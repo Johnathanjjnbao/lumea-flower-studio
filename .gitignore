@@ -5,3 +5,5 @@ Thumbs.db
 !.env.example
 *.log
 .cache/
+node_modules/
+dist/

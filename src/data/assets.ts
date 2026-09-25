@@ -1,16 +1,8 @@
-/*
- * Temporary visual-prototype asset registry.
- * These Unsplash images are presentation references, not production catalog data.
- * Replace this single registry with owner-approved local assets or Admin/Storage data later.
- */
-window.LUMEA_PROTOTYPE_ASSETS = {
-  // Brand imagery: a generous editorial bouquet plus a distinct botanical detail.
+export const assets = {
   heroMain:
     "https://images.unsplash.com/photo-1487530811176-3780de880c2d?auto=format&fit=crop&w=1600&q=88",
   heroDetail:
     "https://images.unsplash.com/photo-1603353139254-70e25b77b8f2?auto=format&fit=crop&w=900&q=86",
-
-  // Occasion imagery: six different emotional cues and compositions.
   occasionBirthday:
     "https://images.unsplash.com/photo-1523693916903-027d144a2b7d?auto=format&fit=crop&w=1200&q=84",
   occasionLove:
@@ -23,8 +15,6 @@ window.LUMEA_PROTOTYPE_ASSETS = {
     "https://images.unsplash.com/photo-1589244159943-460088ed5c92?auto=format&fit=crop&w=1200&q=84",
   occasionSympathy:
     "https://images.unsplash.com/photo-1497276236755-0f85ba99a126?auto=format&fit=crop&w=1200&q=84",
-
-  // Product imagery: four clearly different bouquet designs.
   productPink:
     "https://images.unsplash.com/photo-1623406795110-99f1c4325084?auto=format&fit=crop&w=1000&q=86",
   productPeony:
@@ -33,8 +23,6 @@ window.LUMEA_PROTOTYPE_ASSETS = {
     "https://images.unsplash.com/photo-1523694576729-dc99e9c0f9b4?auto=format&fit=crop&w=1000&q=86",
   productWarm:
     "https://images.unsplash.com/photo-1572454591674-2739f30d8c40?auto=format&fit=crop&w=1000&q=86",
-
-  // Story imagery: delivery, hands-on arranging, wrapping, and final craft.
   sameDay:
     "https://images.unsplash.com/photo-1770386752217-56f4bda6a805?auto=format&fit=crop&w=1400&q=86",
   floristWorkspace:
@@ -43,8 +31,6 @@ window.LUMEA_PROTOTYPE_ASSETS = {
     "https://images.unsplash.com/photo-1758003165922-b95b25e41347?auto=format&fit=crop&w=1600&q=86",
   whyLumea:
     "https://images.unsplash.com/photo-1758402638104-3d3b92e465ca?auto=format&fit=crop&w=1200&q=86",
-
-  // Editorial journal: six unique roles—table, detail, stem, texture, gesture, macro.
   galleryOne:
     "https://images.unsplash.com/photo-1589100534833-475e31a17b4e?auto=format&fit=crop&w=1200&q=84",
   galleryTwo:
@@ -57,4 +43,6 @@ window.LUMEA_PROTOTYPE_ASSETS = {
     "https://images.unsplash.com/photo-1591966801718-48eb8ba0f8f3?auto=format&fit=crop&w=900&q=84",
   gallerySix:
     "https://images.unsplash.com/photo-1518736199958-085fb4214bcf?auto=format&fit=crop&w=900&q=84",
-};
+} as const;
+
+export type AssetKey = keyof typeof assets;

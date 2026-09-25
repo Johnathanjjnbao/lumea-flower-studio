@@ -233,6 +233,8 @@ Every homepage section, including text, media, links, display order, visibility,
 - Confirmation must state the expected next step and response channel once the owner defines them.
 - Validate uploaded file type and size and handle it as untrusted content.
 
+Future direction, not implemented by the current homepage migration: a separate Create Your Bouquet experience may let customers choose individual flowers and quantities, select wrapping, preview the composition, see the updated price, and add the completed configuration to cart. It does not replace the florist-led Custom Bouquet request unless the owner later approves that product decision.
+
 ### 9.5 Same-day Delivery
 
 - Display current Admin-controlled availability, cut-off time, delivery help text, service constraints, and eligible products.
@@ -686,4 +688,3 @@ These decisions are intentionally not invented by this specification:
 14. Product image ratios, upload limits, gallery moderation, and Instagram integration method.
 15. Supported browsers, concrete responsive test widths, analytics choice, and launch success targets.
 16. Admin roles, permissions, audit requirements, and staff notification rules.
-
