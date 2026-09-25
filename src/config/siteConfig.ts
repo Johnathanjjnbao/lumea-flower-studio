@@ -25,4 +25,16 @@ export const siteConfig = {
     { label: "Về Luméa", to: "/#why-lumea" },
     { label: "Ghé studio", to: "/#visit" },
   ] satisfies NavigationItem[],
+  homeChapters: [
+    { id: "top", label: "Hoa" },
+    { id: "occasions", label: "Theo dịp" },
+    { id: "best-sellers", label: "Bộ sưu tập" },
+    { id: "budget", label: "Theo ngân sách" },
+    { id: "same-day", label: "Giao trong ngày" },
+    { id: "florist-choice", label: "Florist’s Choice" },
+    { id: "custom", label: "Tạo bó hoa" },
+    { id: "why-lumea", label: "Vì sao Luméa" },
+    { id: "gallery", label: "Studio Journal" },
+    { id: "visit", label: "Ghé studio" },
+  ],
 } as const;

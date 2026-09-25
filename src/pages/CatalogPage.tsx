@@ -91,9 +91,9 @@ export function CatalogPage() {
 
   return (
     <PageFrame pageRef={pageRef}>
-      <section className="catalog-page section-space" aria-labelledby="catalog-title">
-        <div className="section-shell">
-          <header className="catalog-heading">
+      <section className="catalog-page" aria-labelledby="catalog-title">
+        <div className="catalog-intro">
+          <header className="catalog-heading section-shell">
             <div>
               <p className="eyebrow"><span aria-hidden="true">01</span>The collection</p>
               <h1 id="catalog-title">Hoa cho từng điều<br />bạn muốn gửi trao.</h1>
@@ -102,8 +102,11 @@ export function CatalogPage() {
               <p>Những thiết kế hiện có, được kết bằng tay theo sắc độ và vẻ đẹp tự nhiên của hoa trong ngày.</p>
             </div>
           </header>
+        </div>
 
-          <div className="catalog-discovery">
+        <div className="catalog-commerce">
+          <div className="section-shell">
+            <div className="catalog-discovery">
             <div className="catalog-search">
               <label htmlFor="catalog-search">Tìm trong bộ sưu tập</label>
               <div className="catalog-search__field">
@@ -218,7 +221,9 @@ export function CatalogPage() {
             </div>
 
             <div className="catalog-results-head">
-              <p className="catalog-count" aria-live="polite">{visibleProducts.length} thiết kế</p>
+              <p className="catalog-count" aria-live="polite">
+                <strong>{visibleProducts.length}</strong> thiết kế{activeFilters.length ? " phù hợp" : " trong bộ sưu tập"}
+              </p>
               {activeFilters.length > 0 && (
                 <div className="active-filters" aria-label="Bộ lọc đang áp dụng">
                   {activeFilters.map((filter) => (
@@ -226,24 +231,25 @@ export function CatalogPage() {
                       <span>{filter.label}</span><span aria-hidden="true">×</span>
                     </button>
                   ))}
-                  {activeFilters.length > 1 && <button className="active-filters__clear" type="button" onClick={clearFilters}>Xóa bộ lọc</button>}
+                  <button className="active-filters__clear" type="button" onClick={clearFilters}>Xóa bộ lọc</button>
                 </div>
               )}
             </div>
-          </div>
+            </div>
 
-          {visibleProducts.length > 0 ? (
-            <div className="product-grid catalog-grid">
-              {visibleProducts.map((product) => <ProductCard product={product} showAvailability showStartingPrice key={product.id} />)}
-            </div>
-          ) : (
-            <div className="catalog-empty">
-              <p className="eyebrow"><span aria-hidden="true">0</span>No arrangement found</p>
-              <h2>Chưa tìm thấy bó hoa phù hợp.</h2>
-              <p>Thử thay đổi dịp tặng hoặc khoảng ngân sách.</p>
-              <button className="button button--solid" type="button" onClick={clearFilters}>Xóa bộ lọc</button>
-            </div>
-          )}
+            {visibleProducts.length > 0 ? (
+              <div className="product-grid catalog-grid">
+                {visibleProducts.map((product) => <ProductCard product={product} showAvailability showStartingPrice key={product.id} />)}
+              </div>
+            ) : (
+              <div className="catalog-empty">
+                <p className="eyebrow"><span aria-hidden="true">0</span>No arrangement found</p>
+                <h2>Chưa tìm thấy bó hoa phù hợp.</h2>
+                <p>Thử thay đổi dịp tặng hoặc khoảng ngân sách.</p>
+                <button className="button button--solid" type="button" onClick={clearFilters}>Xóa bộ lọc</button>
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </PageFrame>
