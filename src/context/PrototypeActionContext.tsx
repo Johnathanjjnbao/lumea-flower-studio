@@ -1,19 +1,19 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 interface PrototypeActionContextValue {
-  showPrototypeAction: (title: string) => void;
+  showPrototypeAction: (title: string, message?: string) => void;
 }
 
 const PrototypeActionContext = createContext<PrototypeActionContextValue | null>(null);
 
 export function PrototypeActionProvider({ children }: { children: ReactNode }) {
-  const [title, setTitle] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
   const timerRef = useRef<number | null>(null);
 
-  const showPrototypeAction = useCallback((nextTitle: string) => {
-    setTitle(nextTitle);
+  const showPrototypeAction = useCallback((title: string, message = "Tính năng này đang được Luméa hoàn thiện.") => {
+    setToast({ title, message });
     if (timerRef.current) window.clearTimeout(timerRef.current);
-    timerRef.current = window.setTimeout(() => setTitle(null), 3200);
+    timerRef.current = window.setTimeout(() => setToast(null), 3200);
   }, []);
 
   useEffect(() => () => {
@@ -23,9 +23,9 @@ export function PrototypeActionProvider({ children }: { children: ReactNode }) {
   return (
     <PrototypeActionContext.Provider value={{ showPrototypeAction }}>
       {children}
-      <div className="prototype-toast" role="status" aria-live="polite" hidden={!title}>
-        <strong>{title}</strong>
-        <span>Tính năng này đang được Luméa hoàn thiện.</span>
+      <div className="prototype-toast" role="status" aria-live="polite" hidden={!toast}>
+        <strong>{toast?.title}</strong>
+        <span>{toast?.message}</span>
       </div>
     </PrototypeActionContext.Provider>
   );

@@ -75,24 +75,47 @@ function prepareSectionImages(section: Element) {
   );
 }
 
-export function useImagePipeline(rootRef: RefObject<HTMLElement | null>) {
+interface ImagePipelineOptions {
+  prioritySelector?: string;
+  observe?: "sections" | "images";
+  preloadMargin?: string;
+}
+
+export function useImagePipeline(
+  rootRef: RefObject<HTMLElement | null>,
+  {
+    prioritySelector = ".hero",
+    observe = "sections",
+    preloadMargin = "1100px 0px",
+  }: ImagePipelineOptions = {},
+) {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
 
-    const heroImages = Array.from(root.querySelectorAll<HTMLImageElement>(".hero img[data-asset]"));
-    heroImages.forEach((image, index) => {
+    const priorityImages = prioritySelector
+      ? Array.from(root.querySelectorAll<HTMLImageElement>(`${prioritySelector} img[data-asset]`))
+      : [];
+    priorityImages.forEach((image, index) => {
       image.loading = "eager";
       image.decoding = "async";
       if (index === 0) image.fetchPriority = "high";
       void waitForImage(image);
     });
 
-    const deferredSections = Array.from(root.querySelectorAll("main > section:not(.hero)"))
-      .filter((section) => section.querySelector("img[data-asset]"));
+    const deferredTargets = observe === "images"
+      ? Array.from(root.querySelectorAll<HTMLImageElement>("img[data-asset]"))
+        .filter((image) => !priorityImages.includes(image))
+      : Array.from(root.querySelectorAll("main > section"))
+        .filter((section) => !prioritySelector || !section.matches(prioritySelector))
+        .filter((section) => section.querySelector("img[data-asset]"));
+
+    const prepareTarget = (target: Element) => target instanceof HTMLImageElement
+      ? waitForImage(target)
+      : prepareSectionImages(target);
 
     if (!("IntersectionObserver" in window)) {
-      deferredSections.forEach((section) => void prepareSectionImages(section));
+      deferredTargets.forEach((target) => void prepareTarget(target));
       return;
     }
 
@@ -100,14 +123,14 @@ export function useImagePipeline(rootRef: RefObject<HTMLElement | null>) {
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
-          void prepareSectionImages(entry.target);
+          void prepareTarget(entry.target);
           observer.unobserve(entry.target);
         });
       },
-      { rootMargin: "1100px 0px", threshold: 0 },
+      { rootMargin: preloadMargin, threshold: 0 },
     );
 
-    deferredSections.forEach((section) => observer.observe(section));
+    deferredTargets.forEach((target) => observer.observe(target));
     return () => observer.disconnect();
-  }, [rootRef]);
+  }, [observe, preloadMargin, prioritySelector, rootRef]);
 }

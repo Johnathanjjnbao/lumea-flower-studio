@@ -1,4 +1,6 @@
+import { Link } from "react-router-dom";
 import { AssetImage } from "../components/AssetImage";
+import { ProductCard } from "../components/ProductCard";
 import { budgetRanges, occasions, products } from "../data/content";
 
 export function Occasions() {
@@ -33,28 +35,10 @@ export function BestSellers() {
             <p className="eyebrow"><span aria-hidden="true">03</span>The Luméa edit</p>
             <h2 id="best-sellers-title">Những bó hoa<br />được yêu thích</h2>
           </div>
-          <a className="text-link" href="#best-sellers">Xem tất cả thiết kế</a>
+          <Link className="text-link" to="/flowers">Xem tất cả thiết kế</Link>
         </div>
         <div className="product-grid">
-          {products.map((product) => (
-            <article className="product-card" key={product.id}>
-              <a className="product-image" href="#best-sellers" aria-label={`Xem ${product.name}`}>
-                <AssetImage className={product.imageTone === "quiet" ? "image-tone--quiet" : undefined} asset={product.image} alt={product.alt} loading="lazy" />
-                {product.tag && <span className={`product-tag${product.tagTone === "light" ? " product-tag--light" : ""}`}>{product.tag}</span>}
-              </a>
-              <div className="product-meta">
-                <div className="product-copy">
-                  <p className="product-category">{product.category}</p>
-                  <h3><a href="#best-sellers">{product.name}</a></h3>
-                  <p className="product-description">{product.description}</p>
-                </div>
-                <div className="product-footer">
-                  <p className="product-price">{product.price}</p>
-                  <span className="product-arrow" aria-hidden="true">→</span>
-                </div>
-              </div>
-            </article>
-          ))}
+          {products.map((product) => <ProductCard product={product} key={product.id} />)}
         </div>
       </div>
     </section>

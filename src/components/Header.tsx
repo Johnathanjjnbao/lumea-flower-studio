@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { siteConfig } from "../config/siteConfig";
 import { usePrototypeAction } from "../context/PrototypeActionContext";
 
@@ -45,13 +46,13 @@ export function Header() {
           </button>
 
           <nav className="desktop-nav" aria-label="Điều hướng chính">
-            {siteConfig.navigation.map((item) => <a key={item.href} href={item.href}>{item.label}</a>)}
+            {siteConfig.navigation.map((item) => <Link key={item.to} to={item.to}>{item.label}</Link>)}
           </nav>
 
-          <a className="wordmark" href="#top" aria-label={`${siteConfig.brandDisplayName} Flower Studio, về đầu trang`}>
+          <Link className="wordmark" to="/#top" aria-label={`${siteConfig.brandDisplayName} Flower Studio, về đầu trang`}>
             <span className="wordmark__name">{siteConfig.brandName}</span>
             <span className="wordmark__descriptor">{siteConfig.descriptor} · {siteConfig.city}</span>
-          </a>
+          </Link>
 
           <div className="header-actions">
             <button className="icon-button search-button" type="button" aria-label="Tìm kiếm" onClick={() => showPrototypeAction("Tìm kiếm")}>
@@ -69,9 +70,9 @@ export function Header() {
 
         <nav className="mobile-menu" id="mobile-menu" aria-label="Menu di động" hidden={!menuOpen}>
           {siteConfig.navigation.map((item, index) => (
-            <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>
+            <Link key={item.to} to={item.to} onClick={() => setMenuOpen(false)}>
               {item.label} <span>{String(index + 1).padStart(2, "0")}</span>
-            </a>
+            </Link>
           ))}
           <p>Hoa được làm thủ công mỗi ngày tại Sài Gòn.</p>
         </nav>
