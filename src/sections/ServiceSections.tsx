@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { AssetImage } from "../components/AssetImage";
 import { usePrototypeAction } from "../context/PrototypeActionContext";
 
@@ -12,7 +13,7 @@ export function SameDay() {
           <span className="status-dot" aria-hidden="true" />
           <span>Đặt trước 14:00 · Xác nhận theo khu vực và mẫu hoa</span>
         </div>
-        <a className="button button--dark" href="#best-sellers">Xem hoa giao trong ngày</a>
+        <Link className="button button--dark" to="/flowers?sameDay=true">Xem hoa giao trong ngày</Link>
       </div>
       <figure className="same-day-image">
         <AssetImage asset="sameDay" alt="Bó hoa tươi sẵn sàng được giao trong ngày" loading="lazy" />

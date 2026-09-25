@@ -79,6 +79,7 @@ interface ImagePipelineOptions {
   prioritySelector?: string;
   observe?: "sections" | "images";
   preloadMargin?: string;
+  refreshKey?: string;
 }
 
 export function useImagePipeline(
@@ -87,6 +88,7 @@ export function useImagePipeline(
     prioritySelector = ".hero",
     observe = "sections",
     preloadMargin = "1100px 0px",
+    refreshKey = "",
   }: ImagePipelineOptions = {},
 ) {
   useEffect(() => {
@@ -132,5 +134,5 @@ export function useImagePipeline(
 
     deferredTargets.forEach((target) => observer.observe(target));
     return () => observer.disconnect();
-  }, [observe, preloadMargin, prioritySelector, rootRef]);
+  }, [observe, preloadMargin, prioritySelector, refreshKey, rootRef]);
 }

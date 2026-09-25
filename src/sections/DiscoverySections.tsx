@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { AssetImage } from "../components/AssetImage";
 import { ProductCard } from "../components/ProductCard";
 import { budgetRanges, occasions, products } from "../data/content";
+import { budgetParamByRangeId } from "../utils/catalogDiscovery";
 
 export function Occasions() {
   return (
@@ -15,11 +16,11 @@ export function Occasions() {
       </div>
       <div className="occasion-grid">
         {occasions.map((occasion, index) => (
-          <a className={`occasion-tile occasion-tile--${occasion.id}`} href="#best-sellers" key={occasion.id}>
+          <Link className={`occasion-tile occasion-tile--${occasion.id}`} to={`/flowers?occasion=${occasion.id}`} key={occasion.id}>
             <AssetImage className={occasion.tone === "quiet" ? "image-tone--quiet" : undefined} asset={occasion.image} alt={occasion.alt} loading="lazy" />
             <span className="occasion-number">{String(index + 1).padStart(2, "0")}</span>
             <span className="occasion-name">{occasion.name}</span>
-          </a>
+          </Link>
         ))}
       </div>
     </section>
@@ -56,7 +57,7 @@ export function Budget() {
         </div>
         <nav className="budget-selector" aria-label="Chọn hoa theo ngân sách">
           {budgetRanges.map((range) => (
-            <a className={`budget-option budget-option--${range.id}`} href="#best-sellers" key={range.id}>
+            <Link className={`budget-option budget-option--${range.id}`} to={`/flowers?budget=${budgetParamByRangeId[range.id]}`} key={range.id}>
               <figure className="budget-option__image">
                 <AssetImage asset={range.image} alt={range.alt} loading="lazy" />
               </figure>
@@ -64,7 +65,7 @@ export function Budget() {
               <strong>{range.label}</strong>
               <span className="budget-option__note">{range.note}</span>
               <span className="budget-option__arrow" aria-hidden="true">↗</span>
-            </a>
+            </Link>
           ))}
         </nav>
       </div>

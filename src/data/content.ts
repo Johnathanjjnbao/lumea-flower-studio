@@ -51,7 +51,7 @@ export const products: Product[] = [
     basePrice: 820000,
     images: [{ asset: "productPeony", alt: "Bó hoa Morning Peony sáng trong" }],
     composition: ["Mẫu đơn theo mùa", "Hồng kem", "Thanh liễu"],
-    occasions: ["Sinh nhật", "Chúc mừng"],
+    occasions: ["Sinh nhật", "Chúc mừng", "Tốt nghiệp"],
     availability: "SEASONAL",
     sameDayEligible: false,
     sizes: standardSizes,
