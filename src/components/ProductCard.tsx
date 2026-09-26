@@ -5,14 +5,16 @@ import { AssetImage } from "./AssetImage";
 
 interface ProductCardProps {
   product: Product;
+  headingLevel?: 2 | 3;
   showAvailability?: boolean;
   showStartingPrice?: boolean;
 }
 
-export function ProductCard({ product, showAvailability = false, showStartingPrice = false }: ProductCardProps) {
+export function ProductCard({ product, headingLevel = 3, showAvailability = false, showStartingPrice = false }: ProductCardProps) {
   const primaryImage = product.images[0];
   const statusLabel = product.tag ?? (showAvailability ? availabilityLabels[product.availability] : undefined);
   const lightTag = product.tagTone === "light" || product.availability === "SEASONAL";
+  const ProductHeading = headingLevel === 2 ? "h2" : "h3";
 
   return (
     <article className="product-card">
@@ -28,7 +30,7 @@ export function ProductCard({ product, showAvailability = false, showStartingPri
       <div className="product-meta">
         <div className="product-copy">
           <p className="product-category">{product.category}</p>
-          <h3><Link to={`/flowers/${product.slug}`}>{product.name}</Link></h3>
+          <ProductHeading><Link to={`/flowers/${product.slug}`}>{product.name}</Link></ProductHeading>
           <p className="product-description">{product.shortDescription}</p>
         </div>
         <div className="product-footer">

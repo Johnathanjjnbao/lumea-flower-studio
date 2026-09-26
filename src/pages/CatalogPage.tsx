@@ -239,7 +239,7 @@ export function CatalogPage() {
 
             {visibleProducts.length > 0 ? (
               <div className="product-grid catalog-grid">
-                {visibleProducts.map((product) => <ProductCard product={product} showAvailability showStartingPrice key={product.id} />)}
+                {visibleProducts.map((product) => <ProductCard product={product} headingLevel={2} showAvailability showStartingPrice key={product.id} />)}
               </div>
             ) : (
               <div className="catalog-empty">

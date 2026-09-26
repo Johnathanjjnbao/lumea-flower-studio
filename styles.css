@@ -945,11 +945,11 @@ h3 {
   text-transform: uppercase;
 }
 
-.product-meta h3 {
+.product-meta :is(h2, h3) {
   font-size: 1.72rem;
 }
 
-.product-meta h3 a {
+.product-meta :is(h2, h3) a {
   text-decoration-color: transparent;
   text-decoration-line: underline;
   text-decoration-thickness: 1px;
@@ -957,7 +957,7 @@ h3 {
   transition: text-decoration-color 180ms ease;
 }
 
-.product-meta h3 a:hover {
+.product-meta :is(h2, h3) a:hover {
   text-decoration-color: currentColor;
 }
 
@@ -4326,7 +4326,7 @@ h2 em,
   pointer-events: none;
 }
 
-.product-meta h3 {
+.product-meta :is(h2, h3) {
   font-size: clamp(1.6rem, 2.3vw, 2rem);
 }
 
