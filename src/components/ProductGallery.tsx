@@ -10,6 +10,7 @@ export function ProductGallery({ images, name }: { images: ProductImage[]; name:
     <div className="product-gallery" aria-label={`Hình ảnh ${name}`}>
       <figure className="product-gallery__main">
         <AssetImage asset={selectedImage.asset} alt={selectedImage.alt} fetchPriority="high" />
+        <figcaption><span aria-hidden="true">L</span> Studio composition · Made by hand</figcaption>
       </figure>
       {images.length > 1 && (
         <div className="product-gallery__thumbs" aria-label="Chọn ảnh sản phẩm">

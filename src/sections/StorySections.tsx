@@ -12,15 +12,15 @@ export function WhyLumea() {
         </div>
         <div className="craft-stories">
           <figure className="craft-story craft-story--fresh">
-            <div className="craft-story__image"><AssetImage asset="occasionOpening" alt="Hoa tươi tại chợ hoa được chọn trong ngày" loading="lazy" /></div>
+            <div className="craft-story__image"><AssetImage asset="flowerShop" alt="Những cành hoa tươi và lá xanh được chọn tại cửa hàng hoa" loading="lazy" /></div>
             <figcaption><span>Fresh daily</span><h3>Hoa được chọn mỗi ngày</h3><p>Theo mùa, theo sắc độ và theo vẻ đẹp tự nhiên nhất.</p></figcaption>
           </figure>
           <figure className="craft-story craft-story--handmade">
-            <div className="craft-story__image"><AssetImage asset="whyLumea" alt="Đôi tay florist đang hoàn thiện bó hoa" loading="lazy" /></div>
+            <div className="craft-story__image"><AssetImage asset="floristHands" alt="Đôi tay florist đang sắp từng cành hoa thành một composition" loading="lazy" /></div>
             <figcaption><span>Made by hand</span><h3>Từng bó được kết bằng tay</h3><p>Cân chỉnh riêng để mỗi composition có nhịp điệu của mình.</p></figcaption>
           </figure>
           <figure className="craft-story craft-story--delivery">
-            <div className="craft-story__image"><AssetImage asset="sameDay" alt="Bó hoa đã hoàn thiện sẵn sàng được trao tặng" loading="lazy" /></div>
+            <div className="craft-story__image"><AssetImage asset="wrappingDetail" alt="Ribbon được buộc thủ công cho bó hoa trước khi giao" loading="lazy" /></div>
             <figcaption><span>Given with care</span><h3>Được trao đi như một món quà</h3><p>Giữ trọn hình dáng và cảm xúc từ studio đến người nhận.</p></figcaption>
           </figure>
         </div>
@@ -46,12 +46,19 @@ export function Gallery() {
           <figcaption>Seasonal study · No. 09</figcaption>
         </figure>
         <figure className="gallery-item gallery-item--two"><AssetImage asset="galleryTwo" alt="Chi tiết một đóa hoa vàng trong nắng" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--three"><AssetImage asset="galleryThree" alt="Bình hoa pastel trên bàn studio" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--four"><AssetImage asset="galleryFour" alt="Chi tiết cánh hoa hồng mềm mại" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--five"><AssetImage asset="galleryFive" alt="Những cành hoa tươi được sắp đặt tự nhiên" loading="lazy" /></figure>
+        <figure className="gallery-item gallery-item--three"><AssetImage asset="studioRibbon" alt="Florist đang đo ribbon trên bàn hoa" loading="lazy" /></figure>
+        <figure className="gallery-item gallery-item--four"><AssetImage asset="galleryFour" alt="Chi tiết những cánh hoa trắng trong khu vườn" loading="lazy" /></figure>
+        <figure className="gallery-item gallery-item--five"><AssetImage asset="galleryThree" alt="Bình hoa pastel được sắp tự nhiên trên bàn studio" loading="lazy" /></figure>
         <figure className="gallery-item gallery-item--six">
           <AssetImage asset="gallerySix" alt="Hoa và lá trong một khung hình editorial" loading="lazy" />
           <figcaption>From the studio · Saigon</figcaption>
+        </figure>
+        <figure className="gallery-item gallery-item--seven"><AssetImage asset="singleRose" alt="Florist đang điểm thêm hoa baby quanh một đóa hồng đỏ" loading="lazy" /></figure>
+        <figure className="gallery-item gallery-item--eight"><AssetImage asset="galleryFive" alt="Những cành hoa tươi được sắp đặt tự nhiên" loading="lazy" /></figure>
+        <figure className="gallery-item gallery-item--nine"><AssetImage asset="customBouquet" alt="Bó hoa đã gói đặt trên ghế, sẵn sàng được trao đi" loading="lazy" /></figure>
+        <figure className="gallery-item gallery-item--ten">
+          <AssetImage asset="whyLumea" alt="Bàn tay chạm nhẹ vào một composition hoa nhỏ trong studio" loading="lazy" />
+          <figcaption>Hands, stems &amp; quiet details.</figcaption>
         </figure>
       </div>
     </section>

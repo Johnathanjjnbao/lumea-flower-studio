@@ -79,6 +79,8 @@ interface ImagePipelineOptions {
   prioritySelector?: string;
   observe?: "sections" | "images";
   preloadMargin?: string;
+  progressiveSelector?: string;
+  progressiveMargin?: string;
   refreshKey?: string;
 }
 
@@ -88,6 +90,8 @@ export function useImagePipeline(
     prioritySelector = ".hero",
     observe = "sections",
     preloadMargin = "1100px 0px",
+    progressiveSelector,
+    progressiveMargin = "320px 0px",
     refreshKey = "",
   }: ImagePipelineOptions = {},
 ) {
@@ -105,11 +109,17 @@ export function useImagePipeline(
       void waitForImage(image);
     });
 
+    const progressiveImages = progressiveSelector
+      ? Array.from(root.querySelectorAll<HTMLImageElement>(`${progressiveSelector} img[data-asset]`))
+      : [];
+
     const deferredTargets = observe === "images"
       ? Array.from(root.querySelectorAll<HTMLImageElement>("img[data-asset]"))
         .filter((image) => !priorityImages.includes(image))
+        .filter((image) => !progressiveImages.includes(image))
       : Array.from(root.querySelectorAll("main > section"))
         .filter((section) => !prioritySelector || !section.matches(prioritySelector))
+        .filter((section) => !progressiveImages.some((image) => section.contains(image)))
         .filter((section) => section.querySelector("img[data-asset]"));
 
     const prepareTarget = (target: Element) => target instanceof HTMLImageElement
@@ -118,6 +128,7 @@ export function useImagePipeline(
 
     if (!("IntersectionObserver" in window)) {
       deferredTargets.forEach((target) => void prepareTarget(target));
+      progressiveImages.forEach((image) => void waitForImage(image));
       return;
     }
 
@@ -132,7 +143,22 @@ export function useImagePipeline(
       { rootMargin: preloadMargin, threshold: 0 },
     );
 
+    const progressiveObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          void waitForImage(entry.target as HTMLImageElement);
+          progressiveObserver.unobserve(entry.target);
+        });
+      },
+      { rootMargin: progressiveMargin, threshold: 0 },
+    );
+
     deferredTargets.forEach((target) => observer.observe(target));
-    return () => observer.disconnect();
-  }, [observe, preloadMargin, prioritySelector, refreshKey, rootRef]);
+    progressiveImages.forEach((image) => progressiveObserver.observe(image));
+    return () => {
+      observer.disconnect();
+      progressiveObserver.disconnect();
+    };
+  }, [observe, preloadMargin, prioritySelector, progressiveMargin, progressiveSelector, refreshKey, rootRef]);
 }

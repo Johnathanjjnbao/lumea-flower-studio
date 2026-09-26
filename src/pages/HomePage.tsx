@@ -10,7 +10,7 @@ import { Gallery, Visit, WhyLumea } from "../sections/StorySections";
 
 export function HomePage() {
   const pageRef = useRef<HTMLDivElement>(null);
-  useImagePipeline(pageRef);
+  useImagePipeline(pageRef, { progressiveSelector: "#gallery", progressiveMargin: "320px 0px" });
   useHomeMotion(pageRef);
   useDocumentMetadata(
     "Luméa Flower Studio — Hoa cho những điều khó nói thành lời",

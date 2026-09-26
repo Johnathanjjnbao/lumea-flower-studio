@@ -31,6 +31,7 @@ export interface Product {
   tag?: string;
   tagTone?: "light";
   imageTone?: "quiet";
+  featured?: boolean;
 }
 
 export type ProductAvailability = "AVAILABLE" | "UNAVAILABLE" | "SEASONAL";

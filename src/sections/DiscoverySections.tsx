@@ -28,6 +28,8 @@ export function Occasions() {
 }
 
 export function BestSellers() {
+  const featuredProducts = products.filter((product) => product.featured);
+
   return (
     <section className="best-sellers section-space" id="best-sellers" aria-labelledby="best-sellers-title">
       <div className="section-shell">
@@ -39,7 +41,7 @@ export function BestSellers() {
           <Link className="text-link" to="/flowers">Xem tất cả thiết kế</Link>
         </div>
         <div className="product-grid">
-          {products.map((product) => <ProductCard product={product} key={product.id} />)}
+          {featuredProducts.map((product) => <ProductCard product={product} key={product.id} />)}
         </div>
       </div>
     </section>

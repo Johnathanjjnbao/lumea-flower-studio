@@ -23,6 +23,38 @@ export const assets = {
     "https://images.unsplash.com/photo-1523694576729-dc99e9c0f9b4?auto=format&fit=crop&w=1000&q=86",
   productWarm:
     "https://images.unsplash.com/photo-1572454591674-2739f30d8c40?auto=format&fit=crop&w=1000&q=86",
+  productRoseLetter:
+    "https://images.pexels.com/photos/17588254/pexels-photo-17588254.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  productAmberStudy:
+    "https://images.pexels.com/photos/29252580/pexels-photo-29252580.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  productHydrangea:
+    "https://images.pexels.com/photos/13205236/pexels-photo-13205236.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  productSpringNote:
+    "https://images.pexels.com/photos/26083404/pexels-photo-26083404.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  productVelvet:
+    "https://images.pexels.com/photos/3648977/pexels-photo-3648977.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  detailRose:
+    "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=1000&q=86",
+  detailCalla:
+    "https://images.unsplash.com/photo-1469259943454-aa100abba749?auto=format&fit=crop&w=1000&q=86",
+  detailWhiteRose:
+    "https://images.unsplash.com/photo-1495231916356-a86217efff12?auto=format&fit=crop&w=1000&q=86",
+  studioFlorist:
+    "https://images.pexels.com/photos/5409690/pexels-photo-5409690.jpeg?auto=compress&cs=tinysrgb&w=1400",
+  studioTable:
+    "https://images.pexels.com/photos/4612226/pexels-photo-4612226.jpeg?auto=compress&cs=tinysrgb&w=1400",
+  studioRibbon:
+    "https://images.pexels.com/photos/7810716/pexels-photo-7810716.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  wrappingDetail:
+    "https://images.pexels.com/photos/6913152/pexels-photo-6913152.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  floristHands:
+    "https://images.pexels.com/photos/6913158/pexels-photo-6913158.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  singleRose:
+    "https://images.pexels.com/photos/6913121/pexels-photo-6913121.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  flowerShop:
+    "https://images.unsplash.com/photo-1487070183336-b863922373d4?auto=format&fit=crop&w=1400&q=86",
+  deliveryReady:
+    "https://images.unsplash.com/photo-1758402638146-a1a94f400073?auto=format&fit=crop&w=1200&q=86",
   sameDay:
     "https://images.unsplash.com/photo-1770386752217-56f4bda6a805?auto=format&fit=crop&w=1400&q=86",
   floristWorkspace:

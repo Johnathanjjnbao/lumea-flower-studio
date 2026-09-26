@@ -16,8 +16,8 @@ export function SameDay() {
         <Link className="button button--dark" to="/flowers?sameDay=true">Xem hoa giao trong ngày</Link>
       </div>
       <figure className="same-day-image">
-        <AssetImage asset="sameDay" alt="Bó hoa tươi sẵn sàng được giao trong ngày" loading="lazy" />
-        <figcaption>Prepared fresh, delivered with care.</figcaption>
+        <AssetImage asset="deliveryReady" alt="Bó hoa hoàn thiện đang được cầm trên tay, sẵn sàng trao tặng" loading="lazy" />
+        <figcaption>Wrapped at the studio · Ready to be given.</figcaption>
       </figure>
     </section>
   );
@@ -28,8 +28,8 @@ export function FloristChoice() {
     <section className="florist-choice section-space" id="florist-choice" aria-labelledby="florist-title">
       <div className="section-shell florist-layout">
         <figure className="florist-image">
-          <AssetImage asset="floristWorkspace" alt="Bàn làm việc của florist với những cành hoa đang được chọn" loading="lazy" />
-          <figcaption>Luméa atelier · Made by hand, guided by feeling.</figcaption>
+          <AssetImage asset="studioTable" alt="Florist đang chọn và sắp từng cành hoa trên bàn studio" loading="lazy" />
+          <figcaption>Luméa atelier · A composition begins at the flower table.</figcaption>
         </figure>
         <div className="florist-copy">
           <p className="eyebrow eyebrow--light"><span aria-hidden="true">06</span>Florist&apos;s Choice</p>
@@ -69,7 +69,7 @@ export function CustomBouquet() {
   return (
     <section className="custom section-space section-shell" id="custom" aria-labelledby="custom-title">
       <figure className="custom-image">
-        <AssetImage asset="customBouquet" alt="Bó hoa thiết kế riêng được gói thủ công" loading="lazy" />
+        <AssetImage asset="studioFlorist" alt="Florist đang gói một bó hồng bằng giấy tại studio" loading="lazy" />
         <figcaption>One story · Two ways to create</figcaption>
       </figure>
       <div className="custom-copy">
@@ -85,16 +85,16 @@ export function CustomBouquet() {
           </div>
           <div className="flower-picks" aria-label="Các loại hoa đã chọn">
             <figure className="flower-pick">
-              <AssetImage asset="galleryFour" alt="Hoa dahlia màu blush" loading="lazy" />
-              <figcaption><span>Dahlia</span><strong>× 5</strong></figcaption>
+              <AssetImage asset="detailRose" alt="Một cành hồng garden màu blush" loading="lazy" />
+              <figcaption><span>Garden Rose</span><strong>× 5</strong></figcaption>
             </figure>
             <figure className="flower-pick">
-              <AssetImage asset="galleryTwo" alt="Hoa hibiscus màu vàng kem" loading="lazy" />
-              <figcaption><span>Hibiscus</span><strong>× 3</strong></figcaption>
+              <AssetImage asset="detailCalla" alt="Hoa calla hồng cùng lá xanh" loading="lazy" />
+              <figcaption><span>Calla</span><strong>× 3</strong></figcaption>
             </figure>
             <figure className="flower-pick">
-              <AssetImage asset="gallerySix" alt="Hoa lily màu cam làm điểm nhấn" loading="lazy" />
-              <figcaption><span>Lily</span><strong>× 2</strong></figcaption>
+              <AssetImage asset="detailWhiteRose" alt="Một cành hồng trắng làm điểm sáng" loading="lazy" />
+              <figcaption><span>White Rose</span><strong>× 2</strong></figcaption>
             </figure>
           </div>
           <div className="wrapping-choice">

@@ -375,8 +375,9 @@ export function useHomeMotion(rootRef: RefObject<HTMLElement | null>) {
             drawHairline(timeline, gallery.querySelector(".botanical-hairline"), 0.12);
             const galleryDirections: Direction[] = ["down", "left", "up", "right", "left", "up"];
             gallery.querySelectorAll(".gallery-item").forEach((item, index) => {
-              imageReveal(timeline, item, galleryDirections[index], 0.14 + index * (isMobile ? 0.09 : 0.12), { profile: index === 0 ? "signature" : "story", preserveTransform: index === 0, offset: index === 0 ? 0 : undefined });
-              fadeFrom(timeline, item.querySelector("figcaption"), 0.4 + index * (isMobile ? 0.07 : 0.09), { y: 6, duration: 0.24 });
+              const itemTimeline = sectionTimeline(item, isMobile ? "top 94%" : "top 90%");
+              imageReveal(itemTimeline, item, galleryDirections[index % galleryDirections.length], 0, { profile: index === 0 ? "signature" : "story", preserveTransform: index === 0, offset: index === 0 ? 0 : undefined });
+              fadeFrom(itemTimeline, item.querySelector("figcaption"), 0.2, { y: 6, duration: 0.24 });
             });
           }
 
@@ -400,15 +401,8 @@ export function useHomeMotion(rootRef: RefObject<HTMLElement | null>) {
         },
       );
 
-      const refresh = () => ScrollTrigger.refresh();
-      let refreshFrame = 0;
-      if (document.readyState === "complete") refreshFrame = requestAnimationFrame(refresh);
-      else window.addEventListener("load", refresh, { once: true });
-
       return () => {
         active = false;
-        window.cancelAnimationFrame(refreshFrame);
-        window.removeEventListener("load", refresh);
         media.revert();
       };
     } catch {
