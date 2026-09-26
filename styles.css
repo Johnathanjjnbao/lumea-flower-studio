@@ -15,6 +15,8 @@
   --paper-shadow: 0 1.2rem 3.25rem rgba(74, 51, 48, 0.065);
   --serif: "Fraunces", Georgia, serif;
   --sans: "Manrope", Arial, sans-serif;
+  --serif-ko: "Noto Serif KR", "Noto Serif", serif;
+  --sans-ko: "Noto Sans KR", "Noto Sans", sans-serif;
   --page-gutter: clamp(1.25rem, 4vw, 4.75rem);
   --section-space: clamp(4.75rem, 7vw, 7.5rem);
   --content-width: 1440px;
@@ -28,6 +30,13 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+html[lang="ko"] {
+  --serif: var(--serif-ko);
+  --sans: var(--sans-ko);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 body {
@@ -4915,4 +4924,74 @@ h2 em,
 .budget-option__arrow {
   color: var(--burgundy);
   font-weight: 700;
+}
+
+/* Step 7A: compact locale control; Korean uses dedicated, legible typefaces. */
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  color: var(--ink-soft);
+  font-size: 0.64rem;
+  font-weight: 650;
+  letter-spacing: 0.045em;
+  line-height: 1;
+}
+
+.language-switch a {
+  padding-block: 0.35rem;
+  border-bottom: 1px solid transparent;
+}
+
+.language-switch a[data-active="true"] {
+  border-bottom-color: var(--burgundy);
+  color: var(--burgundy);
+}
+
+.language-switch--desktop {
+  display: none;
+}
+
+.language-switch--mobile {
+  margin: 0.85rem 0 0.3rem;
+}
+
+.mobile-menu .language-switch--mobile a {
+  display: inline-flex;
+  width: auto;
+  padding: 0.45rem 0;
+  justify-content: flex-start;
+  border-bottom: 1px solid transparent;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.mobile-menu .language-switch--mobile a[data-active="true"] {
+  border-bottom-color: var(--burgundy);
+}
+
+html[lang="ko"] h1,
+html[lang="ko"] h2,
+html[lang="ko"] h3 {
+  letter-spacing: -0.045em;
+  line-height: 1.14;
+}
+
+html[lang="ko"] .wordmark__name,
+html[lang="ko"] .footer-wordmark {
+  font-family: "Fraunces", Georgia, serif;
+}
+
+@media (min-width: 1100px) {
+  .language-switch--desktop {
+    display: inline-flex;
+    margin-right: clamp(0.3rem, 0.7vw, 0.75rem);
+  }
+}
+
+@media (min-width: 1100px) and (max-width: 1239px) {
+  .language-switch--desktop {
+    display: none;
+  }
 }

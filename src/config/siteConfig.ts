@@ -1,40 +1,22 @@
-import type { NavigationItem } from "../types/content";
+import type { HomeChapterId, NavigationItem } from "../types/content";
 
 export const siteConfig = {
   brandName: "LUMÉA",
   brandDisplayName: "Luméa",
-  descriptor: "Flower Studio",
-  city: "Saigon",
   monogram: "L",
-  tagline: "Hoa cho những điều khó nói thành lời.",
   phoneDisplay: "0900 000 000",
   phoneHref: "tel:0900000000",
   email: "hello@lumea.flowers",
   instagramHandle: "@lumeaflowers",
   currency: "VND",
-  delivery: {
-    standardNote: "Thời gian và khu vực giao sẽ được xác nhận trước khi hoàn tất đơn.",
-    sameDayNote: "Có thể giao trong ngày với đơn đặt trước giờ cắt và khu vực phù hợp.",
-  },
   year: 2026,
   navigation: [
-    { label: "Hoa", to: "/flowers" },
-    { label: "Theo dịp", to: "/#occasions" },
-    { label: "Đặt hoa riêng", to: "/#custom" },
-    { label: "Giao trong ngày", to: "/#same-day" },
-    { label: "Về Luméa", to: "/#why-lumea" },
-    { label: "Ghé studio", to: "/#visit" },
+    { key: "flowers", to: "/flowers" },
+    { key: "occasions", to: "/#occasions" },
+    { key: "custom", to: "/#custom" },
+    { key: "sameDay", to: "/#same-day" },
+    { key: "about", to: "/#why-lumea" },
+    { key: "visit", to: "/#visit" },
   ] satisfies NavigationItem[],
-  homeChapters: [
-    { id: "top", label: "Hoa" },
-    { id: "occasions", label: "Theo dịp" },
-    { id: "best-sellers", label: "Bộ sưu tập" },
-    { id: "budget", label: "Theo ngân sách" },
-    { id: "same-day", label: "Giao trong ngày" },
-    { id: "florist-choice", label: "Florist’s Choice" },
-    { id: "custom", label: "Tạo bó hoa" },
-    { id: "why-lumea", label: "Vì sao Luméa" },
-    { id: "gallery", label: "Studio Journal" },
-    { id: "visit", label: "Ghé studio" },
-  ],
+  homeChapters: ["top", "occasions", "best-sellers", "budget", "same-day", "florist-choice", "custom", "why-lumea", "gallery", "visit"] satisfies HomeChapterId[],
 } as const;

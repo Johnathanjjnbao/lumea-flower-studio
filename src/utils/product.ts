@@ -1,10 +1,4 @@
-import type { Product, ProductAvailability, ProductSize } from "../types/content";
-
-export const availabilityLabels: Record<ProductAvailability, string> = {
-  AVAILABLE: "Có thể đặt",
-  SEASONAL: "Hoa theo mùa",
-  UNAVAILABLE: "Tạm hết",
-};
+import type { Product, ProductSize } from "../types/content";
 
 export function formatVnd(value: number) {
   return `${new Intl.NumberFormat("vi-VN").format(value)}đ`;

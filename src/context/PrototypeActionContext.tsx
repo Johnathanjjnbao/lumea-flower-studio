@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useI18n } from "../i18n";
 
 interface PrototypeActionContextValue {
   showPrototypeAction: (title: string, message?: string) => void;
@@ -7,14 +8,15 @@ interface PrototypeActionContextValue {
 const PrototypeActionContext = createContext<PrototypeActionContextValue | null>(null);
 
 export function PrototypeActionProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const [toast, setToast] = useState<{ title: string; message: string } | null>(null);
   const timerRef = useRef<number | null>(null);
 
-  const showPrototypeAction = useCallback((title: string, message = "Tính năng này đang được Luméa hoàn thiện.") => {
+  const showPrototypeAction = useCallback((title: string, message = t.common.prototypeMessage) => {
     setToast({ title, message });
     if (timerRef.current) window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => setToast(null), 3200);
-  }, []);
+  }, [t.common.prototypeMessage]);
 
   useEffect(() => () => {
     if (timerRef.current) window.clearTimeout(timerRef.current);

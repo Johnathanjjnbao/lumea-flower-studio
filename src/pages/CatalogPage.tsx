@@ -5,6 +5,7 @@ import { ProductCard } from "../components/ProductCard";
 import { occasions, products } from "../data/content";
 import { useDocumentMetadata } from "../hooks/useDocumentMetadata";
 import { useImagePipeline } from "../hooks/useImagePipeline";
+import { formatMessage, useI18n } from "../i18n";
 import {
   availabilityFilterOptions,
   budgetFilterOptions,
@@ -16,6 +17,7 @@ import {
 type FilterParam = "q" | "occasion" | "budget" | "sameDay" | "availability";
 
 export function CatalogPage() {
+  const { locale, t } = useI18n();
   const pageRef = useRef<HTMLDivElement>(null);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -24,7 +26,7 @@ export function CatalogPage() {
   const representedOccasions = useMemo(() => getRepresentedOccasions(products, occasions), []);
   const validOccasionIds = useMemo(() => new Set(representedOccasions.map((occasion) => occasion.id)), [representedOccasions]);
   const discoveryState = readCatalogDiscoveryState(searchParams, validOccasionIds);
-  const visibleProducts = filterCatalogProducts(products, discoveryState, representedOccasions);
+  const visibleProducts = filterCatalogProducts(products, discoveryState, t, locale);
   const searchParamKey = searchParams.toString();
 
   useImagePipeline(pageRef, {
@@ -34,8 +36,8 @@ export function CatalogPage() {
     refreshKey: searchParamKey,
   });
   useDocumentMetadata(
-    "Bộ sưu tập hoa — Luméa Flower Studio",
-    "Khám phá những thiết kế hoa thủ công hiện có tại Luméa Flower Studio.",
+    t.meta.catalogTitle,
+    t.meta.catalogDescription,
   );
 
   const updateFilter = (name: FilterParam, value: string | null, replace = false) => {
@@ -71,19 +73,19 @@ export function CatalogPage() {
   }, [filtersOpen]);
 
   const activeFilters = [
-    discoveryState.query.trim() ? { key: "q" as const, label: `Tìm “${discoveryState.query.trim()}”` } : null,
+    discoveryState.query.trim() ? { key: "q" as const, label: formatMessage(t.catalog.searchChip, { query: discoveryState.query.trim() }) } : null,
     discoveryState.occasion ? {
       key: "occasion" as const,
-      label: representedOccasions.find((occasion) => occasion.id === discoveryState.occasion)?.name ?? discoveryState.occasion,
+      label: representedOccasions.find((occasion) => occasion.id === discoveryState.occasion) ? t.occasions[discoveryState.occasion as keyof typeof t.occasions].name : discoveryState.occasion,
     } : null,
     discoveryState.budget ? {
       key: "budget" as const,
-      label: budgetFilterOptions.find((option) => option.id === discoveryState.budget)?.label ?? discoveryState.budget,
+      label: t.catalog.budgetLabels[discoveryState.budget],
     } : null,
-    discoveryState.sameDay ? { key: "sameDay" as const, label: "Giao trong ngày" } : null,
+    discoveryState.sameDay ? { key: "sameDay" as const, label: t.catalog.sameDay } : null,
     discoveryState.availability ? {
       key: "availability" as const,
-      label: availabilityFilterOptions.find((option) => option.id === discoveryState.availability)?.label ?? discoveryState.availability,
+      label: t.product.availability[availabilityFilterOptions.find((option) => option.id === discoveryState.availability)?.value ?? "AVAILABLE"],
     } : null,
   ].filter((filter): filter is { key: FilterParam; label: string } => Boolean(filter));
 
@@ -95,11 +97,11 @@ export function CatalogPage() {
         <div className="catalog-intro">
           <header className="catalog-heading section-shell">
             <div>
-              <p className="eyebrow"><span aria-hidden="true">01</span>The collection</p>
-              <h1 id="catalog-title">Hoa cho từng điều<br />bạn muốn gửi trao.</h1>
+              <p className="eyebrow"><span aria-hidden="true">01</span>{t.catalog.eyebrow}</p>
+              <h1 id="catalog-title">{t.catalog.titleOne}<br />{t.catalog.titleTwo}</h1>
             </div>
             <div className="catalog-heading__meta">
-              <p>Những thiết kế hiện có, được kết bằng tay theo sắc độ và vẻ đẹp tự nhiên của hoa trong ngày.</p>
+              <p>{t.catalog.intro}</p>
             </div>
           </header>
         </div>
@@ -108,18 +110,18 @@ export function CatalogPage() {
           <div className="section-shell">
             <div className="catalog-discovery">
             <div className="catalog-search">
-              <label htmlFor="catalog-search">Tìm trong bộ sưu tập</label>
+              <label htmlFor="catalog-search">{t.catalog.searchLabel}</label>
               <div className="catalog-search__field">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.6" /><path d="m16 16 4.2 4.2" /></svg>
                 <input
                   id="catalog-search"
                   type="search"
                   value={discoveryState.query}
-                  placeholder="Tìm theo tên hoa, dịp tặng..."
+                  placeholder={t.catalog.searchPlaceholder}
                   onChange={(event) => updateFilter("q", event.target.value, true)}
                 />
                 {discoveryState.query && (
-                  <button type="button" onClick={() => updateFilter("q", null, true)} aria-label="Xóa tìm kiếm">Xóa</button>
+                  <button type="button" onClick={() => updateFilter("q", null, true)} aria-label={t.catalog.clearSearch}>{t.catalog.clear}</button>
                 )}
               </div>
             </div>
@@ -132,26 +134,26 @@ export function CatalogPage() {
               aria-controls="catalog-filter-panel"
               onClick={openFilters}
             >
-              <span>Bộ lọc{structuredFilterCount ? ` (${structuredFilterCount})` : ""}</span>
+              <span>{t.catalog.filter}{structuredFilterCount ? ` (${structuredFilterCount})` : ""}</span>
               <span aria-hidden="true">＋</span>
             </button>
 
             <button
               className="catalog-filter-backdrop"
               type="button"
-              aria-label="Đóng bộ lọc"
+              aria-label={t.catalog.closeFilter}
               data-open={filtersOpen}
               onClick={() => closeFilters(true)}
             />
 
-            <div className="catalog-filter-panel" id="catalog-filter-panel" data-open={filtersOpen} role="region" aria-label="Bộ lọc sản phẩm">
+            <div className="catalog-filter-panel" id="catalog-filter-panel" data-open={filtersOpen} role="region" aria-label={t.catalog.filterAria}>
               <div className="catalog-filter-panel__head">
-                <div><span>Refine the collection</span><strong>Bộ lọc</strong></div>
-                <button ref={closeButtonRef} type="button" onClick={() => closeFilters(true)} aria-label="Đóng bộ lọc">×</button>
+                <div><span>{t.catalog.refine}</span><strong>{t.catalog.filter}</strong></div>
+                <button ref={closeButtonRef} type="button" onClick={() => closeFilters(true)} aria-label={t.catalog.closeFilter}>×</button>
               </div>
 
               <fieldset className="catalog-filter-group">
-                <legend>Dịp tặng</legend>
+                <legend>{t.catalog.occasion}</legend>
                 <div className="catalog-filter-options">
                   {representedOccasions.map((occasion) => (
                     <label key={occasion.id} data-selected={discoveryState.occasion === occasion.id}>
@@ -162,14 +164,14 @@ export function CatalogPage() {
                         checked={discoveryState.occasion === occasion.id}
                         onChange={() => updateFilter("occasion", occasion.id)}
                       />
-                      <span>{occasion.name}</span>
+                      <span>{t.occasions[occasion.id].name}</span>
                     </label>
                   ))}
                 </div>
               </fieldset>
 
               <fieldset className="catalog-filter-group">
-                <legend>Ngân sách</legend>
+                <legend>{t.catalog.budget}</legend>
                 <div className="catalog-filter-options">
                   {budgetFilterOptions.map((option) => (
                     <label key={option.id} data-selected={discoveryState.budget === option.id}>
@@ -180,14 +182,14 @@ export function CatalogPage() {
                         checked={discoveryState.budget === option.id}
                         onChange={() => updateFilter("budget", option.id)}
                       />
-                      <span>{option.label}</span>
+                      <span>{t.catalog.budgetLabels[option.id]}</span>
                     </label>
                   ))}
                 </div>
               </fieldset>
 
               <fieldset className="catalog-filter-group catalog-filter-group--compact">
-                <legend>Đáp ứng</legend>
+                <legend>{t.catalog.fulfillment}</legend>
                 <div className="catalog-filter-options">
                   <label data-selected={discoveryState.sameDay}>
                     <input
@@ -195,7 +197,7 @@ export function CatalogPage() {
                       checked={discoveryState.sameDay}
                       onChange={(event) => updateFilter("sameDay", event.target.checked ? "true" : null)}
                     />
-                    <span>Giao trong ngày</span>
+                    <span>{t.catalog.sameDay}</span>
                   </label>
                   {availabilityFilterOptions.map((option) => (
                     <label key={option.id} data-selected={discoveryState.availability === option.id}>
@@ -206,32 +208,32 @@ export function CatalogPage() {
                         checked={discoveryState.availability === option.id}
                         onChange={() => updateFilter("availability", option.id)}
                       />
-                      <span>{option.label}</span>
+                      <span>{t.product.availability[option.value]}</span>
                     </label>
                   ))}
                 </div>
               </fieldset>
 
               <div className="catalog-filter-panel__actions">
-                {activeFilters.length > 0 && <button type="button" onClick={clearFilters}>Xóa bộ lọc</button>}
+                {activeFilters.length > 0 && <button type="button" onClick={clearFilters}>{t.catalog.clearFilters}</button>}
                 <button className="button button--solid" type="button" onClick={() => closeFilters(true)}>
-                  Xem {visibleProducts.length} thiết kế
+                  {formatMessage(t.catalog.viewResults, { count: visibleProducts.length })}
                 </button>
               </div>
             </div>
 
             <div className="catalog-results-head">
               <p className="catalog-count" aria-live="polite">
-                <strong>{visibleProducts.length}</strong> thiết kế{activeFilters.length ? " phù hợp" : " trong bộ sưu tập"}
+                <strong>{visibleProducts.length}</strong> {activeFilters.length ? t.catalog.resultFiltered : t.catalog.resultAll}
               </p>
               {activeFilters.length > 0 && (
-                <div className="active-filters" aria-label="Bộ lọc đang áp dụng">
+                <div className="active-filters" aria-label={t.catalog.activeAria}>
                   {activeFilters.map((filter) => (
-                    <button type="button" key={filter.key} onClick={() => updateFilter(filter.key, null)} aria-label={`Xóa bộ lọc ${filter.label}`}>
+                    <button type="button" key={filter.key} onClick={() => updateFilter(filter.key, null)} aria-label={formatMessage(t.catalog.removeFilter, { label: filter.label })}>
                       <span>{filter.label}</span><span aria-hidden="true">×</span>
                     </button>
                   ))}
-                  <button className="active-filters__clear" type="button" onClick={clearFilters}>Xóa bộ lọc</button>
+                  <button className="active-filters__clear" type="button" onClick={clearFilters}>{t.catalog.clearFilters}</button>
                 </div>
               )}
             </div>
@@ -243,10 +245,10 @@ export function CatalogPage() {
               </div>
             ) : (
               <div className="catalog-empty">
-                <p className="eyebrow"><span aria-hidden="true">0</span>No arrangement found</p>
-                <h2>Chưa tìm thấy bó hoa phù hợp.</h2>
-                <p>Thử thay đổi dịp tặng hoặc khoảng ngân sách.</p>
-                <button className="button button--solid" type="button" onClick={clearFilters}>Xóa bộ lọc</button>
+                <p className="eyebrow"><span aria-hidden="true">0</span>{t.catalog.emptyEyebrow}</p>
+                <h2>{t.catalog.emptyTitle}</h2>
+                <p>{t.catalog.emptyText}</p>
+                <button className="button button--solid" type="button" onClick={clearFilters}>{t.catalog.clearFilters}</button>
               </div>
             )}
           </div>

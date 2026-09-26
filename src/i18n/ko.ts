@@ -1,0 +1,58 @@
+import type { DictionaryShape } from "./types";
+import type { vi } from "./vi";
+
+export const ko = {
+  meta: {
+    homeTitle: "Luméa Flower Studio — 말로 다 전하기 어려운 마음을 꽃으로",
+    homeDescription: "사이공의 Luméa Flower Studio에서 말로 다 전하기 어려운 마음을 위해 정성껏 꽃을 엮습니다.",
+    catalogTitle: "플라워 컬렉션 — Luméa Flower Studio",
+    catalogDescription: "Luméa Flower Studio가 손으로 완성한 플라워 디자인을 만나보세요.",
+  },
+  brand: { descriptor: "플라워 스튜디오", city: "사이공" },
+  common: { from: "부터", prototypeMessage: "이 기능은 Luméa에서 준비하고 있습니다." },
+  header: {
+    skip: "본문으로 건너뛰기", deliveryAria: "꽃 배송 안내", topNote: "매일 사이공에서 정성껏 제작합니다", topNoteDetail: "가능한 디자인은 당일 배송으로 만나보세요", openMenu: "탐색 메뉴 열기", closeMenu: "탐색 메뉴 닫기", openLabel: "둘러보기", closeLabel: "닫기", primaryNavAria: "주요 메뉴", quickNavAria: "홈페이지 섹션", quickNav: "둘러보기", closeQuickNav: "탐색 메뉴 닫기", homeAria: "Luméa Flower Studio 홈으로", search: "검색", cart: "장바구니", cartAria: "장바구니, 상품 0개", zeroItems: "상품 0개", mobileNavAria: "Luméa 둘러보기", goTo: "바로가기", exploreLumea: "Luméa 둘러보기", viewAll: "모든 꽃 보기", mobileNote: "사이공에서 매일 손으로 꽃을 만듭니다.", homeIndex: "홈페이지 인덱스", switchToVi: "베트남어로 변경", switchToKo: "한국어 (선택됨)",
+    navigation: { flowers: "꽃", occasions: "용도별", custom: "맞춤 꽃다발", sameDay: "당일 배송", about: "Luméa 이야기", visit: "스튜디오" },
+    chapters: { top: "꽃", occasions: "용도별", "best-sellers": "컬렉션", budget: "예산별", "same-day": "당일 배송", "florist-choice": "플로리스트 초이스", custom: "꽃다발 만들기", "why-lumea": "Luméa의 방식", gallery: "스튜디오 저널", visit: "스튜디오" },
+  },
+  footer: { taglineOne: "말로 다 전하기 어려운 마음을", taglineTwo: "꽃으로 전해요.", message: "손으로 정성껏 엮어, 소중한 마음과 함께 보냅니다.", navAria: "하단 메뉴", explore: "둘러보기", collection: "컬렉션", occasions: "용도별", custom: "맞춤 꽃다발", florist: "플로리스트 초이스", contact: "연락처", handcrafted: "매일 사이공에서 정성껏 제작합니다" },
+  home: {
+    hero: { kicker: "손으로 완성한 플라워", titleOne: "말로 못다 한 마음을,", titleTwo: "꽃으로 전해요.", intro: "생일과 사랑, 조용히 전하고 싶은 마음을 위해 스튜디오에서 한 송이씩 정성껏 엮습니다.", collectionCta: "컬렉션 보기", customCta: "맞춤 꽃다발 문의", commerceBefore: "꽃다발", commerceAfter: "호찌민시 당일 배송", mediaAria: "에디토리얼 무드의 생화", mainAlt: "우아한 색감의 장미 꽃다발", detailAlt: "부드러운 꽃잎의 섬세한 디테일", captionOne: "시즌 플라워 구성", captionTwo: "로즈 & 아이보리" },
+    occasions: { eyebrow: "마음을 위한 셀렉션", titleOne: "어떤 마음을", titleTwo: "전하고 싶으신가요?", intro: "각 순간에는 저마다의 감정이 있습니다. 전하고 싶은 마음에서 시작하면, 어울리는 꽃을 함께 골라드릴게요.", aria: "용도별 꽃 선택" },
+    best: { eyebrow: "Luméa 셀렉션", titleOne: "사랑받는", titleTwo: "꽃다발", viewAll: "모든 디자인 보기" },
+    budget: { eyebrow: "마음을 담은 네 가지 선택", titleOne: "예산에 맞는", titleTwo: "꽃을 찾아보세요", intro: "원하는 가격대를 고르면, 풍성함과 섬세함을 모두 갖춘 디자인을 안내해 드립니다.", aria: "예산별 꽃 선택" },
+    sameDay: { eyebrow: "오늘을 위한 꽃 · 사이공", titleOne: "오늘,", titleTwo: "꽃이 필요하신가요?", intro: "네. 일부 디자인은 호찌민시 서비스 가능 지역에 당일 준비 및 배송할 수 있습니다.", note: "14:00 이전 주문 · 지역 및 디자인에 따라 확정", cta: "당일 배송 꽃 보기", imageAlt: "전달할 준비를 마친 완성된 꽃다발", caption: "스튜디오에서 포장해, 마음을 전할 준비를 마쳤습니다." },
+    florist: { eyebrow: "플로리스트 초이스", imageAlt: "스튜디오 작업대에서 꽃을 고르고 배치하는 플로리스트", imageCaption: "Luméa 아틀리에 · 꽃 작업대에서 하나의 구성이 시작됩니다.", titleOne: "플로리스트에게", titleTwo: "맡겨보세요.", intro: "예산과 색감, 용도만 골라주세요. 나머지는 Luméa가 완성합니다.", briefAria: "플로리스트를 위한 요청 예시", brief: "당신의 요청", interprets: "플로리스트의 해석", budget: "예산", tone: "색감", toneAria: "블러시, 아이보리, 세이지", occasion: "용도", birthday: "생일", anniversary: "기념일", note: "마음은 당신이 고르고, 오늘 가장 아름다운 꽃은 플로리스트가 고릅니다.", cta: "플로리스트 초이스 보기" },
+    custom: { imageAlt: "스튜디오에서 장미 꽃다발을 포장하는 플로리스트", imageCaption: "하나의 이야기 · 두 가지 만드는 방법", eyebrow: "맞춤 제작 · 원하는 방식으로", titleOne: "당신의 방식으로", titleTwo: "완성하는 꽃다발.", intro: "모든 디테일을 직접 고르거나, 전하고 싶은 마음을 들려주세요.", builderAria: "꽃다발 만들기 예시", selfLabel: "직접 선택하기", builderTitle: "나만의 꽃다발 만들기", builderStatus: "당신의 구성", flowersAria: "선택한 꽃", flowerNames: ["가든 장미", "칼라", "화이트 장미"], roseAlt: "블러시 컬러의 가든 장미 한 송이", callaAlt: "초록 잎과 어우러진 핑크 칼라", whiteRoseAlt: "포인트가 되는 화이트 장미 한 송이", wrapping: "포장지", wrappingText: "당신의 구성에 마지막 감각을 더하세요.", wrappingAria: "포장지 세 가지 선택", wrappingNames: ["아이보리", "크라프트", "블러시"], cta: "꽃다발 만들기", assistLabel: "세심한 손길에 모두 맡기고 싶다면", assistTitle: "Luméa가 디자인해 드릴게요", assistText: "용도와 색감, 전하고 싶은 느낌만 알려주세요.", assistCta: "플로리스트에게 요청 보내기" },
+    why: { eyebrow: "Luméa의 방식", titleOne: "꽃 작업대에서", titleTwo: "받는 분의 손까지.", intro: "Luméa의 모든 꽃다발은 천천히 살피고 정성껏 완성해 소중히 전합니다.", stories: [
+      { label: "매일 신선하게", title: "매일 꽃을 고릅니다", text: "계절과 색감, 꽃 본연의 아름다움을 살펴 선택합니다.", alt: "꽃집에서 고른 신선한 꽃과 초록 잎" },
+      { label: "손으로 정성껏", title: "꽃다발마다 손으로 엮습니다", text: "각 구성만의 리듬이 살아나도록 세심하게 균형을 맞춥니다.", alt: "꽃을 한 송이씩 배치하는 플로리스트의 손" },
+      { label: "마음을 담아", title: "선물처럼 소중히 전합니다", text: "스튜디오에서 받는 분까지 형태와 마음을 온전히 지킵니다.", alt: "배송 전 꽃다발에 리본을 묶는 손" },
+    ] },
+    gallery: { eyebrow: "스튜디오 저널", titleOne: "우리의", titleTwo: "플라워 테이블", follow: "팔로우", alts: ["꽃다발을 가까이에서 담은 풍성한 장면", "작업대에서 리본을 재는 플로리스트", "스튜디오 테이블 위 자연스럽게 놓인 파스텔 꽃병", "정원의 하얀 꽃잎 디테일", "붉은 장미 주변에 작은 꽃을 더하는 플로리스트", "자연스럽게 배치한 신선한 꽃과 잎", "전달을 기다리는 포장된 꽃다발", "스튜디오의 작은 꽃 구성에 손을 대는 장면", "햇빛 아래 노란 꽃 한 송이", "에디토리얼 프레임 속 꽃과 잎"], captions: ["시즌 스터디 · No. 09", "사이공 스튜디오에서", "꽃잎과 줄기, 고요한 디테일."] },
+    visit: { eyebrow: "스튜디오 방문", title: "Luméa에 들러보세요", lead: "꽃과 햇살, 그리고 전해지기를 기다리는 이야기가 머무는 작은 공간입니다.", address: "주소", addressValue: "호찌민시 · 데모 정보", hours: "운영 시간", hoursValue: "매일 · 09:00 – 20:00", phone: "전화", instagram: "인스타그램", mapAria: "호찌민시 Luméa Flower Studio 위치 안내 이미지", district: "스튜디오 디스트릭트 · 사이공", mapNote: "스튜디오 위치 · 안내 지도" },
+  },
+  catalog: { eyebrow: "컬렉션", titleOne: "전하고 싶은 마음에", titleTwo: "어울리는 꽃.", intro: "오늘의 꽃이 지닌 색감과 자연스러운 아름다움을 살려 손으로 완성한 디자인입니다.", searchLabel: "컬렉션 검색", searchPlaceholder: "꽃 이름이나 용도로 검색...", clearSearch: "검색어 지우기", clear: "지우기", filter: "필터", closeFilter: "필터 닫기", filterAria: "상품 필터", refine: "컬렉션 세부 선택", occasion: "용도", budget: "예산", fulfillment: "주문 조건", sameDay: "당일 배송", viewResults: "디자인 {count}개 보기", resultFiltered: "개의 디자인을 찾았습니다", resultAll: "개의 디자인", activeAria: "적용 중인 필터", removeFilter: "{label} 필터 삭제", clearFilters: "필터 초기화", searchChip: "“{query}” 검색", emptyEyebrow: "검색 결과 없음", emptyTitle: "조건에 맞는 꽃다발이 없습니다.", emptyText: "용도나 예산 범위를 바꿔보세요.", budgetLabels: { "under-500": "500k 미만", "500-800": "500–800k", "800-1200": "800k–1.2m", "over-1200": "1.2m 초과" } },
+  product: {
+    view: "{name} 보기",
+    availability: { AVAILABLE: "주문 가능", SEASONAL: "시즌 플라워", UNAVAILABLE: "일시 품절" },
+    tags: { bestseller: "베스트셀러", seasonal: "시즌 플라워", sameDay: "당일 배송", studioEdit: "스튜디오 셀렉션" },
+    sizes: { standard: { label: "스탠더드", description: "부드러운 마음을 전하기에 충분한 크기입니다." }, large: { label: "라지", description: "꽃과 잎을 더해 한층 풍성합니다." }, premium: { label: "프리미엄", description: "크고 풍성해 선명한 존재감을 전합니다." } },
+    tones: { pastel: "파스텔", pink: "핑크", white: "화이트", warm: "웜", "florist-choice": "플로리스트 초이스" },
+    detail: { notFoundTitle: "디자인을 찾을 수 없습니다 — Luméa", notFoundDescription: "이 플라워 디자인은 변경되었거나 현재 존재하지 않습니다.", notFoundHeadingOne: "이 디자인을", notFoundHeadingTwo: "찾을 수 없습니다.", notFoundText: "디자인이 변경되었거나 현재 컬렉션에서 제외되었을 수 있습니다.", collectionEyebrow: "Luméa 컬렉션", collection: "컬렉션", back: "← 컬렉션", galleryAria: "{name} 이미지", imageCaption: "스튜디오 구성 · 핸드메이드", imageButton: "{name}의 {index}번째 이미지 보기", chooseImages: "상품 이미지 선택", price: "선택 옵션 가격", size: "크기", tone: "색감", composition: "주요 구성", seasonalNote: "계절에 따라 꽃 소재는 자연스럽게 달라질 수 있으며, 주문 완료 전 스튜디오에서 확인해 드립니다.", add: "장바구니에 담기", unavailable: "일시 품절", addToast: "아직 장바구니에 담기지 않았습니다", addToastText: "장바구니 기능은 다음 단계에서 완성됩니다.", delivery: "배송 시간과 가능 지역은 주문 완료 전에 확인해 드립니다.", sameDay: "마감 시간 이전 주문과 가능 지역에 한해 당일 배송을 요청할 수 있습니다.", metaDescription: "{description}. {name}의 크기와 색감 옵션을 확인해 보세요." },
+  },
+  occasions: { birthday: { name: "생일", alt: "따뜻한 핑크 톤의 생일 꽃" }, love: { name: "사랑과 기념일", alt: "사랑과 기념일을 위한 꽃" }, congrats: { name: "축하", alt: "화사한 축하 꽃다발" }, graduation: { name: "졸업", alt: "우아한 졸업 축하 꽃" }, opening: { name: "개업", alt: "따뜻한 색감의 개업 축하 꽃" }, sympathy: { name: "위로", alt: "차분하고 단정한 위로의 꽃" } },
+  budgets: { small: { scale: "라이트", label: "500k 미만", note: "부드러운 마음 한마디", alt: "핑크와 초록빛의 간결한 칼라 디자인" }, medium: { scale: "시그니처", label: "500–800k", note: "기억할 순간을 위한 풍성함", alt: "블러시 포장지의 중간 크기 꽃다발" }, large: { scale: "풍성하게", label: "800k–1.2m", note: "여러 겹의 플라워 구성", alt: "브라운과 오렌지 꽃이 층을 이룬 큰 꽃다발" }, statement: { scale: "스테이트먼트", label: "1.2m 초과", note: "첫눈에 전해지는 인상", alt: "풍성하고 존재감 있는 수국 바구니" } },
+  products: {
+    "pink-garden": { category: "시그니처 디자인", shortDescription: "가든 장미 · 스프레이 국화 · 실버 리프", description: "부드러운 핑크 정원을 닮은 꽃다발로, 꽃 한 송이마다 자연스러운 결이 살아나도록 여유 있게 엮었습니다.", composition: ["가든 장미", "스프레이 국화", "실버 리프"], imageAlts: ["핑크 톤의 Pink Garden 꽃다발"] },
+    "morning-peony": { category: "시즌 플라워", shortDescription: "핑크 튤립 · 그린 리프 · 아이보리 리본", description: "맑고 가벼운 튤립의 선을 살린 디자인으로, 조용하고 섬세한 아름다움이 필요한 순간에 어울립니다.", composition: ["핑크 튤립", "그린 리프", "아이보리 리본"], imageAlts: ["부드러운 빛 속의 Morning Tulip 꽃병"] },
+    "white-poetry": { category: "화이트 팔레트", shortDescription: "화이트 장미 · 델피니움 · 레이스 플라워", description: "꽃의 선과 레이스처럼 가벼운 디테일로 깊이를 더한 맑고 우아한 화이트 구성입니다.", composition: ["화이트 장미", "델피니움", "레이스 플라워"], imageAlts: ["화이트 톤의 White Poetry 꽃다발"] },
+    "warm-embrace": { category: "웜 톤", shortDescription: "오렌지 장미 · 라넌큘러스 · 타나세툼", description: "오렌지와 크림 컬러를 작은 꽃가지와 균형 있게 엮어 따뜻하면서도 섬세하게 완성했습니다.", composition: ["오렌지 장미", "라넌큘러스", "타나세툼"], imageAlts: ["따뜻한 색감의 Warm Embrace 꽃다발"] },
+    "rose-letter": { category: "다정한 메시지", shortDescription: "블러시 장미 · 화이트 국화 · 블러시 포장지", description: "블러시 장미를 부드러운 화이트 국화가 감싸는, 손편지처럼 밝고 친근한 꽃다발입니다.", composition: ["블러시 장미", "화이트 국화", "시즌 그린"], imageAlts: ["블러시 장미와 화이트 국화로 만든 Rose Letter"] },
+    "amber-afternoon": { category: "가을 팔레트", shortDescription: "브라운 국화 · 오렌지 장미 · 유칼립투스", description: "앰버 브라운과 허니 오렌지, 초록 잎을 여러 겹으로 배치해 따뜻하고 성숙한 축하의 마음을 담았습니다.", composition: ["브라운 국화", "오렌지 장미", "유칼립투스"], imageAlts: ["브라운과 오렌지 톤의 Amber Afternoon 꽃다발"] },
+    "hydrangea-cloud": { category: "스테이트먼트 꽃다발", shortDescription: "수국 · 더스티 블루 · 라탄 바구니", description: "깊은 색의 흐름을 지닌 풍성한 수국을 부드러운 하나의 덩어리로 구성해 선명한 존재감을 전합니다.", composition: ["수국", "시즌 플라워", "라탄 바구니"], imageAlts: ["더스티 블루 톤의 풍성한 Hydrangea Cloud 바구니"] },
+    "spring-note": { category: "산뜻한 컬러", shortDescription: "스프레이 장미 · 아스틸베 · 그린 리프", description: "생기와 움직임을 담은 구성으로, 새로운 시작과 눈에 보이게 축하하고 싶은 기쁨에 어울립니다.", composition: ["스프레이 장미", "아스틸베", "그린 리프"], imageAlts: ["그린 포장지와 화사한 핑크 톤의 Spring Note 꽃다발"] },
+    "velvet-promise": { category: "로맨틱 스터디", shortDescription: "레드 릴리 · 크림 장미 · 올리브 잎", description: "벨벳 레드와 크림 핑크가 깊이 있는 조화를 이루는, 과하지 않게 로맨틱한 꽃다발입니다.", composition: ["레드 릴리", "크림 장미", "올리브 잎"], imageAlts: ["벨벳 레드와 크림 장미의 Velvet Promise 꽃다발"] },
+    "quiet-calla": { category: "보태니컬 라인", shortDescription: "핑크 칼라 · 그린 리프 · 아이보리 포장지", description: "칼라의 자연스러운 곡선을 여유롭고 미니멀하게 살려 차분한 마음을 전하는 디자인입니다.", composition: ["핑크 칼라", "시즌 그린", "아이보리 포장지"], imageAlts: ["초록 잎 사이의 핑크 칼라"] },
+  },
+} satisfies DictionaryShape<typeof vi>;

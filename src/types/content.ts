@@ -1,64 +1,36 @@
 import type { AssetKey } from "../data/assets";
 
-export interface NavigationItem {
-  label: string;
-  to: string;
-}
+export type Locale = "vi" | "ko";
+export type NavigationKey = "flowers" | "occasions" | "custom" | "sameDay" | "about" | "visit";
+export type HomeChapterId = "top" | "occasions" | "best-sellers" | "budget" | "same-day" | "florist-choice" | "custom" | "why-lumea" | "gallery" | "visit";
+export type OccasionId = "birthday" | "love" | "congrats" | "graduation" | "opening" | "sympathy";
+export type ProductId = "pink-garden" | "morning-peony" | "white-poetry" | "warm-embrace" | "rose-letter" | "amber-afternoon" | "hydrangea-cloud" | "spring-note" | "velvet-promise" | "quiet-calla";
+export type ProductTag = "bestseller" | "seasonal" | "sameDay" | "studioEdit";
+export type ProductAvailability = "AVAILABLE" | "UNAVAILABLE" | "SEASONAL";
+export type ProductSizeId = "standard" | "large" | "premium";
+export type ProductToneId = "pastel" | "pink" | "white" | "warm" | "florist-choice";
+export type BudgetRangeId = "small" | "medium" | "large" | "statement";
 
-export interface Occasion {
-  id: string;
-  name: string;
-  image: AssetKey;
-  alt: string;
-  tone?: "quiet";
-}
+export interface NavigationItem { key: NavigationKey; to: string; }
+export interface Occasion { id: OccasionId; image: AssetKey; tone?: "quiet"; }
+export interface ProductImage { asset: AssetKey; }
+export interface ProductSize { id: ProductSizeId; priceDelta: number; }
+export interface ProductTone { id: ProductToneId; swatch: string; }
+export interface BudgetRange { id: BudgetRangeId; image: AssetKey; }
 
 export interface Product {
-  id: string;
-  slug: string;
+  id: ProductId;
+  slug: ProductId;
   name: string;
-  category: string;
-  shortDescription: string;
-  description: string;
   basePrice: number;
   images: ProductImage[];
-  composition: string[];
-  occasions: string[];
+  occasionIds: OccasionId[];
   availability: ProductAvailability;
   sameDayEligible: boolean;
   sizes: ProductSize[];
   tones: ProductTone[];
-  tag?: string;
+  tag?: ProductTag;
   tagTone?: "light";
   imageTone?: "quiet";
   featured?: boolean;
-}
-
-export type ProductAvailability = "AVAILABLE" | "UNAVAILABLE" | "SEASONAL";
-
-export interface ProductImage {
-  asset: AssetKey;
-  alt: string;
-}
-
-export interface ProductSize {
-  id: "standard" | "large" | "premium";
-  label: string;
-  priceDelta: number;
-  description: string;
-}
-
-export interface ProductTone {
-  id: "pastel" | "pink" | "white" | "warm" | "florist-choice";
-  label: string;
-  swatch: string;
-}
-
-export interface BudgetRange {
-  id: string;
-  scale: string;
-  label: string;
-  note: string;
-  image: AssetKey;
-  alt: string;
 }

@@ -1,4 +1,6 @@
 import type { Occasion, Product, ProductAvailability } from "../types/content";
+import type { Locale, OccasionId } from "../types/content";
+import type { Translations } from "../i18n";
 
 export type CatalogBudgetId = "under-500" | "500-800" | "800-1200" | "over-1200";
 export type CatalogAvailabilityId = "available" | "seasonal";
@@ -11,27 +13,23 @@ export interface CatalogDiscoveryState {
   availability: CatalogAvailabilityId | null;
 }
 
-export const budgetFilterOptions: ReadonlyArray<{ id: CatalogBudgetId; label: string }> = [
-  { id: "under-500", label: "Dưới 500k" },
-  { id: "500-800", label: "500–800k" },
-  { id: "800-1200", label: "800k–1.2m" },
-  { id: "over-1200", label: "Trên 1.2m" },
+export const budgetFilterOptions: ReadonlyArray<{ id: CatalogBudgetId }> = [
+  { id: "under-500" }, { id: "500-800" }, { id: "800-1200" }, { id: "over-1200" },
 ];
 
 export const availabilityFilterOptions: ReadonlyArray<{
   id: CatalogAvailabilityId;
-  label: string;
   value: ProductAvailability;
 }> = [
-  { id: "available", label: "Có thể đặt", value: "AVAILABLE" },
-  { id: "seasonal", label: "Hoa theo mùa", value: "SEASONAL" },
+  { id: "available", value: "AVAILABLE" },
+  { id: "seasonal", value: "SEASONAL" },
 ];
 
 const budgetIds = new Set<CatalogBudgetId>(budgetFilterOptions.map((option) => option.id));
 const availabilityIds = new Set<CatalogAvailabilityId>(availabilityFilterOptions.map((option) => option.id));
 
 export function getRepresentedOccasions(productList: Product[], occasionList: Occasion[]) {
-  return occasionList.filter((occasion) => productList.some((product) => product.occasions.includes(occasion.name)));
+  return occasionList.filter((occasion) => productList.some((product) => product.occasionIds.includes(occasion.id)));
 }
 
 export function readCatalogDiscoveryState(searchParams: URLSearchParams, validOccasionIds: Set<string>): CatalogDiscoveryState {
@@ -48,12 +46,12 @@ export function readCatalogDiscoveryState(searchParams: URLSearchParams, validOc
   };
 }
 
-export function normalizeCatalogSearch(value: string) {
+export function normalizeCatalogSearch(value: string, locale: Locale = "vi") {
   return value
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .replace(/đ/gi, "d")
-    .toLocaleLowerCase("vi-VN")
+    .toLocaleLowerCase(locale === "ko" ? "ko-KR" : "vi-VN")
     .trim();
 }
 
@@ -67,25 +65,27 @@ function matchesBudget(price: number, budget: CatalogBudgetId) {
 export function filterCatalogProducts(
   productList: Product[],
   state: CatalogDiscoveryState,
-  occasionList: Occasion[],
+  t: Translations,
+  locale: Locale,
 ) {
-  const normalizedQuery = normalizeCatalogSearch(state.query);
-  const selectedOccasion = occasionList.find((occasion) => occasion.id === state.occasion);
+  const normalizedQuery = normalizeCatalogSearch(state.query, locale);
   const selectedAvailability = availabilityFilterOptions.find((option) => option.id === state.availability);
 
   return productList.filter((product) => {
     if (normalizedQuery) {
+      const copy = t.products[product.id];
       const searchableText = normalizeCatalogSearch([
         product.name,
-        product.category,
-        product.shortDescription,
-        ...product.composition,
-        ...product.occasions,
-      ].join(" "));
+        copy.category,
+        copy.shortDescription,
+        copy.description,
+        ...copy.composition,
+        ...product.occasionIds.map((id) => t.occasions[id].name),
+      ].join(" "), locale);
       if (!searchableText.includes(normalizedQuery)) return false;
     }
 
-    if (selectedOccasion && !product.occasions.includes(selectedOccasion.name)) return false;
+    if (state.occasion && !product.occasionIds.includes(state.occasion as OccasionId)) return false;
     if (state.budget && !matchesBudget(product.basePrice, state.budget)) return false;
     if (state.sameDay && !product.sameDayEligible) return false;
     if (selectedAvailability && product.availability !== selectedAvailability.value) return false;

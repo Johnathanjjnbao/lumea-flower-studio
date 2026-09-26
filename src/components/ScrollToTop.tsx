@@ -14,11 +14,17 @@ export function ScrollToTop() {
       return;
     }
 
+    let innerFrame = 0;
     const frame = window.requestAnimationFrame(() => {
-      const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
-      target?.scrollIntoView({ behavior: pathChanged ? "auto" : "smooth", block: "start" });
+      innerFrame = window.requestAnimationFrame(() => {
+        const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+        target?.scrollIntoView({ behavior: pathChanged ? "auto" : "smooth", block: "start" });
+      });
     });
-    return () => window.cancelAnimationFrame(frame);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.cancelAnimationFrame(innerFrame);
+    };
   }, [location.hash, location.pathname]);
 
   return null;

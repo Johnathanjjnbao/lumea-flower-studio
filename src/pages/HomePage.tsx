@@ -7,8 +7,10 @@ import { BestSellers, Budget, Occasions } from "../sections/DiscoverySections";
 import { Hero } from "../sections/Hero";
 import { CustomBouquet, FloristChoice, SameDay } from "../sections/ServiceSections";
 import { Gallery, Visit, WhyLumea } from "../sections/StorySections";
+import { useI18n } from "../i18n";
 
 export function HomePage() {
+  const { t } = useI18n();
   const pageRef = useRef<HTMLDivElement>(null);
   useImagePipeline(pageRef, {
     prioritySelector: ".hero, #occasions .occasion-tile:nth-child(-n + 3), #best-sellers .product-card:first-child",
@@ -17,8 +19,8 @@ export function HomePage() {
   });
   useHomeMotion(pageRef);
   useDocumentMetadata(
-    "Luméa Flower Studio — Hoa cho những điều khó nói thành lời",
-    "Luméa Flower Studio — hoa được kết bằng tay tại Sài Gòn cho những điều khó nói thành lời.",
+    t.meta.homeTitle,
+    t.meta.homeDescription,
   );
 
   return (

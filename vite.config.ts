@@ -11,7 +11,13 @@ function githubPagesRouteEntries(): Plugin {
     async closeBundle() {
       const outputDirectory = resolve(process.cwd(), "dist");
       const appShell = await readFile(resolve(outputDirectory, "index.html"), "utf8");
-      const routes = ["flowers", ...products.map((product) => `flowers/${product.slug}`)];
+      const routes = [
+        "flowers",
+        "ko",
+        "ko/flowers",
+        ...products.map((product) => `flowers/${product.slug}`),
+        ...products.map((product) => `ko/flowers/${product.slug}`),
+      ];
 
       await Promise.all(routes.map(async (route) => {
         const routeDirectory = resolve(outputDirectory, route);

@@ -1,94 +1,43 @@
 import { AssetImage } from "../components/AssetImage";
 import { siteConfig } from "../config/siteConfig";
+import type { AssetKey } from "../data/assets";
+import { useI18n } from "../i18n";
+
+const storyAssets: Array<{ asset: AssetKey; className: string }> = [
+  { asset: "flowerShop", className: "fresh" },
+  { asset: "floristHands", className: "handmade" },
+  { asset: "wrappingDetail", className: "delivery" },
+];
+
+const galleryAssets: AssetKey[] = ["galleryOne", "studioRibbon", "galleryThree", "galleryFour", "singleRose", "galleryFive", "customBouquet", "whyLumea", "galleryTwo", "gallerySix"];
+const galleryClasses = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
 
 export function WhyLumea() {
-  return (
-    <section className="why section-space" id="why-lumea" aria-labelledby="why-title">
-      <div className="section-shell why-layout">
-        <div className="why-heading">
-          <p className="eyebrow"><span aria-hidden="true">08</span>Why Luméa</p>
-          <h2 id="why-title">Từ bàn hoa<br />đến tận tay.</h2>
-          <p>Tại Luméa, mỗi bó hoa được làm chậm rãi, cân nhắc và trao đi với sự chăm chút.</p>
-        </div>
-        <div className="craft-stories">
-          <figure className="craft-story craft-story--fresh">
-            <div className="craft-story__image"><AssetImage asset="flowerShop" alt="Những cành hoa tươi và lá xanh được chọn tại cửa hàng hoa" loading="lazy" /></div>
-            <figcaption><span>Fresh daily</span><h3>Hoa được chọn mỗi ngày</h3><p>Theo mùa, theo sắc độ và theo vẻ đẹp tự nhiên nhất.</p></figcaption>
-          </figure>
-          <figure className="craft-story craft-story--handmade">
-            <div className="craft-story__image"><AssetImage asset="floristHands" alt="Đôi tay florist đang sắp từng cành hoa thành một composition" loading="lazy" /></div>
-            <figcaption><span>Made by hand</span><h3>Từng bó được kết bằng tay</h3><p>Cân chỉnh riêng để mỗi composition có nhịp điệu của mình.</p></figcaption>
-          </figure>
-          <figure className="craft-story craft-story--delivery">
-            <div className="craft-story__image"><AssetImage asset="wrappingDetail" alt="Ribbon được buộc thủ công cho bó hoa trước khi giao" loading="lazy" /></div>
-            <figcaption><span>Given with care</span><h3>Được trao đi như một món quà</h3><p>Giữ trọn hình dáng và cảm xúc từ studio đến người nhận.</p></figcaption>
-          </figure>
-        </div>
-      </div>
-    </section>
-  );
+  const { t } = useI18n();
+  return <section className="why section-space" id="why-lumea" aria-labelledby="why-title"><div className="section-shell why-layout">
+    <div className="why-heading"><p className="eyebrow"><span aria-hidden="true">08</span>{t.home.why.eyebrow}</p><h2 id="why-title">{t.home.why.titleOne}<br />{t.home.why.titleTwo}</h2><p>{t.home.why.intro}</p></div>
+    <div className="craft-stories">{storyAssets.map(({ asset, className }, index) => {
+      const story = t.home.why.stories[index];
+      return <figure className={`craft-story craft-story--${className}`} key={asset}><div className="craft-story__image"><AssetImage asset={asset} alt={story.alt} loading="lazy" /></div><figcaption><span>{story.label}</span><h3>{story.title}</h3><p>{story.text}</p></figcaption></figure>;
+    })}</div>
+  </div></section>;
 }
 
 export function Gallery() {
-  return (
-    <section className="gallery section-space section-shell" id="gallery" aria-labelledby="gallery-title">
-      <div className="section-heading section-heading--row gallery-heading">
-        <div>
-          <p className="eyebrow"><span aria-hidden="true">09</span>Studio journal</p>
-          <span className="botanical-hairline" aria-hidden="true" />
-          <h2 id="gallery-title">From our<br /><em>flower table</em></h2>
-        </div>
-        <a className="text-link" href="#visit">Theo dõi {siteConfig.instagramHandle}</a>
-      </div>
-      <div className="gallery-grid">
-        <figure className="gallery-item gallery-item--one">
-          <AssetImage asset="galleryOne" alt="Bó hoa rực rỡ chụp cận cảnh" loading="lazy" />
-          <figcaption>Seasonal study · No. 09</figcaption>
-        </figure>
-        <figure className="gallery-item gallery-item--two"><AssetImage asset="studioRibbon" alt="Florist đang đo ribbon trên bàn hoa" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--three"><AssetImage asset="galleryThree" alt="Bình hoa pastel được sắp tự nhiên trên bàn studio" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--four"><AssetImage asset="galleryFour" alt="Chi tiết những cánh hoa trắng trong khu vườn" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--five"><AssetImage asset="singleRose" alt="Florist đang điểm thêm hoa baby quanh một đóa hồng đỏ" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--six">
-          <AssetImage asset="galleryFive" alt="Những cành hoa tươi được sắp đặt tự nhiên" loading="lazy" />
-          <figcaption>From the studio · Saigon</figcaption>
-        </figure>
-        <figure className="gallery-item gallery-item--seven"><AssetImage asset="customBouquet" alt="Bó hoa đã gói đặt trên ghế, sẵn sàng được trao đi" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--eight"><AssetImage asset="whyLumea" alt="Bàn tay chạm nhẹ vào một composition hoa nhỏ trong studio" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--nine"><AssetImage asset="galleryTwo" alt="Chi tiết một đóa hoa vàng trong nắng" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--ten">
-          <AssetImage asset="gallerySix" alt="Hoa và lá trong một khung hình editorial" loading="lazy" />
-          <figcaption>Petals, stems &amp; quiet details.</figcaption>
-        </figure>
-      </div>
-    </section>
-  );
+  const { t } = useI18n();
+  const captionByIndex: Record<number, string> = { 0: t.home.gallery.captions[0], 5: t.home.gallery.captions[1], 9: t.home.gallery.captions[2] };
+  return <section className="gallery section-space section-shell" id="gallery" aria-labelledby="gallery-title">
+    <div className="section-heading section-heading--row gallery-heading"><div><p className="eyebrow"><span aria-hidden="true">09</span>{t.home.gallery.eyebrow}</p><span className="botanical-hairline" aria-hidden="true" /><h2 id="gallery-title">{t.home.gallery.titleOne}<br /><em>{t.home.gallery.titleTwo}</em></h2></div><a className="text-link" href="#visit">{t.home.gallery.follow} {siteConfig.instagramHandle}</a></div>
+    <div className="gallery-grid">{galleryAssets.map((asset, index) => <figure className={`gallery-item gallery-item--${galleryClasses[index]}`} key={asset}><AssetImage asset={asset} alt={t.home.gallery.alts[index]} loading="lazy" />{captionByIndex[index] && <figcaption>{captionByIndex[index]}</figcaption>}</figure>)}</div>
+  </section>;
 }
 
 export function Visit() {
-  return (
-    <section className="visit section-space" id="visit" aria-labelledby="visit-title">
-      <div className="section-shell visit-layout">
-        <div className="visit-copy">
-          <p className="eyebrow eyebrow--light"><span aria-hidden="true">10</span>Visit the studio</p>
-          <h2 id="visit-title">Ghé {siteConfig.brandDisplayName}</h2>
-          <p className="visit-lead">Một góc nhỏ đầy hoa, nắng và những câu chuyện đang chờ được gửi trao.</p>
-          <dl className="visit-details">
-            <div><dt>Địa chỉ</dt><dd>TP.HCM · Thông tin demo</dd></div>
-            <div><dt>Mở cửa</dt><dd>Mỗi ngày · 09:00 – 20:00</dd></div>
-            <div><dt>Điện thoại</dt><dd><a href={siteConfig.phoneHref}>{siteConfig.phoneDisplay}</a></dd></div>
-            <div><dt>Instagram</dt><dd><a href="#gallery">{siteConfig.instagramHandle}</a></dd></div>
-          </dl>
-        </div>
-        <div className="map-placeholder" aria-label="Minh hoạ vị trí Luméa Flower Studio tại Thành phố Hồ Chí Minh">
-          <span className="map-district" aria-hidden="true">Studio district · Saigon</span>
-          <div className="map-lines" aria-hidden="true">
-            <span className="map-road map-road--one" /><span className="map-road map-road--two" /><span className="map-road map-road--three" /><span className="map-water" />
-          </div>
-          <div className="map-pin" aria-hidden="true"><span>{siteConfig.monogram}</span></div>
-          <p>{siteConfig.brandDisplayName} Flower Studio<br /><small>Điểm hẹn studio · Bản đồ minh hoạ</small></p>
-        </div>
-      </div>
-    </section>
-  );
+  const { t } = useI18n();
+  return <section className="visit section-space" id="visit" aria-labelledby="visit-title"><div className="section-shell visit-layout">
+    <div className="visit-copy"><p className="eyebrow eyebrow--light"><span aria-hidden="true">10</span>{t.home.visit.eyebrow}</p><h2 id="visit-title">{t.home.visit.title}</h2><p className="visit-lead">{t.home.visit.lead}</p><dl className="visit-details">
+      <div><dt>{t.home.visit.address}</dt><dd>{t.home.visit.addressValue}</dd></div><div><dt>{t.home.visit.hours}</dt><dd>{t.home.visit.hoursValue}</dd></div><div><dt>{t.home.visit.phone}</dt><dd><a href={siteConfig.phoneHref}>{siteConfig.phoneDisplay}</a></dd></div><div><dt>{t.home.visit.instagram}</dt><dd><a href="#gallery">{siteConfig.instagramHandle}</a></dd></div>
+    </dl></div>
+    <div className="map-placeholder" aria-label={t.home.visit.mapAria}><span className="map-district" aria-hidden="true">{t.home.visit.district}</span><div className="map-lines" aria-hidden="true"><span className="map-road map-road--one" /><span className="map-road map-road--two" /><span className="map-road map-road--three" /><span className="map-water" /></div><div className="map-pin" aria-hidden="true"><span>{siteConfig.monogram}</span></div><p>{siteConfig.brandDisplayName} {t.brand.descriptor}<br /><small>{t.home.visit.mapNote}</small></p></div>
+  </div></section>;
 }
