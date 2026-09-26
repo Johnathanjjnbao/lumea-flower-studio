@@ -4866,3 +4866,53 @@ h2 em,
     min-height: 20rem;
   }
 }
+
+/* Targeted Budget contrast fix: warm paper, clear commerce hierarchy. */
+.budget {
+  background: var(--ivory);
+}
+
+.budget .eyebrow {
+  color: var(--burgundy);
+}
+
+.budget h2 {
+  color: var(--charcoal);
+}
+
+.budget-intro > p:last-child {
+  color: #554845;
+}
+
+.budget-option {
+  border-bottom-color: rgba(109, 59, 71, 0.42);
+  color: var(--charcoal);
+}
+
+.budget-option__image {
+  border-color: rgba(84, 58, 54, 0.22);
+  box-shadow: 0 0.75rem 2rem rgba(73, 49, 46, 0.085);
+}
+
+.budget-option__scale {
+  color: var(--burgundy);
+  font-weight: 700;
+  letter-spacing: 0.11em;
+}
+
+.budget-option strong {
+  color: var(--charcoal);
+  font-family: var(--sans);
+  font-size: clamp(1.15rem, 1.5vw, 1.45rem);
+  font-weight: 720;
+  letter-spacing: -0.025em;
+}
+
+.budget-option__note {
+  color: #5c514d;
+}
+
+.budget-option__arrow {
+  color: var(--burgundy);
+  font-weight: 700;
+}
