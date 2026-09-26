@@ -1,12 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { defaultWrappingTypeId, defaultWrappingVariantId, flowerStems, initialFlowerQuantities, wrappingTypes, wrappingVariants } from "./data";
+import { clearBouquetDraft, isDefaultBouquetDraft, readBouquetDraft, writeBouquetDraft } from "./persistence";
 import { calculateBouquetPricing, clampFlowerQuantity, createBouquetResult } from "./pricing";
 import type { BouquetBuilderResult, FlowerQuantities, FlowerStemId, WrappingTypeId, WrappingVariantId } from "./types";
 
 export function useBouquetBuilder() {
-  const [quantities, setQuantities] = useState<FlowerQuantities>({ ...initialFlowerQuantities });
-  const [wrappingTypeId, setWrappingTypeId] = useState<WrappingTypeId>(defaultWrappingTypeId);
-  const [wrappingVariantId, setWrappingVariantId] = useState<WrappingVariantId>(defaultWrappingVariantId);
+  const [initialDraft] = useState(() => readBouquetDraft());
+  const [quantities, setQuantities] = useState<FlowerQuantities>(() => initialDraft?.quantities ?? { ...initialFlowerQuantities });
+  const [wrappingTypeId, setWrappingTypeId] = useState<WrappingTypeId>(() => initialDraft?.wrappingTypeId ?? defaultWrappingTypeId);
+  const [wrappingVariantId, setWrappingVariantId] = useState<WrappingVariantId>(() => initialDraft?.wrappingVariantId ?? defaultWrappingVariantId);
   const [completedResult, setCompletedResult] = useState<BouquetBuilderResult | null>(null);
 
   const wrappingType = wrappingTypes.find((option) => option.id === wrappingTypeId) ?? wrappingTypes[0];
@@ -16,6 +18,14 @@ export function useBouquetBuilder() {
     () => calculateBouquetPricing(flowerStems, quantities, wrappingType, wrappingVariant),
     [quantities, wrappingType, wrappingVariant],
   );
+
+  useEffect(() => {
+    if (isDefaultBouquetDraft(quantities, wrappingTypeId, wrappingVariantId)) {
+      clearBouquetDraft();
+      return;
+    }
+    writeBouquetDraft(quantities, wrappingTypeId, wrappingVariantId);
+  }, [quantities, wrappingTypeId, wrappingVariantId]);
 
   const setQuantity = (flowerId: FlowerStemId, nextQuantity: number) => {
     const flower = flowerStems.find((option) => option.id === flowerId);
@@ -41,11 +51,14 @@ export function useBouquetBuilder() {
   };
 
   const reset = () => {
+    clearBouquetDraft();
     setQuantities({ ...initialFlowerQuantities });
     setWrappingTypeId(defaultWrappingTypeId);
     setWrappingVariantId(defaultWrappingVariantId);
     setCompletedResult(null);
   };
+
+  const edit = () => setCompletedResult(null);
 
   const complete = () => {
     if (pricing.totalStemCount < 1) return null;
@@ -67,6 +80,7 @@ export function useBouquetBuilder() {
     selectWrappingType,
     selectWrappingVariant,
     reset,
+    edit,
     complete,
   };
 }

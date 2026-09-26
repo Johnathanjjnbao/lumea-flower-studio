@@ -303,15 +303,18 @@ h3 {
 }
 
 .text-link::after {
-  width: 2.2rem;
+  width: 3.2rem;
   height: 1px;
   background: currentColor;
   content: "";
-  transition: width 180ms ease;
+  transform: scaleX(0.6875);
+  transform-origin: left center;
+  transition: transform 180ms ease;
 }
 
-.text-link:hover::after {
-  width: 3.2rem;
+.text-link:hover::after,
+.text-link:focus-visible::after {
+  transform: scaleX(1);
 }
 
 .image-missing {
@@ -1561,6 +1564,10 @@ h3 {
 .custom-assist .text-link {
   flex: 0 0 auto;
   color: var(--burgundy);
+}
+
+.custom-assist > div {
+  min-width: 0;
 }
 
 .why {
@@ -2890,8 +2897,10 @@ body.catalog-filter-open {
   }
 
   .custom-assist {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: flex-end;
-    flex-direction: row;
+    column-gap: clamp(1rem, 2.5vw, 2.25rem);
   }
 
   .wrapping-choice {
@@ -5062,25 +5071,58 @@ html[lang="ko"] .footer-wordmark {
 .builder-steps {
   display: grid;
   padding: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   list-style: none;
   border-top: 1px solid rgba(255, 255, 255, 0.22);
 }
 
 .builder-steps li {
-  display: flex;
-  min-height: 3.25rem;
-  align-items: center;
-  gap: 0.75rem;
+  min-width: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.22);
-  color: var(--white);
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.045em;
+  border-right: 1px solid rgba(255, 255, 255, 0.22);
 }
 
-.builder-steps li span {
+.builder-steps li:last-child {
+  border-right: 0;
+}
+
+.builder-steps button {
+  display: grid;
+  width: 100%;
+  min-height: 4.15rem;
+  padding: 0.75rem clamp(0.45rem, 1vw, 0.8rem);
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+  border: 0;
+  background: transparent;
+  color: var(--white);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.builder-steps button:hover,
+.builder-steps button:focus-visible,
+.builder-steps button[data-active="true"] {
+  background: rgba(255, 250, 244, 0.11);
+}
+
+.builder-steps button[data-active="true"] {
+  box-shadow: inset 0 -2px 0 #e8cfd0;
+}
+
+.builder-steps button span {
   color: #dcaeb3;
   font-size: 0.6rem;
+}
+
+.builder-steps button strong {
+  min-width: 0;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.025em;
+  line-height: 1.35;
 }
 
 .builder-workspace {
@@ -5097,6 +5139,11 @@ html[lang="ko"] .footer-wordmark {
 
 .builder-controls {
   gap: clamp(5rem, 8vw, 8rem);
+}
+
+.builder-control-section,
+.builder-preview-panel {
+  scroll-margin-top: 6.2rem;
 }
 
 .builder-section-heading {
@@ -5643,9 +5690,10 @@ html[lang="ko"] .footer-wordmark {
 
 .builder-summary__total dd {
   color: var(--burgundy);
-  font-family: var(--serif);
-  font-size: 1.8rem;
-  font-weight: 600;
+  font-family: var(--sans);
+  font-size: 1.55rem;
+  font-weight: 720;
+  letter-spacing: -0.035em;
 }
 
 .builder-summary__actions {
@@ -5705,19 +5753,38 @@ html[lang="ko"] .footer-wordmark {
   line-height: 1.5;
 }
 
+.builder-confirmation dl {
+  margin-top: 0.85rem;
+  padding-block: 0.75rem;
+  border-top: 1px solid rgba(79, 88, 72, 0.22);
+  border-bottom: 1px solid rgba(79, 88, 72, 0.22);
+}
+
+.builder-confirmation dl > div {
+  font-size: 0.65rem;
+}
+
+.builder-confirmation dl > div:last-child dd {
+  color: var(--burgundy);
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.builder-confirmation button {
+  min-height: 2.75rem;
+  margin-top: 0.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--burgundy);
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.28rem;
+}
+
 @media (min-width: 600px) {
-  .builder-steps {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .builder-steps li {
-    border-right: 1px solid rgba(255, 255, 255, 0.22);
-  }
-
-  .builder-steps li:last-child {
-    border-right: 0;
-  }
-
   .stem-grid,
   .wrap-type-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5760,8 +5827,21 @@ html[lang="ko"] .footer-wordmark {
     display: none;
   }
 
-  .builder-steps li {
-    padding-inline: 0.2rem;
+  .builder-intro__copy {
+    gap: 1.5rem;
+  }
+
+  .builder-steps button {
+    min-height: 4.5rem;
+    padding-inline: 0.42rem;
+    align-content: center;
+    grid-template-columns: 1fr;
+    gap: 0.22rem;
+  }
+
+  .builder-steps button strong {
+    font-size: 0.62rem;
+    line-height: 1.3;
   }
 
   .stem-card {

@@ -1,10 +1,11 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { AssetImage } from "../components/AssetImage";
 import { PageFrame } from "../components/PageFrame";
 import { flowerStems, wrappingTypes } from "../features/bouquetBuilder/data";
 import { MAX_STEMS_PER_FLOWER } from "../features/bouquetBuilder/pricing";
 import type { FlowerStem, WrappingTypeId, WrappingVariantId } from "../features/bouquetBuilder/types";
 import { useBouquetBuilder } from "../features/bouquetBuilder/useBouquetBuilder";
+import { useBuilderStepNavigation, type BuilderStepId } from "../features/bouquetBuilder/useBuilderStepNavigation";
 import { useDocumentMetadata } from "../hooks/useDocumentMetadata";
 import { useImagePipeline } from "../hooks/useImagePipeline";
 import { formatMessage, useI18n } from "../i18n";
@@ -26,7 +27,17 @@ function availabilityCopy(flower: FlowerStem, t: ReturnType<typeof useI18n>["t"]
 export function BouquetBuilderPage() {
   const { t } = useI18n();
   const pageRef = useRef<HTMLDivElement>(null);
+  const flowersSectionRef = useRef<HTMLElement>(null);
+  const wrappingSectionRef = useRef<HTMLElement>(null);
+  const previewSectionRef = useRef<HTMLElement>(null);
+  const confirmationRef = useRef<HTMLDivElement>(null);
   const builder = useBouquetBuilder();
+  const stepTargets = useMemo(() => [
+    { id: "flowers" as const, ref: flowersSectionRef },
+    { id: "wrapping" as const, ref: wrappingSectionRef },
+    { id: "preview" as const, ref: previewSectionRef },
+  ], []);
+  const { activeStep, scrollToStep } = useBuilderStepNavigation(stepTargets);
   const refreshKey = `${builder.selectedFlowers.map((flower) => `${flower.id}:${builder.quantities[flower.id]}`).join("|")}-${builder.wrappingType.id}-${builder.wrappingVariant.id}`;
 
   useDocumentMetadata(t.meta.builderTitle, t.meta.builderDescription);
@@ -36,6 +47,10 @@ export function BouquetBuilderPage() {
     preloadMargin: "700px 0px",
     refreshKey,
   });
+
+  useEffect(() => {
+    if (builder.completedResult) confirmationRef.current?.focus({ preventScroll: true });
+  }, [builder.completedResult]);
 
   const previewFlowers = useMemo(() => builder.selectedFlowers.flatMap((flower) => {
     const visibleCount = Math.min(3, Math.max(1, Math.ceil(builder.quantities[flower.id] / 4)));
@@ -56,16 +71,27 @@ export function BouquetBuilderPage() {
             </div>
             <div className="builder-intro__copy">
               <p>{t.builder.intro}</p>
-              <ol className="builder-steps">
-                {t.builder.steps.map((step, index) => <li key={step}><span>{String(index + 1).padStart(2, "0")}</span>{step}</li>)}
-              </ol>
+              <nav className="builder-step-nav" aria-label={t.builder.stepsAria}>
+                <ol className="builder-steps">
+                  {t.builder.steps.map((step, index) => {
+                    const stepId = (["flowers", "wrapping", "preview"] as const)[index] as BuilderStepId;
+                    return (
+                      <li key={stepId}>
+                        <button type="button" data-active={activeStep === stepId} aria-current={activeStep === stepId ? "step" : undefined} onClick={() => scrollToStep(stepId)}>
+                          <span>{String(index + 1).padStart(2, "0")}</span><strong>{step}</strong>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </nav>
             </div>
           </div>
         </header>
 
         <div className="section-shell builder-workspace">
           <div className="builder-controls">
-            <section className="builder-control-section" aria-labelledby="flower-table-title">
+            <section ref={flowersSectionRef} className="builder-control-section" id="builder-flowers" tabIndex={-1} aria-labelledby="flower-table-title">
               <div className="builder-section-heading">
                 <p className="eyebrow">{t.builder.flowersEyebrow}</p>
                 <h2 id="flower-table-title">{t.builder.flowersTitle}</h2>
@@ -104,7 +130,7 @@ export function BouquetBuilderPage() {
               </div>
             </section>
 
-            <section className="builder-control-section builder-wrapping" aria-labelledby="wrapping-title">
+            <section ref={wrappingSectionRef} className="builder-control-section builder-wrapping" id="builder-wrapping" tabIndex={-1} aria-labelledby="wrapping-title">
               <div className="builder-section-heading">
                 <p className="eyebrow">{t.builder.wrappingEyebrow}</p>
                 <h2 id="wrapping-title">{t.builder.wrappingTitle}</h2>
@@ -145,7 +171,7 @@ export function BouquetBuilderPage() {
             </section>
           </div>
 
-          <aside className="builder-preview-panel" aria-labelledby="preview-title">
+          <aside ref={previewSectionRef} className="builder-preview-panel" id="builder-preview" tabIndex={-1} aria-labelledby="preview-title">
             <div className="builder-preview-heading">
               <p>{t.builder.previewEyebrow}</p>
               <h2 id="preview-title">{t.builder.previewTitle}</h2>
@@ -187,9 +213,23 @@ export function BouquetBuilderPage() {
               </div>
               {!builder.isValid && <p className="builder-summary__hint">{t.builder.completeHint}</p>}
               {builder.completedResult && (
-                <div className="builder-confirmation" role="status" aria-label={t.builder.confirmationAria}>
+                <div ref={confirmationRef} className="builder-confirmation" role="status" tabIndex={-1} aria-label={t.builder.confirmationAria}>
                   <strong>{t.builder.confirmationTitle}</strong>
                   <p>{t.builder.confirmationText}</p>
+                  <dl>
+                    <div><dt>{t.builder.totalStems}</dt><dd>{builder.completedResult.totalStemCount}</dd></div>
+                    <div><dt>{t.builder.wrapping}</dt><dd>{wrappingName} · {variantName}</dd></div>
+                    <div><dt>{t.builder.total}</dt><dd>{formatVnd(builder.completedResult.totalPrice)}</dd></div>
+                  </dl>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      builder.edit();
+                      window.requestAnimationFrame(() => scrollToStep("flowers"));
+                    }}
+                  >
+                    {t.builder.edit}
+                  </button>
                 </div>
               )}
             </div>
