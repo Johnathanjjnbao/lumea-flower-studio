@@ -76,6 +76,8 @@ Implement approved public and Admin interfaces. Keep stable interface structure 
 
 Design data relationships and constraints for products, taxonomy, content, orders, requests, fulfillment, and settings. Preserve historical order snapshots and independent order/payment status.
 
+Before creating migrations, use `docs/LUMEA_ARCHITECTURE.md`, `docs/LUMEA_DATA_MODEL.md`, and `docs/LUMEA_ADMIN_SCOPE.md` as the Step 8 architecture lock. Resolve or explicitly defer any owner policy needed by the current vertical slice; do not weaken the locked trust, snapshot, localization, or Admin ownership boundaries.
+
 **Exit gate:** The model supports specified behavior, integrity constraints, migrations, and non-destructive evolution; it does not add advanced inventory or other V1 non-goals.
 
 ### 3.11 Storage
@@ -93,6 +95,8 @@ Implement authentication only for roles that require it in V1, primarily Admin. 
 ### 3.13 Admin
 
 Implement business operations for products, categories, occasions, homepage, requests, orders, delivery, site, and payment settings.
+
+The first Admin milestone is a real **Admin → Database/Storage → Storefront** Product and Media slice: create, localize, upload, publish, read in Catalog/Product Detail, then hide. Broad mock Admin screens do not satisfy this gate.
 
 **Exit gate:** Authorized staff can change mutable content without code changes, and public refresh reflects relevant saved changes without rebuild/redeploy.
 
@@ -211,4 +215,3 @@ A task is done only when:
 3. **Verification:** Automated checks and hands-on user-flow reviews, with results.
 4. **Known limitations and decisions:** Assumptions, unresolved owner decisions, and follow-up risks.
 5. **Git/deploy status:** Commit, push, pull request, and deployment actions taken, or a clear statement that none were taken.
-

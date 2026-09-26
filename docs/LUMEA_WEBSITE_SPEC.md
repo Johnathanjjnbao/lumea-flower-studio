@@ -6,6 +6,16 @@
 **Working name:** Luméa Flower Studio  
 **Tagline:** “Hoa cho những điều khó nói thành lời.”
 
+## Architecture baseline
+
+Step 8 locks Luméa as a boutique floral e-commerce platform with a configurable product Builder, not a standalone landing page. The approved system direction is documented in:
+
+- `docs/LUMEA_ARCHITECTURE.md` — system boundaries, trust model, data ownership, migration, flows, and implementation roadmap.
+- `docs/LUMEA_DATA_MODEL.md` — Supabase-ready entities, relationships, status enums, constraints, and snapshot rules.
+- `docs/LUMEA_ADMIN_SCOPE.md` — Admin-managed content, roles, media workflow, publication, and deletion boundaries.
+
+Business-mutable data must follow **Admin → Database/Storage → Storefront**. Order creation must revalidate prices and fulfillment on a trusted boundary and persist historical snapshots. The first backend milestone must prove one real Product and Media vertical slice end to end before broad Admin or commerce UI expansion.
+
 ## 1. Context and positioning
 
 Luméa Flower Studio is a boutique florist positioned in the mid-to-near-premium segment. The website must feel romantic, editorial, botanical, elegant, warm, refined, and handmade while remaining approachable.
