@@ -100,7 +100,13 @@ export function useImagePipeline(
     if (!root) return;
 
     const priorityImages = prioritySelector
-      ? Array.from(root.querySelectorAll<HTMLImageElement>(`${prioritySelector} img[data-asset]`))
+      ? Array.from(new Set(
+        Array.from(root.querySelectorAll(prioritySelector)).flatMap((target) => (
+          target instanceof HTMLImageElement && target.matches("img[data-asset]")
+            ? [target]
+            : Array.from(target.querySelectorAll<HTMLImageElement>("img[data-asset]"))
+        )),
+      ))
       : [];
     priorityImages.forEach((image, index) => {
       image.loading = "eager";
@@ -118,7 +124,8 @@ export function useImagePipeline(
         .filter((image) => !priorityImages.includes(image))
         .filter((image) => !progressiveImages.includes(image))
       : Array.from(root.querySelectorAll("main > section"))
-        .filter((section) => !prioritySelector || !section.matches(prioritySelector))
+        .filter((section) => Array.from(section.querySelectorAll<HTMLImageElement>("img[data-asset]"))
+          .some((image) => !priorityImages.includes(image)))
         .filter((section) => !progressiveImages.some((image) => section.contains(image)))
         .filter((section) => section.querySelector("img[data-asset]"));
 
@@ -126,10 +133,20 @@ export function useImagePipeline(
       ? waitForImage(target)
       : prepareSectionImages(target);
 
+    const prepareHashTarget = () => {
+      if (!window.location.hash) return;
+      const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
+      if (!target || !root.contains(target) || (progressiveSelector && target.matches(progressiveSelector))) return;
+      void prepareSectionImages(target);
+    };
+
+    prepareHashTarget();
+    window.addEventListener("hashchange", prepareHashTarget);
+
     if (!("IntersectionObserver" in window)) {
       deferredTargets.forEach((target) => void prepareTarget(target));
       progressiveImages.forEach((image) => void waitForImage(image));
-      return;
+      return () => window.removeEventListener("hashchange", prepareHashTarget);
     }
 
     const observer = new IntersectionObserver(
@@ -159,6 +176,7 @@ export function useImagePipeline(
     return () => {
       observer.disconnect();
       progressiveObserver.disconnect();
+      window.removeEventListener("hashchange", prepareHashTarget);
     };
   }, [observe, preloadMargin, prioritySelector, progressiveMargin, progressiveSelector, refreshKey, rootRef]);
 }

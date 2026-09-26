@@ -10,9 +10,9 @@ export const occasions: Occasion[] = [
 ];
 
 const standardSizes: ProductSize[] = [
-  { id: "standard", label: "Standard", priceDelta: 0, description: "Gọn gàng, vừa đủ cho một lời nhắn dịu dàng." },
-  { id: "large", label: "Large", priceDelta: 180000, description: "Đầy đặn hơn với nhiều lớp hoa và lá." },
-  { id: "premium", label: "Premium", priceDelta: 350000, description: "Một composition có độ mở và hiện diện nổi bật." },
+  { id: "standard", label: "Standard", priceDelta: 0, description: "Vừa đủ cho một lời nhắn dịu dàng." },
+  { id: "large", label: "Large", priceDelta: 180000, description: "Thêm lớp hoa và lá, đầy đặn hơn." },
+  { id: "premium", label: "Premium", priceDelta: 350000, description: "Độ mở lớn, hiện diện nổi bật." },
 ];
 
 const tones: Record<ProductTone["id"], ProductTone> = {
@@ -103,11 +103,7 @@ export const products: Product[] = [
     shortDescription: "Hồng phấn · Cúc trắng · Giấy blush",
     description: "Một bó hoa sáng và gần gũi, nơi những đóa hồng phấn được ôm bởi cúc trắng mềm như một lá thư viết tay.",
     basePrice: 560000,
-    images: [
-      { asset: "productRoseLetter", alt: "Bó hoa Rose Letter với hồng phấn và cúc trắng" },
-      { asset: "detailRose", alt: "Chi tiết một cành hồng phấn trong ánh nắng" },
-      { asset: "wrappingDetail", alt: "Chi tiết ribbon tím nhạt được buộc thủ công" },
-    ],
+    images: [{ asset: "productRoseLetter", alt: "Bó hoa Rose Letter với hồng phấn và cúc trắng" }],
     composition: ["Hồng phấn", "Cúc trắng", "Hoa lá theo mùa"],
     occasions: ["Sinh nhật", "Tình yêu & Kỷ niệm"],
     availability: "AVAILABLE",
@@ -143,10 +139,7 @@ export const products: Product[] = [
     shortDescription: "Cẩm tú cầu · Sắc xanh phấn · Giỏ mây",
     description: "Cẩm tú cầu đầy đặn với độ chuyển màu sâu, được xếp thành một khối hoa mềm và có sức hiện diện.",
     basePrice: 1280000,
-    images: [
-      { asset: "productHydrangea", alt: "Giỏ hoa Hydrangea Cloud đầy đặn trong sắc xanh phấn" },
-      { asset: "floristHands", alt: "Đôi tay florist hoàn thiện một khối hoa cẩm tú cầu" },
-    ],
+    images: [{ asset: "productHydrangea", alt: "Giỏ hoa Hydrangea Cloud đầy đặn trong sắc xanh phấn" }],
     composition: ["Cẩm tú cầu", "Hoa theo mùa", "Giỏ mây"],
     occasions: ["Chúc mừng", "Khai trương"],
     availability: "SEASONAL",
@@ -184,10 +177,7 @@ export const products: Product[] = [
     shortDescription: "Lily đỏ · Hồng kem · Lá olive",
     description: "Đỏ nhung và hồng kem tạo nên một bó hoa có chiều sâu, lãng mạn nhưng không phô trương.",
     basePrice: 1180000,
-    images: [
-      { asset: "productVelvet", alt: "Bó hoa Velvet Promise với sắc đỏ nhung và hồng kem" },
-      { asset: "singleRose", alt: "Florist đang hoàn thiện một cành hồng đỏ" },
-    ],
+    images: [{ asset: "productVelvet", alt: "Bó hoa Velvet Promise với sắc đỏ nhung và hồng kem" }],
     composition: ["Lily đỏ", "Hồng kem", "Lá olive"],
     occasions: ["Tình yêu & Kỷ niệm", "Chúc mừng"],
     availability: "SEASONAL",
@@ -204,10 +194,7 @@ export const products: Product[] = [
     shortDescription: "Calla hồng · Lá xanh · Giấy ivory",
     description: "Những đường cong tự nhiên của calla được giữ thoáng và tối giản, tạo nên một lời chia sẻ điềm tĩnh.",
     basePrice: 480000,
-    images: [
-      { asset: "detailCalla", alt: "Hoa calla hồng giữa những lớp lá xanh" },
-      { asset: "detailWhiteRose", alt: "Một đóa hồng trắng trên nền gỗ trầm" },
-    ],
+    images: [{ asset: "detailCalla", alt: "Hoa calla hồng giữa những lớp lá xanh" }],
     composition: ["Calla hồng", "Lá xanh theo mùa", "Giấy ivory"],
     occasions: ["Chia buồn", "Tình yêu & Kỷ niệm"],
     availability: "AVAILABLE",

@@ -4647,3 +4647,222 @@ h2 em,
     bottom: 0.5rem;
   }
 }
+
+/* Targeted post-review polish: shorten mobile journeys without changing the desktop art direction. */
+.occasion-tile,
+.product-image,
+.product-gallery__main,
+.gallery-item {
+  background-color: var(--blush);
+  background-image:
+    radial-gradient(circle at 72% 24%, rgba(255, 250, 244, 0.6), transparent 34%),
+    linear-gradient(145deg, rgba(196, 147, 155, 0.16), rgba(226, 230, 220, 0.46));
+}
+
+.bouquet-builder {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.bouquet-builder__head {
+  padding-top: 1rem;
+  border-top: 1px solid var(--line-strong);
+}
+
+.product-description,
+.budget-option__note,
+.custom-intro,
+.wrapping-choice p,
+.custom-assist p:not(.custom-path__label),
+.craft-story figcaption p {
+  color: #625550;
+}
+
+.custom-path__label,
+.builder-status,
+.gallery-item figcaption,
+.visit-details dt {
+  font-size: max(0.6rem, 10px);
+}
+
+.map-placeholder {
+  background-color: #d9d4c6;
+  background-image:
+    linear-gradient(rgba(247, 243, 237, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(247, 243, 237, 0.18) 1px, transparent 1px);
+  background-size: 3.5rem 3.5rem;
+}
+
+.map-district {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 2;
+  padding: 0.45rem 0.58rem;
+  border: 1px solid rgba(51, 43, 41, 0.18);
+  background: rgba(253, 249, 243, 0.86);
+  color: var(--burgundy);
+  font-size: 0.58rem;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+@media (max-width: 759px) {
+  html {
+    overflow-x: clip;
+  }
+
+  .occasions.section-space,
+  .best-sellers.section-space,
+  .budget.section-space,
+  .gallery.section-space {
+    padding-block: 3.75rem;
+  }
+
+  .occasion-tile--sympathy {
+    grid-column: 1 / -1;
+    grid-row: span 1;
+  }
+
+  .best-sellers .product-card:nth-child(n + 5),
+  .gallery-item--nine,
+  .gallery-item--ten {
+    display: none;
+  }
+
+  .gallery-item figcaption {
+    font-size: 0.55rem;
+    letter-spacing: 0.065em;
+  }
+
+  .custom-copy {
+    padding: 2.25rem 1.25rem;
+  }
+
+  .bouquet-builder {
+    margin-top: 1.55rem;
+  }
+
+  .flower-pick figcaption {
+    min-height: 3.25rem;
+    font-size: 0.63rem;
+  }
+
+  .product-detail.section-space {
+    padding-top: 1.65rem;
+  }
+
+  .product-detail__back {
+    margin-bottom: 0.75rem;
+  }
+
+  .product-detail__layout {
+    gap: 0;
+  }
+
+  .product-detail__info {
+    display: contents;
+  }
+
+  .product-detail__heading {
+    order: 1;
+    padding-bottom: 0.9rem;
+  }
+
+  .product-detail__heading h1 {
+    margin-top: 0.35rem;
+    font-size: clamp(2.85rem, 14vw, 3.65rem);
+    line-height: 0.92;
+  }
+
+  .product-detail__description {
+    margin-top: 0.85rem;
+    font-size: 0.84rem;
+    line-height: 1.6;
+  }
+
+  .product-detail__commerce-head {
+    order: 2;
+    padding: 0.9rem 0 1rem;
+  }
+
+  .product-detail__commerce-head strong {
+    font-size: 1.45rem;
+  }
+
+  .availability {
+    min-height: 1.9rem;
+    padding: 0.4rem 0.58rem;
+    font-size: 0.62rem;
+  }
+
+  .product-gallery {
+    order: 3;
+    margin: 1.15rem 0 0.25rem;
+  }
+
+  .product-gallery__main {
+    min-height: 0;
+    aspect-ratio: 4 / 4.65;
+  }
+
+  .product-options {
+    order: 4;
+    padding: 1.25rem 0;
+  }
+
+  .size-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  .size-option {
+    min-height: 9rem;
+    padding: 2rem 0.65rem 0.75rem;
+    align-content: start;
+  }
+
+  .size-option input {
+    top: 0.7rem;
+    right: 0.65rem;
+  }
+
+  .size-option__head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.28rem;
+  }
+
+  .size-option__head strong {
+    font-size: 1rem;
+  }
+
+  .size-option__head span,
+  .size-option small {
+    font-size: 0.62rem;
+    line-height: 1.35;
+  }
+
+  .product-options + .product-options {
+    order: 5;
+  }
+
+  .product-purchase {
+    order: 6;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .product-composition {
+    order: 7;
+    padding: 1.25rem 0 0;
+    border-bottom: 0;
+  }
+
+  .map-placeholder {
+    min-height: 20rem;
+  }
+}

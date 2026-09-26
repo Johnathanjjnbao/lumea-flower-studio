@@ -45,20 +45,20 @@ export function Gallery() {
           <AssetImage asset="galleryOne" alt="Bó hoa rực rỡ chụp cận cảnh" loading="lazy" />
           <figcaption>Seasonal study · No. 09</figcaption>
         </figure>
-        <figure className="gallery-item gallery-item--two"><AssetImage asset="galleryTwo" alt="Chi tiết một đóa hoa vàng trong nắng" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--three"><AssetImage asset="studioRibbon" alt="Florist đang đo ribbon trên bàn hoa" loading="lazy" /></figure>
+        <figure className="gallery-item gallery-item--two"><AssetImage asset="studioRibbon" alt="Florist đang đo ribbon trên bàn hoa" loading="lazy" /></figure>
+        <figure className="gallery-item gallery-item--three"><AssetImage asset="galleryThree" alt="Bình hoa pastel được sắp tự nhiên trên bàn studio" loading="lazy" /></figure>
         <figure className="gallery-item gallery-item--four"><AssetImage asset="galleryFour" alt="Chi tiết những cánh hoa trắng trong khu vườn" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--five"><AssetImage asset="galleryThree" alt="Bình hoa pastel được sắp tự nhiên trên bàn studio" loading="lazy" /></figure>
+        <figure className="gallery-item gallery-item--five"><AssetImage asset="singleRose" alt="Florist đang điểm thêm hoa baby quanh một đóa hồng đỏ" loading="lazy" /></figure>
         <figure className="gallery-item gallery-item--six">
-          <AssetImage asset="gallerySix" alt="Hoa và lá trong một khung hình editorial" loading="lazy" />
+          <AssetImage asset="galleryFive" alt="Những cành hoa tươi được sắp đặt tự nhiên" loading="lazy" />
           <figcaption>From the studio · Saigon</figcaption>
         </figure>
-        <figure className="gallery-item gallery-item--seven"><AssetImage asset="singleRose" alt="Florist đang điểm thêm hoa baby quanh một đóa hồng đỏ" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--eight"><AssetImage asset="galleryFive" alt="Những cành hoa tươi được sắp đặt tự nhiên" loading="lazy" /></figure>
-        <figure className="gallery-item gallery-item--nine"><AssetImage asset="customBouquet" alt="Bó hoa đã gói đặt trên ghế, sẵn sàng được trao đi" loading="lazy" /></figure>
+        <figure className="gallery-item gallery-item--seven"><AssetImage asset="customBouquet" alt="Bó hoa đã gói đặt trên ghế, sẵn sàng được trao đi" loading="lazy" /></figure>
+        <figure className="gallery-item gallery-item--eight"><AssetImage asset="whyLumea" alt="Bàn tay chạm nhẹ vào một composition hoa nhỏ trong studio" loading="lazy" /></figure>
+        <figure className="gallery-item gallery-item--nine"><AssetImage asset="galleryTwo" alt="Chi tiết một đóa hoa vàng trong nắng" loading="lazy" /></figure>
         <figure className="gallery-item gallery-item--ten">
-          <AssetImage asset="whyLumea" alt="Bàn tay chạm nhẹ vào một composition hoa nhỏ trong studio" loading="lazy" />
-          <figcaption>Hands, stems &amp; quiet details.</figcaption>
+          <AssetImage asset="gallerySix" alt="Hoa và lá trong một khung hình editorial" loading="lazy" />
+          <figcaption>Petals, stems &amp; quiet details.</figcaption>
         </figure>
       </div>
     </section>
@@ -80,12 +80,13 @@ export function Visit() {
             <div><dt>Instagram</dt><dd><a href="#gallery">{siteConfig.instagramHandle}</a></dd></div>
           </dl>
         </div>
-        <div className="map-placeholder" aria-label="Vị trí Google Maps sẽ được tích hợp sau">
+        <div className="map-placeholder" aria-label="Minh hoạ vị trí Luméa Flower Studio tại Thành phố Hồ Chí Minh">
+          <span className="map-district" aria-hidden="true">Studio district · Saigon</span>
           <div className="map-lines" aria-hidden="true">
             <span className="map-road map-road--one" /><span className="map-road map-road--two" /><span className="map-road map-road--three" /><span className="map-water" />
           </div>
           <div className="map-pin" aria-hidden="true"><span>{siteConfig.monogram}</span></div>
-          <p>{siteConfig.brandDisplayName} Flower Studio<br /><small>Bản đồ minh hoạ</small></p>
+          <p>{siteConfig.brandDisplayName} Flower Studio<br /><small>Điểm hẹn studio · Bản đồ minh hoạ</small></p>
         </div>
       </div>
     </section>
