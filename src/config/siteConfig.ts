@@ -13,7 +13,7 @@ export const siteConfig = {
   navigation: [
     { key: "flowers", to: "/flowers" },
     { key: "occasions", to: "/#occasions" },
-    { key: "custom", to: "/#custom" },
+    { key: "custom", to: "/create-bouquet" },
     { key: "sameDay", to: "/#same-day" },
     { key: "about", to: "/#why-lumea" },
     { key: "visit", to: "/#visit" },

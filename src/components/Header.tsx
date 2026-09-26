@@ -73,7 +73,11 @@ export function Header() {
   }, [quickNavOpen]);
 
   const chapterIsActive = (id: string) => isHome && activeSection === id;
-  const navigationIsActive = (to: string) => to === "/flowers" ? appPathname.startsWith("/flowers") : Boolean(to.split("#")[1] && chapterIsActive(to.split("#")[1]));
+  const navigationIsActive = (to: string) => {
+    const chapterId = to.split("#")[1];
+    if (chapterId) return chapterIsActive(chapterId);
+    return appPathname === to || appPathname.startsWith(`${to}/`);
+  };
 
   return <>
     <a className="skip-link" href="#main-content">{t.header.skip}</a>
@@ -82,7 +86,7 @@ export function Header() {
       <div className="header-inner">
         <button ref={menuButtonRef} className="menu-toggle" type="button" aria-label={menuOpen ? t.header.closeMenu : t.header.openMenu} aria-expanded={menuOpen} aria-controls="mobile-menu" onClick={() => setMenuOpen((open) => !open)}><span className="menu-toggle__icon" aria-hidden="true"><i /><i /></span><span className="menu-toggle__label">{menuOpen ? t.header.closeLabel : t.header.openLabel}</span></button>
         <nav className="desktop-nav" aria-label={t.header.primaryNavAria}>
-          {siteConfig.navigation.map((item) => <Link key={item.to} to={path(item.to)} data-active={navigationIsActive(item.to)} aria-current={navigationIsActive(item.to) ? (item.to === "/flowers" ? "page" : "location") : undefined}>{t.header.navigation[item.key]}</Link>)}
+          {siteConfig.navigation.map((item) => <Link key={item.to} to={path(item.to)} data-active={navigationIsActive(item.to)} aria-current={navigationIsActive(item.to) ? (item.to.includes("#") ? "location" : "page") : undefined}>{t.header.navigation[item.key]}</Link>)}
           <button ref={quickNavButtonRef} className="quick-nav-trigger" type="button" aria-expanded={quickNavOpen} aria-controls="header-quick-nav" onClick={() => setQuickNavOpen((open) => !open)}>{t.header.quickNav} <span aria-hidden="true">{quickNavOpen ? "−" : "+"}</span></button>
         </nav>
         <Link className="wordmark" to={path("/#top")} aria-label={t.header.homeAria}><span className="wordmark__name">{siteConfig.brandName}</span><span className="wordmark__descriptor">{t.brand.descriptor} · {t.brand.city}</span></Link>

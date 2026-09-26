@@ -13,8 +13,10 @@ function githubPagesRouteEntries(): Plugin {
       const appShell = await readFile(resolve(outputDirectory, "index.html"), "utf8");
       const routes = [
         "flowers",
+        "create-bouquet",
         "ko",
         "ko/flowers",
+        "ko/create-bouquet",
         ...products.map((product) => `flowers/${product.slug}`),
         ...products.map((product) => `ko/flowers/${product.slug}`),
       ];

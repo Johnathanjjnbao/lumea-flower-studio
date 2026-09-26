@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { AssetImage } from "../components/AssetImage";
-import { usePrototypeAction } from "../context/PrototypeActionContext";
 import { useI18n } from "../i18n";
 
 export function SameDay() {
@@ -67,8 +66,7 @@ export function FloristChoice() {
 }
 
 export function CustomBouquet() {
-  const { t } = useI18n();
-  const { showPrototypeAction } = usePrototypeAction();
+  const { t, path } = useI18n();
 
   return (
     <section className="custom section-space section-shell" id="custom" aria-labelledby="custom-title">
@@ -109,7 +107,7 @@ export function CustomBouquet() {
               <span><i className="wrap-swatch wrap-swatch--blush" />{t.home.custom.wrappingNames[2]}</span>
             </div>
           </div>
-          <button className="button button--solid" type="button" onClick={() => showPrototypeAction(t.home.custom.builderTitle)}>{t.home.custom.cta}</button>
+          <Link className="button button--solid" to={path("/create-bouquet")}>{t.home.custom.cta}</Link>
         </div>
 
         <aside className="custom-assist">
