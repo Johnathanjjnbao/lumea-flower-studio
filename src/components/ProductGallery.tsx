@@ -1,17 +1,21 @@
 import { useState } from "react";
-import type { AssetKey } from "../data/assets";
+import type { CatalogMediaRecord } from "../features/catalog/data/catalogRepository";
 import { formatMessage, useI18n } from "../i18n";
-import { AssetImage } from "./AssetImage";
+import { ManagedImage } from "./ManagedImage";
 
-export function ProductGallery({ images, name }: { images: Array<{ asset: AssetKey; alt: string }>; name: string }) {
+export function ProductGallery({ images, name }: { images: CatalogMediaRecord[]; name: string }) {
   const { t } = useI18n();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectedImage = images[selectedIndex] ?? images[0];
 
+  if (!selectedImage) {
+    return <div className="product-gallery product-gallery--empty"><div className="product-gallery__main"><span className="managed-image-placeholder" aria-hidden="true">L</span></div></div>;
+  }
+
   return (
     <div className="product-gallery" aria-label={formatMessage(t.product.detail.galleryAria, { name })}>
       <figure className="product-gallery__main">
-        <AssetImage asset={selectedImage.asset} alt={selectedImage.alt} fetchPriority="high" />
+        <ManagedImage src={selectedImage.url} alt={selectedImage.altText} fetchPriority="high" width={960} height={1200} />
         <figcaption><span aria-hidden="true">L</span> {t.product.detail.imageCaption}</figcaption>
       </figure>
       {images.length > 1 && (
@@ -24,9 +28,9 @@ export function ProductGallery({ images, name }: { images: Array<{ asset: AssetK
               aria-label={formatMessage(t.product.detail.imageButton, { index: index + 1, name })}
               aria-pressed={selectedIndex === index}
               onClick={() => setSelectedIndex(index)}
-              key={`${image.asset}-${index}`}
+              key={image.id}
             >
-              <AssetImage asset={image.asset} alt="" loading="lazy" />
+              <ManagedImage src={image.url} alt="" loading="lazy" width={160} height={160} />
             </button>
           ))}
         </div>

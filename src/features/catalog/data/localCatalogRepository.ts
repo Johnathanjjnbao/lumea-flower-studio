@@ -60,6 +60,11 @@ function mapLocalProducts(locale: Locale): CatalogProductRecord[] {
         sortOrder: imageIndex,
       })),
       occasionCodes: [...product.occasionIds],
+      occasions: product.occasionIds.map((occasionCode, occasionIndex) => ({
+        stableCode: occasionCode,
+        name: dictionary.occasions[occasionCode].name,
+        sortOrder: occasionIndex,
+      })),
       tones: product.tones.map((tone, toneIndex) => ({
         stableCode: tone.id,
         name: dictionary.product.tones[tone.id],

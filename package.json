@@ -11,6 +11,8 @@
     "check:supabase-foundation": "node scripts/check-supabase-foundation.mjs",
     "check:admin-foundation": "node scripts/check-admin-foundation.mjs",
     "check:admin-runtime": "node scripts/check-admin-runtime.mjs",
+    "check:storefront-runtime": "node scripts/check-storefront-runtime.mjs",
+    "seed:live-catalog": "node scripts/seed-live-catalog.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b"
   },

@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { AssetImage } from "../components/AssetImage";
 import { ProductCard } from "../components/ProductCard";
-import { budgetRanges, occasions, products } from "../data/content";
+import { budgetRanges, occasions } from "../data/content";
+import { usePublishedCatalog } from "../features/catalog/useCatalogData";
 import { budgetParamByRangeId } from "../utils/catalogDiscovery";
 import { useI18n } from "../i18n";
 
@@ -30,8 +31,11 @@ export function Occasions() {
 }
 
 export function BestSellers() {
-  const { t, path } = useI18n();
-  const featuredProducts = products.filter((product) => product.featured);
+  const { locale, t, path } = useI18n();
+  const catalogState = usePublishedCatalog(locale);
+  const featuredProducts = catalogState.status === "success"
+    ? catalogState.data.filter((product) => product.featured)
+    : [];
 
   return (
     <section className="best-sellers section-space" id="best-sellers" aria-labelledby="best-sellers-title">
@@ -43,9 +47,27 @@ export function BestSellers() {
           </div>
           <Link className="text-link" to={path("/flowers")}>{t.home.best.viewAll}</Link>
         </div>
-        <div className="product-grid">
-          {featuredProducts.map((product) => <ProductCard product={product} key={product.id} />)}
-        </div>
+        {catalogState.status === "loading" ? (
+          <div className="product-grid" aria-label={t.home.best.loading} aria-busy="true">
+            {Array.from({ length: 6 }, (_, index) => (
+              <article className="product-card product-card--skeleton" aria-hidden="true" key={index}>
+                <div className="product-image catalog-skeleton" />
+                <div className="product-meta"><div className="catalog-skeleton catalog-skeleton--line" /><div className="catalog-skeleton catalog-skeleton--title" /></div>
+              </article>
+            ))}
+          </div>
+        ) : catalogState.status === "error" ? (
+          <div className="home-catalog-state" role="status">
+            <p>{t.home.best.error}</p>
+            <button className="text-link" type="button" onClick={catalogState.retry}>{t.catalog.retry}</button>
+          </div>
+        ) : featuredProducts.length > 0 ? (
+          <div className="product-grid">
+            {featuredProducts.map((product) => <ProductCard product={product} key={product.id} />)}
+          </div>
+        ) : (
+          <div className="home-catalog-state"><p>{t.home.best.empty}</p></div>
+        )}
       </div>
     </section>
   );

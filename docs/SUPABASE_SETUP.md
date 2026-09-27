@@ -1,6 +1,6 @@
 # Luméa Supabase Setup
 
-This guide is the operational reference for the Step 9A Supabase foundation. Step 9B Product/Media operations are documented in `docs/ADMIN_PRODUCT_MEDIA.md`. Cart, checkout, orders, and Builder persistence remain out of scope.
+This guide is the operational reference for the Supabase foundation through Step 9C. Step 9B Product/Media operations are documented in `docs/ADMIN_PRODUCT_MEDIA.md`. Cart, checkout, orders, and Builder persistence remain out of scope.
 
 ## Project identity
 
@@ -31,7 +31,7 @@ Only a browser-safe `sb_publishable_...` key may use the `VITE_` prefix. Do not 
 
 `.env.local`, `.env`, and `.env.*` are ignored by Git. `.env.example` is intentionally tracked and contains names only.
 
-The frontend client is lazy and optional during Step 9A. A build without both public values keeps the current local-data storefront working. Supplying only one value, an invalid URL, or a non-publishable key produces a clear configuration error when the Supabase client is requested.
+The Step 9C storefront requires both public values and fails with a localized retry state when live catalog access is unavailable; it never falls back to local Product data in production. Supplying only one value, an invalid URL, or a non-publishable key produces a clear configuration error when the Supabase client is requested.
 
 ## CLI and migration workflow
 
@@ -142,11 +142,23 @@ The first Admin write runtime test is deferred until an owner-approved Auth user
 React components must not query Supabase directly.
 
 - `CatalogRepository` defines published list and slug-detail reads.
-- `LocalCatalogRepository` adapts the current demo products and remains the active source during Step 9A.
-- `SupabaseCatalogRepository` is available for the later controlled data-source switch.
-- `src/lib/supabase.ts` owns the single lazy browser client.
+- `SupabaseCatalogRepository` is the active storefront source for Catalog, Product Detail, and homepage featured Products.
+- `LocalCatalogRepository` and `src/data/content.ts` are retained only as a controlled development/import fixture; no production storefront path imports them.
+- `src/lib/supabase.ts` owns two lazy browser clients: the persisted Admin client and a non-persisted public client that cannot inherit an Admin session.
+- `src/features/catalog/data/storefrontCatalog.ts` owns the shared repository boundary and short request cache; React views consume it through `useCatalogData.ts`.
 
-The storefront is not switched to live Supabase data until Product/Admin propagation and empty/loading/error states are verified in the later storefront migration step.
+Public repository queries explicitly require `PUBLISHED`, non-archived Products, active variants/relationships/media, and a public primary image. Database RLS remains authoritative and the query predicates keep behavior obvious in code.
+
+## Controlled catalog import
+
+The approved ten-Product fixture can seed an empty linked project without overwriting owner edits:
+
+```powershell
+npm run seed:live-catalog
+npm run check:storefront-runtime
+```
+
+The importer verifies the linked project reference, uses deterministic identities, uploads validated image files to immutable Storage paths, inserts only missing records, and publishes only records that remain `DRAFT`. It does not restore `HIDDEN` or `ARCHIVED` Products and does not overwrite existing Admin-managed content. The runtime check compares VI/KO copy, variants, taxonomy, media, and public visibility against the approved import fixture.
 
 ## Verification
 
@@ -161,6 +173,7 @@ It verifies the project URL, browser-safe key type, anonymous published read, an
 Then run:
 
 ```powershell
+npm run check:storefront-runtime
 npm run typecheck
 npm run build
 npx supabase db lint --linked --level warning

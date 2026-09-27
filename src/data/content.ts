@@ -1,5 +1,8 @@
 import type { BudgetRange, Occasion, Product, ProductSize, ProductTone } from "../types/content";
 
+// Development fixture and controlled Step 9C import source only.
+// Production storefront product reads must go through SupabaseCatalogRepository.
+
 export const occasions: Occasion[] = [
   { id: "birthday", image: "occasionBirthday" },
   { id: "love", image: "occasionLove" },

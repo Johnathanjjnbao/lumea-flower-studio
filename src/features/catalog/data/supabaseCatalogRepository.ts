@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { requireSupabaseClient } from "../../../lib/supabase";
+import { requirePublicSupabaseClient } from "../../../lib/supabase";
 import type { Database } from "../../../types/database.generated";
 import type { Locale } from "../../../types/content";
 import type {
@@ -21,7 +21,7 @@ const PRODUCT_SELECT = `
   product_translations(locale, name, short_description, description, composition, seo_title, seo_description),
   product_variants(id, stable_code, price_amount, active, sort_order, product_variant_translations(locale, name, description)),
   product_images(id, role, active, sort_order, media_assets(id, storage_bucket, storage_path, access, status, media_asset_translations(locale, alt_text, caption))),
-  product_occasions(sort_order, occasions(stable_code, visibility, archived_at)),
+  product_occasions(sort_order, occasions(stable_code, visibility, archived_at, sort_order, occasion_translations(locale, name, description))),
   product_tones(active, sort_order, tones(stable_code, swatch_value, visibility, archived_at, tone_translations(locale, name, description)))
 ` as const;
 
@@ -109,7 +109,12 @@ function mapProduct(
       };
     })
     .filter((image): image is NonNullable<typeof image> => Boolean(image))
-    .sort((left, right) => left.sortOrder - right.sortOrder);
+    .sort((left, right) => {
+      if (left.role !== right.role) return left.role === "PRIMARY" ? -1 : 1;
+      return left.sortOrder - right.sortOrder;
+    });
+
+  if (!images.some((image) => image.role === "PRIMARY")) return null;
 
   const tones = product.product_tones
     .filter((relation) => relation.active)
@@ -126,6 +131,21 @@ function mapProduct(
       };
     })
     .filter((tone): tone is NonNullable<typeof tone> => Boolean(tone))
+    .sort((left, right) => left.sortOrder - right.sortOrder);
+
+  const occasions = product.product_occasions
+    .map((relation) => {
+      const occasion = relation.occasions;
+      if (!occasion || occasion.visibility !== "PUBLISHED" || occasion.archived_at) return null;
+      const occasionTranslation = pickTranslation(occasion.occasion_translations, locale);
+      if (!occasionTranslation) return null;
+      return {
+        stableCode: occasion.stable_code,
+        name: occasionTranslation.name,
+        sortOrder: occasion.sort_order,
+      };
+    })
+    .filter((occasion): occasion is NonNullable<typeof occasion> => Boolean(occasion))
     .sort((left, right) => left.sortOrder - right.sortOrder);
 
   return {
@@ -147,20 +167,18 @@ function mapProduct(
     startingPriceAmount: Math.min(...variants.map((variant) => variant.priceAmount)),
     variants,
     images,
-    occasionCodes: product.product_occasions
-      .map((relation) => {
-        const occasion = relation.occasions;
-        return occasion?.visibility === "PUBLISHED" && !occasion.archived_at
-          ? occasion.stable_code
-          : null;
-      })
-      .filter((code): code is string => Boolean(code)),
+    occasionCodes: occasions.map((occasion) => occasion.stableCode),
+    occasions,
     tones,
   };
 }
 
 export class SupabaseCatalogRepository implements CatalogRepository {
-  constructor(private readonly client: SupabaseClient<Database> = requireSupabaseClient()) {}
+  constructor(private readonly providedClient?: SupabaseClient<Database>) {}
+
+  private get client() {
+    return this.providedClient ?? requirePublicSupabaseClient();
+  }
 
   async listPublishedProducts(locale: Locale, filters?: CatalogProductFilters) {
     const rows = await loadProductRows(this.client);

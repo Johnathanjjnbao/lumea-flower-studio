@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageFrame } from "../components/PageFrame";
 import { ProductCard } from "../components/ProductCard";
-import { occasions, products } from "../data/content";
+import { usePublishedCatalog } from "../features/catalog/useCatalogData";
 import { useDocumentMetadata } from "../hooks/useDocumentMetadata";
 import { useImagePipeline } from "../hooks/useImagePipeline";
 import { formatMessage, useI18n } from "../i18n";
@@ -23,10 +23,12 @@ export function CatalogPage() {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
-  const representedOccasions = useMemo(() => getRepresentedOccasions(products, occasions), []);
-  const validOccasionIds = useMemo(() => new Set(representedOccasions.map((occasion) => occasion.id)), [representedOccasions]);
+  const catalogState = usePublishedCatalog(locale);
+  const productList = catalogState.status === "success" ? catalogState.data : [];
+  const representedOccasions = useMemo(() => getRepresentedOccasions(productList), [productList]);
+  const validOccasionIds = useMemo(() => new Set(representedOccasions.map((occasion) => occasion.stableCode)), [representedOccasions]);
   const discoveryState = readCatalogDiscoveryState(searchParams, validOccasionIds);
-  const visibleProducts = filterCatalogProducts(products, discoveryState, t, locale);
+  const visibleProducts = filterCatalogProducts(productList, discoveryState, locale);
   const searchParamKey = searchParams.toString();
 
   useImagePipeline(pageRef, {
@@ -76,7 +78,7 @@ export function CatalogPage() {
     discoveryState.query.trim() ? { key: "q" as const, label: formatMessage(t.catalog.searchChip, { query: discoveryState.query.trim() }) } : null,
     discoveryState.occasion ? {
       key: "occasion" as const,
-      label: representedOccasions.find((occasion) => occasion.id === discoveryState.occasion) ? t.occasions[discoveryState.occasion as keyof typeof t.occasions].name : discoveryState.occasion,
+      label: representedOccasions.find((occasion) => occasion.stableCode === discoveryState.occasion)?.name ?? discoveryState.occasion,
     } : null,
     discoveryState.budget ? {
       key: "budget" as const,
@@ -106,7 +108,7 @@ export function CatalogPage() {
           </header>
         </div>
 
-        <div className="catalog-commerce">
+        <div className="catalog-commerce" aria-busy={catalogState.status === "loading"}>
           <div className="section-shell">
             <div className="catalog-discovery">
             <div className="catalog-search">
@@ -156,15 +158,15 @@ export function CatalogPage() {
                 <legend>{t.catalog.occasion}</legend>
                 <div className="catalog-filter-options">
                   {representedOccasions.map((occasion) => (
-                    <label key={occasion.id} data-selected={discoveryState.occasion === occasion.id}>
+                    <label key={occasion.stableCode} data-selected={discoveryState.occasion === occasion.stableCode}>
                       <input
                         type="radio"
                         name="occasion"
-                        value={occasion.id}
-                        checked={discoveryState.occasion === occasion.id}
-                        onChange={() => updateFilter("occasion", occasion.id)}
+                        value={occasion.stableCode}
+                        checked={discoveryState.occasion === occasion.stableCode}
+                        onChange={() => updateFilter("occasion", occasion.stableCode)}
                       />
-                      <span>{t.occasions[occasion.id].name}</span>
+                      <span>{occasion.name}</span>
                     </label>
                   ))}
                 </div>
@@ -222,7 +224,7 @@ export function CatalogPage() {
               </div>
             </div>
 
-            <div className="catalog-results-head">
+            {catalogState.status === "success" && <div className="catalog-results-head">
               <p className="catalog-count" aria-live="polite">
                 <strong>{visibleProducts.length}</strong> {activeFilters.length ? t.catalog.resultFiltered : t.catalog.resultAll}
               </p>
@@ -236,10 +238,32 @@ export function CatalogPage() {
                   <button className="active-filters__clear" type="button" onClick={clearFilters}>{t.catalog.clearFilters}</button>
                 </div>
               )}
-            </div>
+            </div>}
             </div>
 
-            {visibleProducts.length > 0 ? (
+            {catalogState.status === "loading" ? (
+              <div className="product-grid catalog-grid" aria-label={t.catalog.loading}>
+                {Array.from({ length: 6 }, (_, index) => (
+                  <article className="product-card product-card--skeleton" aria-hidden="true" key={index}>
+                    <div className="product-image catalog-skeleton" />
+                    <div className="product-meta"><div className="catalog-skeleton catalog-skeleton--line" /><div className="catalog-skeleton catalog-skeleton--title" /><div className="catalog-skeleton catalog-skeleton--line" /></div>
+                  </article>
+                ))}
+              </div>
+            ) : catalogState.status === "error" ? (
+              <div className="catalog-empty catalog-state" role="alert">
+                <p className="eyebrow"><span aria-hidden="true">!</span>{t.catalog.errorEyebrow}</p>
+                <h2>{t.catalog.errorTitle}</h2>
+                <p>{t.catalog.errorText}</p>
+                <button className="button button--solid" type="button" onClick={catalogState.retry}>{t.catalog.retry}</button>
+              </div>
+            ) : productList.length === 0 ? (
+              <div className="catalog-empty catalog-state">
+                <p className="eyebrow"><span aria-hidden="true">0</span>{t.catalog.emptyCollectionEyebrow}</p>
+                <h2>{t.catalog.emptyCollectionTitle}</h2>
+                <p>{t.catalog.emptyCollectionText}</p>
+              </div>
+            ) : visibleProducts.length > 0 ? (
               <div className="product-grid catalog-grid">
                 {visibleProducts.map((product) => <ProductCard product={product} headingLevel={2} showAvailability showStartingPrice key={product.id} />)}
               </div>

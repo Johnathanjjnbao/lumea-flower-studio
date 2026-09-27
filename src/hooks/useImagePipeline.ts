@@ -15,7 +15,7 @@ export function waitForImage(image: HTMLImageElement | null): Promise<boolean> {
   if (existingPromise) return existingPromise;
 
   const assetKey = target.dataset.asset as AssetKey | undefined;
-  const source = assetKey ? assets[assetKey] : undefined;
+  const source = assetKey ? assets[assetKey] : target.currentSrc || target.src || undefined;
   if (!source) {
     markImageMissing(target);
     return Promise.resolve(false);
@@ -71,7 +71,7 @@ export function waitForImage(image: HTMLImageElement | null): Promise<boolean> {
 
 function prepareSectionImages(section: Element) {
   return Promise.all(
-    Array.from(section.querySelectorAll<HTMLImageElement>("img[data-asset]")).map(waitForImage),
+    Array.from(section.querySelectorAll<HTMLImageElement>("img[data-asset], img[data-managed-image]")).map(waitForImage),
   );
 }
 
@@ -102,9 +102,9 @@ export function useImagePipeline(
     const priorityImages = prioritySelector
       ? Array.from(new Set(
         Array.from(root.querySelectorAll(prioritySelector)).flatMap((target) => (
-          target instanceof HTMLImageElement && target.matches("img[data-asset]")
+          target instanceof HTMLImageElement && target.matches("img[data-asset], img[data-managed-image]")
             ? [target]
-            : Array.from(target.querySelectorAll<HTMLImageElement>("img[data-asset]"))
+            : Array.from(target.querySelectorAll<HTMLImageElement>("img[data-asset], img[data-managed-image]"))
         )),
       ))
       : [];
@@ -116,18 +116,18 @@ export function useImagePipeline(
     });
 
     const progressiveImages = progressiveSelector
-      ? Array.from(root.querySelectorAll<HTMLImageElement>(`${progressiveSelector} img[data-asset]`))
+      ? Array.from(root.querySelectorAll<HTMLImageElement>(`${progressiveSelector} img[data-asset], ${progressiveSelector} img[data-managed-image]`))
       : [];
 
     const deferredTargets = observe === "images"
-      ? Array.from(root.querySelectorAll<HTMLImageElement>("img[data-asset]"))
+      ? Array.from(root.querySelectorAll<HTMLImageElement>("img[data-asset], img[data-managed-image]"))
         .filter((image) => !priorityImages.includes(image))
         .filter((image) => !progressiveImages.includes(image))
       : Array.from(root.querySelectorAll("main > section"))
-        .filter((section) => Array.from(section.querySelectorAll<HTMLImageElement>("img[data-asset]"))
+        .filter((section) => Array.from(section.querySelectorAll<HTMLImageElement>("img[data-asset], img[data-managed-image]"))
           .some((image) => !priorityImages.includes(image)))
         .filter((section) => !progressiveImages.some((image) => section.contains(image)))
-        .filter((section) => section.querySelector("img[data-asset]"));
+        .filter((section) => section.querySelector("img[data-asset], img[data-managed-image]"));
 
     const prepareTarget = (target: Element) => target instanceof HTMLImageElement
       ? waitForImage(target)

@@ -2,7 +2,6 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
-import { products } from "./src/data/content";
 
 function githubPagesRouteEntries(): Plugin {
   return {
@@ -17,8 +16,6 @@ function githubPagesRouteEntries(): Plugin {
         "ko",
         "ko/flowers",
         "ko/create-bouquet",
-        ...products.map((product) => `flowers/${product.slug}`),
-        ...products.map((product) => `ko/flowers/${product.slug}`),
       ];
 
       await Promise.all(routes.map(async (route) => {
@@ -33,5 +30,22 @@ function githubPagesRouteEntries(): Plugin {
 
 export default defineConfig({
   base: "/lumea-flower-studio/",
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/@supabase/")) return "supabase";
+          if (id.includes("node_modules/gsap/") || id.includes("node_modules/@gsap/")) return "motion";
+          if (
+            id.includes("node_modules/react/")
+            || id.includes("node_modules/react-dom/")
+            || id.includes("node_modules/react-router-dom/")
+            || id.includes("node_modules/react-router/")
+          ) return "react";
+          return undefined;
+        },
+      },
+    },
+  },
   plugins: [react(), githubPagesRouteEntries()],
 });

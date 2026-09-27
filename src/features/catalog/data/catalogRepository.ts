@@ -27,6 +27,12 @@ export interface CatalogToneRecord {
   sortOrder: number;
 }
 
+export interface CatalogOccasionRecord {
+  stableCode: string;
+  name: string;
+  sortOrder: number;
+}
+
 export interface CatalogProductRecord {
   id: string;
   stableCode: string;
@@ -47,6 +53,7 @@ export interface CatalogProductRecord {
   variants: CatalogVariantRecord[];
   images: CatalogMediaRecord[];
   occasionCodes: string[];
+  occasions: CatalogOccasionRecord[];
   tones: CatalogToneRecord[];
 }
 

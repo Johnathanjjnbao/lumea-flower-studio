@@ -1,6 +1,6 @@
 # Luméa Admin — Product & Media Operations
 
-This guide covers the Step 9B vertical slice only. The public Catalog and Product Detail still use the approved local dataset until the later storefront data-source step.
+This guide covers the Step 9B Admin vertical slice and its Step 9C storefront propagation contract. Catalog, Product Detail, and the homepage featured-product rail now read published Product data from Supabase; the local catalog remains an explicit import fixture only.
 
 ## Access and first Admin
 
@@ -65,4 +65,4 @@ npx supabase db lint --linked --level warning
 npx supabase migration list
 ```
 
-Runtime acceptance still requires a real Admin session: create a draft, upload an image, publish, verify anonymous read, hide, verify anonymous denial, and archive/retain the clearly labelled test record.
+Runtime acceptance requires a real Admin session: create a draft, upload an image, publish, verify the public Catalog and Product Detail after refresh, edit and re-verify, hide and verify public denial, then archive/retain the clearly labelled test record. Public reads use a separate non-persisted Supabase client so an Admin browser session cannot widen storefront visibility.

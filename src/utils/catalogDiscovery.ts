@@ -1,6 +1,6 @@
-import type { Occasion, Product, ProductAvailability } from "../types/content";
-import type { Locale, OccasionId } from "../types/content";
-import type { Translations } from "../i18n";
+import type { ProductAvailability } from "../types/content";
+import type { Locale } from "../types/content";
+import type { CatalogProductRecord } from "../features/catalog/data/catalogRepository";
 
 export type CatalogBudgetId = "under-500" | "500-800" | "800-1200" | "over-1200";
 export type CatalogAvailabilityId = "available" | "seasonal";
@@ -28,8 +28,12 @@ export const availabilityFilterOptions: ReadonlyArray<{
 const budgetIds = new Set<CatalogBudgetId>(budgetFilterOptions.map((option) => option.id));
 const availabilityIds = new Set<CatalogAvailabilityId>(availabilityFilterOptions.map((option) => option.id));
 
-export function getRepresentedOccasions(productList: Product[], occasionList: Occasion[]) {
-  return occasionList.filter((occasion) => productList.some((product) => product.occasionIds.includes(occasion.id)));
+export function getRepresentedOccasions(productList: CatalogProductRecord[]) {
+  const represented = new Map<string, CatalogProductRecord["occasions"][number]>();
+  productList.flatMap((product) => product.occasions).forEach((occasion) => {
+    if (!represented.has(occasion.stableCode)) represented.set(occasion.stableCode, occasion);
+  });
+  return [...represented.values()].sort((left, right) => left.sortOrder - right.sortOrder);
 }
 
 export function readCatalogDiscoveryState(searchParams: URLSearchParams, validOccasionIds: Set<string>): CatalogDiscoveryState {
@@ -63,9 +67,8 @@ function matchesBudget(price: number, budget: CatalogBudgetId) {
 }
 
 export function filterCatalogProducts(
-  productList: Product[],
+  productList: CatalogProductRecord[],
   state: CatalogDiscoveryState,
-  t: Translations,
   locale: Locale,
 ) {
   const normalizedQuery = normalizeCatalogSearch(state.query, locale);
@@ -73,20 +76,20 @@ export function filterCatalogProducts(
 
   return productList.filter((product) => {
     if (normalizedQuery) {
-      const copy = t.products[product.id];
       const searchableText = normalizeCatalogSearch([
         product.name,
-        copy.category,
-        copy.shortDescription,
-        copy.description,
-        ...copy.composition,
-        ...product.occasionIds.map((id) => t.occasions[id].name),
+        product.stableCode,
+        product.slug,
+        product.shortDescription ?? "",
+        product.description ?? "",
+        ...product.composition,
+        ...product.occasions.map((occasion) => occasion.name),
       ].join(" "), locale);
       if (!searchableText.includes(normalizedQuery)) return false;
     }
 
-    if (state.occasion && !product.occasionIds.includes(state.occasion as OccasionId)) return false;
-    if (state.budget && !matchesBudget(product.basePrice, state.budget)) return false;
+    if (state.occasion && !product.occasionCodes.includes(state.occasion)) return false;
+    if (state.budget && !matchesBudget(product.startingPriceAmount, state.budget)) return false;
     if (state.sameDay && !product.sameDayEligible) return false;
     if (selectedAvailability && product.availability !== selectedAvailability.value) return false;
     return true;
