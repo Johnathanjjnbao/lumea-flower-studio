@@ -3734,7 +3734,7 @@ body.catalog-filter-open {
   gap: 0.9rem;
 }
 
-.admin-product-table-wrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); background: #fbf8f3; contain: inline-size; }
+.admin-product-table-wrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); background: #fbf8f3; contain: inline-size paint; }
 .admin-product-table { width: 100%; min-width: 800px; border-collapse: collapse; }
 .admin-product-table th { padding: 0.85rem 1rem; border-bottom: 1px solid var(--line-strong); color: var(--ink-soft); font-size: 0.58rem; letter-spacing: 0.08em; text-align: left; text-transform: uppercase; }
 .admin-product-table td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--line); font-size: 0.69rem; vertical-align: middle; }

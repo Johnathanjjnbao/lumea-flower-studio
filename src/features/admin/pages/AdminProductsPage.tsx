@@ -19,6 +19,10 @@ export function AdminProductsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    document.title = "Sản phẩm — Luméa Admin";
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     setLoading(true);
     repository.listProducts(filters).then((rows) => {
