@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
-import { AssetImage } from "../components/AssetImage";
 import { PageFrame } from "../components/PageFrame";
-import { flowerStems, wrappingTypes } from "../features/bouquetBuilder/data";
 import { MAX_STEMS_PER_FLOWER } from "../features/bouquetBuilder/pricing";
-import type { FlowerStem, WrappingTypeId, WrappingVariantId } from "../features/bouquetBuilder/types";
+import type { BouquetBuilderCatalog, FlowerStem, WrappingTypeId, WrappingVariantId } from "../features/bouquetBuilder/types";
 import { useBouquetBuilder } from "../features/bouquetBuilder/useBouquetBuilder";
+import { useBuilderData } from "../features/bouquetBuilder/useBuilderData";
 import { useBuilderStepNavigation, type BuilderStepId } from "../features/bouquetBuilder/useBuilderStepNavigation";
 import { useDocumentMetadata } from "../hooks/useDocumentMetadata";
 import { useImagePipeline } from "../hooks/useImagePipeline";
@@ -24,14 +23,14 @@ function availabilityCopy(flower: FlowerStem, t: ReturnType<typeof useI18n>["t"]
   return t.product.availability.AVAILABLE;
 }
 
-export function BouquetBuilderPage() {
+function BouquetBuilderExperience({ catalog }: { catalog: BouquetBuilderCatalog }) {
   const { t } = useI18n();
   const pageRef = useRef<HTMLDivElement>(null);
   const flowersSectionRef = useRef<HTMLElement>(null);
   const wrappingSectionRef = useRef<HTMLElement>(null);
   const previewSectionRef = useRef<HTMLElement>(null);
   const confirmationRef = useRef<HTMLDivElement>(null);
-  const builder = useBouquetBuilder();
+  const builder = useBouquetBuilder(catalog);
   const stepTargets = useMemo(() => [
     { id: "flowers" as const, ref: flowersSectionRef },
     { id: "wrapping" as const, ref: wrappingSectionRef },
@@ -40,7 +39,6 @@ export function BouquetBuilderPage() {
   const { activeStep, scrollToStep } = useBuilderStepNavigation(stepTargets);
   const refreshKey = `${builder.selectedFlowers.map((flower) => `${flower.id}:${builder.quantities[flower.id]}`).join("|")}-${builder.wrappingType.id}-${builder.wrappingVariant.id}`;
 
-  useDocumentMetadata(t.meta.builderTitle, t.meta.builderDescription);
   useImagePipeline(pageRef, {
     observe: "images",
     prioritySelector: ".builder-intro",
@@ -57,8 +55,8 @@ export function BouquetBuilderPage() {
     return Array.from({ length: visibleCount }, (_, index) => ({ flower, key: `${flower.id}-${index}` }));
   }).slice(0, previewPositions.length), [builder.quantities, builder.selectedFlowers]);
 
-  const wrappingName = t.builder.wrapTypes[builder.wrappingType.id].name;
-  const variantName = t.builder.wrapVariants[builder.wrappingVariant.id];
+  const wrappingName = builder.wrappingType.name;
+  const variantName = builder.wrappingVariant.name;
 
   return (
     <PageFrame pageRef={pageRef}>
@@ -99,15 +97,15 @@ export function BouquetBuilderPage() {
               </div>
 
               <div className="stem-grid">
-                {flowerStems.map((flower) => {
-                  const copy = t.builder.flowers[flower.id];
+                {catalog.flowers.map((flower) => {
+                  const copy = flower;
                   const quantity = builder.quantities[flower.id];
                   const unavailable = flower.availability === "UNAVAILABLE";
                   const atMaximum = quantity >= MAX_STEMS_PER_FLOWER;
                   return (
                     <article className="stem-card" data-selected={quantity > 0} data-unavailable={unavailable} key={flower.id}>
                       <figure className="stem-card__image">
-                        <AssetImage asset={flower.image} alt={copy.alt} loading="lazy" />
+                        <img data-managed-image src={flower.imageUrl} alt={copy.imageAlt} loading="lazy" />
                         {quantity > 0 && <span>{t.builder.selected} · {quantity}</span>}
                       </figure>
                       <div className="stem-card__body">
@@ -140,8 +138,8 @@ export function BouquetBuilderPage() {
               <fieldset className="wrap-options">
                 <legend>{t.builder.wrapTypeLegend}</legend>
                 <div className="wrap-type-grid">
-                  {wrappingTypes.map((option) => {
-                    const copy = t.builder.wrapTypes[option.id];
+                  {catalog.wrappingTypes.map((option) => {
+                    const copy = option;
                     return (
                       <label data-selected={builder.wrappingType.id === option.id} key={option.id}>
                         <input type="radio" name="wrapping-type" value={option.id} checked={builder.wrappingType.id === option.id} onChange={() => builder.selectWrappingType(option.id as WrappingTypeId)} />
@@ -162,7 +160,7 @@ export function BouquetBuilderPage() {
                     <label data-selected={builder.wrappingVariant.id === variant.id} key={variant.id}>
                       <input type="radio" name="wrapping-variant" value={variant.id} checked={builder.wrappingVariant.id === variant.id} onChange={() => builder.selectWrappingVariant(variant.id as WrappingVariantId)} />
                       <i style={{ backgroundColor: variant.swatch }} aria-hidden="true" />
-                      <span>{t.builder.wrapVariants[variant.id]}</span>
+                      <span>{variant.name}</span>
                       {variant.priceModifier > 0 && <small>{formatMessage(t.builder.addPrice, { price: formatVnd(variant.priceModifier) })}</small>}
                     </label>
                   ))}
@@ -177,13 +175,13 @@ export function BouquetBuilderPage() {
               <h2 id="preview-title">{t.builder.previewTitle}</h2>
             </div>
 
-            <div className="bouquet-preview" data-wrap={builder.wrappingType.id} style={{ "--wrap-color": builder.wrappingVariant.swatch } as React.CSSProperties} role="img" aria-label={t.builder.previewAria}>
+            <div className="bouquet-preview" data-wrap={builder.wrappingType.stableCode} style={{ "--wrap-color": builder.wrappingVariant.swatch } as React.CSSProperties} role="img" aria-label={t.builder.previewAria}>
               <div className="bouquet-preview__paper" aria-hidden="true" />
               {previewFlowers.length ? (
                 <div className="bouquet-preview__flowers" aria-hidden="true">
                   {previewFlowers.map(({ flower, key }, index) => {
                     const [left, top, rotation] = previewPositions[index];
-                    return <AssetImage key={key} asset={flower.image} alt="" style={{ left, top, transform: `translate(-50%, -50%) rotate(${rotation})` }} loading="lazy" />;
+                    return <img data-managed-image key={key} src={flower.imageUrl} alt="" style={{ left, top, transform: `translate(-50%, -50%) rotate(${rotation})` }} loading="lazy" />;
                   })}
                 </div>
               ) : (
@@ -197,7 +195,7 @@ export function BouquetBuilderPage() {
               <div className="builder-summary__selection">
                 <span>{t.builder.selectedFlowers}</span>
                 {builder.selectedFlowers.length ? (
-                  <ul>{builder.selectedFlowers.map((flower) => <li key={flower.id}><span>{t.builder.flowers[flower.id].name}</span><strong>× {builder.quantities[flower.id]}</strong></li>)}</ul>
+                  <ul>{builder.selectedFlowers.map((flower) => <li key={flower.id}><span>{flower.name}</span><strong>× {builder.quantities[flower.id]}</strong></li>)}</ul>
                 ) : <p>{t.builder.noFlowers}</p>}
               </div>
               <dl>
@@ -234,6 +232,32 @@ export function BouquetBuilderPage() {
               )}
             </div>
           </aside>
+        </div>
+      </section>
+    </PageFrame>
+  );
+}
+
+export function BouquetBuilderPage() {
+  const { locale, t } = useI18n();
+  const builderData = useBuilderData(locale);
+  useDocumentMetadata(t.meta.builderTitle, t.meta.builderDescription);
+
+  if (builderData.status === "success" && builderData.data.flowers.length > 0
+    && builderData.data.wrappingTypes.length > 0 && builderData.data.wrappingVariants.length > 0) {
+    return <BouquetBuilderExperience catalog={builderData.data} />;
+  }
+
+  const isLoading = builderData.status === "loading";
+  const isEmpty = builderData.status === "success";
+  return (
+    <PageFrame>
+      <section className="builder-page builder-data-state" aria-labelledby="builder-state-title" aria-busy={isLoading}>
+        <div className="section-shell">
+          <p className="eyebrow">Create your bouquet</p>
+          <h1 id="builder-state-title">{isLoading ? t.builder.loadingTitle : isEmpty ? t.builder.emptyDataTitle : t.builder.errorTitle}</h1>
+          <p>{isLoading ? t.builder.loadingText : isEmpty ? t.builder.emptyDataText : t.builder.errorText}</p>
+          {!isLoading && !isEmpty && <button className="button button--solid" type="button" onClick={builderData.retry}>{t.builder.retry}</button>}
         </div>
       </section>
     </PageFrame>

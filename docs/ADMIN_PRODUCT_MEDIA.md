@@ -2,6 +2,8 @@
 
 This guide covers the Step 9B Admin vertical slice and its Step 9C storefront propagation contract. Catalog, Product Detail, and the homepage featured-product rail now read published Product data from Supabase; the local catalog remains an explicit import fixture only.
 
+Bouquet Builder flower, wrapping, compatibility, and media operations are documented separately in `docs/BUILDER_DATA_ADMIN.md`.
+
 ## Access and first Admin
 
 Admin routes are Vietnamese-only:

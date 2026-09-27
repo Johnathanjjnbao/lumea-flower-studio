@@ -1,6 +1,6 @@
 # Luméa Supabase Setup
 
-This guide is the operational reference for the Supabase foundation through Step 9C. Step 9B Product/Media operations are documented in `docs/ADMIN_PRODUCT_MEDIA.md`. Cart, checkout, orders, and Builder persistence remain out of scope.
+This guide is the operational reference for the Supabase foundation through Step 10. Product/Media operations are documented in `docs/ADMIN_PRODUCT_MEDIA.md`; Builder data operations are documented in `docs/BUILDER_DATA_ADMIN.md`. Cart, checkout, and orders remain out of scope.
 
 ## Project identity
 
@@ -31,7 +31,7 @@ Only a browser-safe `sb_publishable_...` key may use the `VITE_` prefix. Do not 
 
 `.env.local`, `.env`, and `.env.*` are ignored by Git. `.env.example` is intentionally tracked and contains names only.
 
-The Step 9C storefront requires both public values and fails with a localized retry state when live catalog access is unavailable; it never falls back to local Product data in production. Supplying only one value, an invalid URL, or a non-publishable key produces a clear configuration error when the Supabase client is requested.
+The live storefront and Builder require both public values and fail with localized retry states when Supabase access is unavailable; neither silently falls back to local production data. Supplying only one value, an invalid URL, or a non-publishable key produces a clear configuration error when the Supabase client is requested.
 
 ## CLI and migration workflow
 
@@ -70,7 +70,7 @@ Commit the generated type update with its migration. Never hand-edit generated d
 
 ## Implemented schema boundary
 
-Step 9A implements only the first Product and Media foundation:
+The implemented foundation includes Product, Media, and Bouquet Builder data:
 
 - Product identity, type, visibility, availability, merchandising flags, same-day eligibility, ordering, and archive timestamps.
 - VI/KO Product translations with unique `(product_id, locale)` identity.
@@ -78,18 +78,20 @@ Step 9A implements only the first Product and Media foundation:
 - Stable media records, localized alt text/captions, and ordered Product image placements.
 - Occasion and tone taxonomy with localized labels and Product relations.
 - Supabase Auth-linked `ADMIN` and `STAFF` application profiles.
+- Flower stems with availability, integer-VND per-stem pricing, VI/KO content, sort order, media, and lifecycle state.
+- Wrapping options and colour variants with VI/KO content, integer-VND modifiers, safe swatches, and explicit compatibility relations.
 
 Product price is derived from active variants; there is no duplicate mutable Product base-price column. Visibility and availability remain separate. A `PUBLISHED + UNAVAILABLE` Product may be visible while not purchasable.
 
 Publishing a Product requires Vietnamese copy, at least one active priced variant for Product-backed bouquet types, and one active public primary image. The database permits only one active primary image per Product.
 
-Cart, checkout, orders, payments, delivery, customers, custom requests, and Builder persistence are deliberately absent.
+Cart, checkout, orders, payments, delivery, customers, and custom requests are deliberately absent. Builder draft persistence remains browser-local and stores stable codes only; mutable names, availability, compatibility, media, and prices are always reloaded from Supabase.
 
 ## Auth and roles
 
 Supabase Auth owns identity. `public.admin_profiles` maps an Auth user to the application role.
 
-- Active `ADMIN` profiles can manage the Step 9B Product/Media slice. `STAFF` remains blocked until the owner approves exact permissions.
+- Active `ADMIN` profiles can manage Product/Media and Builder data. `STAFF` remains blocked until the owner approves exact permissions.
 - Only an active `ADMIN` profile can manage Admin profile rows.
 - Public or ordinary authenticated users cannot create a profile or promote themselves.
 - UI route guards are not authorization; RLS remains authoritative.
@@ -115,8 +117,8 @@ Use generated immutable object names. Recommended paths are:
 - `occasions/{occasionId}/{assetId}.{ext}`
 - `homepage/{sectionKey}/{assetId}.{ext}`
 - `gallery/{assetId}.{ext}`
-- `flowers/{flowerId}/{assetId}.{ext}`
-- `wrapping/{wrappingId}/{assetId}.{ext}`
+- `builder/flowers/{flowerId}/{assetId}.{ext}`
+- `builder/wrapping/{wrappingId}/{assetId}.{ext}` when wrapping photography is introduced
 - `custom-requests/{requestId}/{assetId}.{ext}` in `private-uploads`
 
 The original filename is metadata only and must never be the object identity. Public users cannot upload, update, or delete Storage objects. Private bucket objects are never public-read.
@@ -127,7 +129,7 @@ For `public-media`, public read means fetching an object from an exact known pub
 
 RLS is enabled on every Step 9A business table.
 
-- Anonymous/public reads expose only published, non-archived Products and taxonomy.
+- Anonymous/public reads expose only published, non-archived Products, taxonomy, flowers, wrapping options, colours, and active compatibility rows.
 - Product translations, active variants, relationships, and image placements are readable only through a public Product.
 - Public media metadata is readable only when active and attached to published content.
 - Anonymous insert, update, and delete are denied.
@@ -146,8 +148,11 @@ React components must not query Supabase directly.
 - `LocalCatalogRepository` and `src/data/content.ts` are retained only as a controlled development/import fixture; no production storefront path imports them.
 - `src/lib/supabase.ts` owns two lazy browser clients: the persisted Admin client and a non-persisted public client that cannot inherit an Admin session.
 - `src/features/catalog/data/storefrontCatalog.ts` owns the shared repository boundary and short request cache; React views consume it through `useCatalogData.ts`.
+- `BuilderRepository` and `SupabaseBuilderRepository` provide the equivalent boundary for the public Builder; `storefrontBuilder.ts` owns its request cache and `useBuilderData.ts` exposes localized loading, retry, error, and empty states.
 
 Public repository queries explicitly require `PUBLISHED`, non-archived Products, active variants/relationships/media, and a public primary image. Database RLS remains authoritative and the query predicates keep behavior obvious in code.
+
+Builder queries explicitly require `PUBLISHED`, non-archived flower/wrapping rows, active compatible colours, and active public media for flowers. An Admin session cannot widen these reads because the storefront uses the separate non-persisted public client.
 
 ## Controlled catalog import
 
@@ -159,6 +164,15 @@ npm run check:storefront-runtime
 ```
 
 The importer verifies the linked project reference, uses deterministic identities, uploads validated image files to immutable Storage paths, inserts only missing records, and publishes only records that remain `DRAFT`. It does not restore `HIDDEN` or `ARCHIVED` Products and does not overwrite existing Admin-managed content. The runtime check compares VI/KO copy, variants, taxonomy, media, and public visibility against the approved import fixture.
+
+The approved Builder fixture follows the same insert-only contract:
+
+```powershell
+npm run seed:live-builder
+npm run check:builder-runtime
+```
+
+It imports eight flowers, three wrapping options, five colour variants, their compatibility rows, VI/KO content, and the approved existing photography. Operational details are in `docs/BUILDER_DATA_ADMIN.md`.
 
 ## Verification
 
@@ -174,6 +188,9 @@ Then run:
 
 ```powershell
 npm run check:storefront-runtime
+npm run check:builder-pricing
+npm run check:builder-persistence
+npm run check:builder-runtime
 npm run typecheck
 npm run build
 npx supabase db lint --linked --level warning

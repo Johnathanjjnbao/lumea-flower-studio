@@ -36,6 +36,13 @@ export const ko = {
   },
   catalog: { eyebrow: "컬렉션", titleOne: "전하고 싶은 마음에", titleTwo: "어울리는 꽃.", intro: "오늘의 꽃이 지닌 색감과 자연스러운 아름다움을 살려 손으로 완성한 디자인입니다.", searchLabel: "컬렉션 검색", searchPlaceholder: "꽃 이름이나 용도로 검색...", clearSearch: "검색어 지우기", clear: "지우기", filter: "필터", closeFilter: "필터 닫기", filterAria: "상품 필터", refine: "컬렉션 세부 선택", occasion: "용도", budget: "예산", fulfillment: "주문 조건", sameDay: "당일 배송", viewResults: "디자인 {count}개 보기", resultFiltered: "개의 디자인을 찾았습니다", resultAll: "개의 디자인", activeAria: "적용 중인 필터", removeFilter: "{label} 필터 삭제", clearFilters: "필터 초기화", searchChip: "“{query}” 검색", loading: "컬렉션을 불러오는 중", errorEyebrow: "컬렉션을 불러올 수 없음", errorTitle: "지금은 컬렉션을 불러올 수 없습니다.", errorText: "잠시 후 다시 시도해 주세요.", retry: "다시 시도", emptyCollectionEyebrow: "플라워 테이블", emptyCollectionTitle: "컬렉션을 준비하고 있습니다.", emptyCollectionText: "스튜디오에서 새로운 디자인을 준비 중입니다. 잠시 후 다시 방문해 주세요.", emptyEyebrow: "검색 결과 없음", emptyTitle: "조건에 맞는 꽃다발이 없습니다.", emptyText: "용도나 예산 범위를 바꿔보세요.", budgetLabels: { "under-500": "500k 미만", "500-800": "500–800k", "800-1200": "800k–1.2m", "over-1200": "1.2m 초과" } },
   builder: {
+    loadingTitle: "플라워 테이블을 준비하고 있습니다…",
+    loadingText: "현재 선택 가능한 꽃과 포장 방식을 불러오고 있습니다.",
+    errorTitle: "지금은 플라워 테이블을 열 수 없습니다.",
+    errorText: "꽃다발 만들기 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    emptyDataTitle: "플라워 테이블을 업데이트하고 있습니다.",
+    emptyDataText: "스튜디오에서 새로운 선택지를 준비 중입니다. 잠시 후 다시 방문해 주세요.",
+    retry: "다시 시도",
     eyebrow: "나만의 꽃다발 · 스튜디오 구성",
     titleOne: "당신의 감각으로",
     titleTwo: "꽃다발을 완성해 보세요.",

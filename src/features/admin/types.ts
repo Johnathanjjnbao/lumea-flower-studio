@@ -94,6 +94,94 @@ export interface AdminProductFilters {
   productType?: ProductType | "ALL";
 }
 
+export interface LocalizedBuilderContent {
+  name: string;
+  description: string;
+}
+
+export interface AdminFlowerImage {
+  mediaAssetId: string;
+  url: string;
+  storagePath: string;
+  viAlt: string;
+  koAlt: string;
+}
+
+export interface AdminFlowerDraft {
+  id?: string;
+  stableCode: string;
+  visibility: VisibilityStatus;
+  availability: AvailabilityStatus;
+  pricePerStem: number | null;
+  seasonalNoteRequired: boolean;
+  sortOrder: number;
+  vi: LocalizedBuilderContent;
+  ko: LocalizedBuilderContent;
+  image: AdminFlowerImage | null;
+  updatedAt?: string;
+}
+
+export interface AdminFlowerListItem {
+  id: string;
+  stableCode: string;
+  name: string;
+  visibility: VisibilityStatus;
+  availability: AvailabilityStatus;
+  pricePerStem: number;
+  thumbnailUrl: string | null;
+  updatedAt: string;
+}
+
+export interface AdminWrappingOptionDraft {
+  id?: string;
+  stableCode: string;
+  visibility: VisibilityStatus;
+  priceModifier: number | null;
+  sortOrder: number;
+  vi: LocalizedBuilderContent;
+  ko: LocalizedBuilderContent;
+  compatibleVariantIds: string[];
+  updatedAt?: string;
+}
+
+export interface AdminWrappingVariantDraft {
+  id?: string;
+  stableCode: string;
+  visibility: VisibilityStatus;
+  priceModifier: number | null;
+  swatch: string;
+  sortOrder: number;
+  vi: LocalizedBuilderContent;
+  ko: LocalizedBuilderContent;
+  updatedAt?: string;
+}
+
+export function emptyLocalizedBuilderContent(): LocalizedBuilderContent {
+  return { name: "", description: "" };
+}
+
+export function emptyAdminFlower(): AdminFlowerDraft {
+  return {
+    stableCode: "",
+    visibility: "DRAFT",
+    availability: "AVAILABLE",
+    pricePerStem: null,
+    seasonalNoteRequired: false,
+    sortOrder: 0,
+    vi: emptyLocalizedBuilderContent(),
+    ko: emptyLocalizedBuilderContent(),
+    image: null,
+  };
+}
+
+export function emptyAdminWrappingOption(): AdminWrappingOptionDraft {
+  return { stableCode: "", visibility: "DRAFT", priceModifier: 0, sortOrder: 0, vi: emptyLocalizedBuilderContent(), ko: emptyLocalizedBuilderContent(), compatibleVariantIds: [] };
+}
+
+export function emptyAdminWrappingVariant(): AdminWrappingVariantDraft {
+  return { stableCode: "", visibility: "DRAFT", priceModifier: 0, swatch: "#EEE8DE", sortOrder: 0, vi: emptyLocalizedBuilderContent(), ko: emptyLocalizedBuilderContent() };
+}
+
 export function emptyLocalizedContent(): LocalizedProductContent {
   return {
     name: "",

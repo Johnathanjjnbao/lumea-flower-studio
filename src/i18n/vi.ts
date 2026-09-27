@@ -88,6 +88,13 @@ export const vi = {
     eyebrow: "The collection", titleOne: "Hoa cho từng điều", titleTwo: "bạn muốn gửi trao.", intro: "Những thiết kế hiện có, được kết bằng tay theo sắc độ và vẻ đẹp tự nhiên của hoa trong ngày.", searchLabel: "Tìm trong bộ sưu tập", searchPlaceholder: "Tìm theo tên hoa, dịp tặng...", clearSearch: "Xóa tìm kiếm", clear: "Xóa", filter: "Bộ lọc", closeFilter: "Đóng bộ lọc", filterAria: "Bộ lọc sản phẩm", refine: "Refine the collection", occasion: "Dịp tặng", budget: "Ngân sách", fulfillment: "Đáp ứng", sameDay: "Giao trong ngày", viewResults: "Xem {count} thiết kế", resultFiltered: "thiết kế phù hợp", resultAll: "thiết kế trong bộ sưu tập", activeAria: "Bộ lọc đang áp dụng", removeFilter: "Xóa bộ lọc {label}", clearFilters: "Xóa bộ lọc", searchChip: "Tìm “{query}”", loading: "Đang tải bộ sưu tập", errorEyebrow: "Collection unavailable", errorTitle: "Không thể tải bộ sưu tập lúc này.", errorText: "Vui lòng thử lại sau ít phút.", retry: "Thử lại", emptyCollectionEyebrow: "The flower table", emptyCollectionTitle: "Bộ sưu tập đang được cập nhật.", emptyCollectionText: "Studio đang chuẩn bị những thiết kế mới. Vui lòng quay lại sau.", emptyEyebrow: "No arrangement found", emptyTitle: "Chưa tìm thấy bó hoa phù hợp.", emptyText: "Thử thay đổi dịp tặng hoặc khoảng ngân sách.", budgetLabels: { "under-500": "Dưới 500k", "500-800": "500–800k", "800-1200": "800k–1.2m", "over-1200": "Trên 1.2m" },
   },
   builder: {
+    loadingTitle: "Đang chuẩn bị bàn hoa…",
+    loadingText: "Luméa đang tải những cành hoa và cách gói hiện có.",
+    errorTitle: "Chưa thể mở bàn hoa lúc này.",
+    errorText: "Dữ liệu tạo bó hoa chưa tải được. Vui lòng thử lại sau ít phút.",
+    emptyDataTitle: "Bàn hoa đang được cập nhật.",
+    emptyDataText: "Studio đang chuẩn bị lựa chọn mới. Vui lòng quay lại sau.",
+    retry: "Thử lại",
     eyebrow: "Create your bouquet · Studio composition",
     titleOne: "Tự tạo một bó hoa",
     titleTwo: "mang dấu ấn của bạn.",

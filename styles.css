@@ -3475,6 +3475,11 @@ body.catalog-filter-open {
   font-family: var(--sans);
 }
 
+.admin-app {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .admin-app h1,
 .admin-login h1,
 .admin-gate h1 {
@@ -3729,7 +3734,7 @@ body.catalog-filter-open {
   gap: 0.9rem;
 }
 
-.admin-product-table-wrap { overflow-x: auto; border: 1px solid var(--line); background: #fbf8f3; }
+.admin-product-table-wrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); background: #fbf8f3; contain: inline-size; }
 .admin-product-table { width: 100%; min-width: 800px; border-collapse: collapse; }
 .admin-product-table th { padding: 0.85rem 1rem; border-bottom: 1px solid var(--line-strong); color: var(--ink-soft); font-size: 0.58rem; letter-spacing: 0.08em; text-align: left; text-transform: uppercase; }
 .admin-product-table td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--line); font-size: 0.69rem; vertical-align: middle; }
@@ -3811,7 +3816,78 @@ body.catalog-filter-open {
 .admin-media-card__actions button:disabled { opacity: 0.3; cursor: not-allowed; }
 .admin-media-card__actions .admin-danger-link { margin-left: auto; color: #913943; }
 
-@media (max-width: 900px) {
+.admin-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.7rem;
+}
+
+.admin-builder-group + .admin-builder-group {
+  margin-top: clamp(3rem, 6vw, 5rem);
+}
+
+.admin-builder-group > header {
+  margin-bottom: 1.25rem;
+}
+
+.admin-builder-group h2 {
+  margin-top: 0.45rem;
+}
+
+.admin-builder-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.admin-builder-card {
+  display: grid;
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  background: #fbf8f3;
+  align-content: space-between;
+  gap: 1.25rem;
+}
+
+.admin-builder-card h3 {
+  margin-top: 0.8rem;
+  font-size: 1.45rem;
+}
+
+.admin-builder-card p {
+  margin-top: 0.55rem;
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+  line-height: 1.55;
+}
+
+.admin-builder-card dl {
+  display: grid;
+  padding-block: 0.75rem;
+  border-block: 1px solid var(--line);
+  gap: 0.4rem;
+}
+
+.admin-builder-card dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.64rem;
+}
+
+.admin-builder-card dd { font-weight: 750; }
+.admin-builder-color-title { display: flex; align-items: flex-start; gap: 0.75rem; }
+.admin-builder-color-title > i { width: 2.4rem; height: 2.4rem; flex: 0 0 auto; border: 1px solid var(--line-strong); border-radius: 50%; }
+.admin-builder-compatibility { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.admin-builder-image { display: grid; grid-template-columns: minmax(10rem, 17rem) minmax(0, 1fr); align-items: end; gap: 1rem; }
+.admin-builder-image img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.admin-builder-image p { overflow-wrap: anywhere; color: var(--ink-soft); font-size: 0.6rem; }
+.admin-color-input { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: 0.55rem; }
+.admin-color-input input[type="color"] { padding: 0.2rem; cursor: pointer; }
+
+@media (max-width: 1100px) {
   .admin-header { grid-template-columns: 1fr auto; }
   .admin-menu-button { display: inline-flex; min-height: 2.6rem; padding: 0.4rem 0.75rem; border: 1px solid var(--line-strong); background: transparent; align-items: center; font-size: 0.65rem; font-weight: 750; }
   .admin-nav { position: absolute; top: 100%; right: 0; left: 0; display: none; padding: 1rem; border-bottom: 1px solid var(--line-strong); background: #f9f5ef; align-items: stretch; flex-direction: column; gap: 0; }
@@ -3825,6 +3901,7 @@ body.catalog-filter-open {
   .admin-search { grid-column: 1 / -1; }
   .admin-editor-layout { grid-template-columns: 1fr; }
   .admin-publish-panel { position: static; }
+  .admin-builder-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 620px) {
@@ -3850,6 +3927,11 @@ body.catalog-filter-open {
   .admin-editor-section { padding: 1rem; }
   .admin-editor-section > header { grid-template-columns: 1.5rem 1fr; }
   .admin-product-table-wrap { margin-inline: -1rem; border-right: 0; border-left: 0; }
+  .admin-heading-actions,
+  .admin-builder-card-grid,
+  .admin-builder-compatibility,
+  .admin-builder-image { grid-template-columns: 1fr; }
+  .admin-heading-actions { display: grid; width: 100%; justify-content: stretch; }
 }
 
 /* UX foundation pass: persistent wayfinding and commerce clarity. */
@@ -5409,6 +5491,32 @@ html[lang="ko"] .footer-wordmark {
   min-height: 70vh;
   background:
     linear-gradient(180deg, var(--surface) 0%, #f5ebe1 44%, var(--ivory) 100%);
+}
+
+.builder-data-state {
+  display: grid;
+  min-height: 70vh;
+  padding-block: clamp(5rem, 10vw, 9rem);
+  place-items: center;
+  text-align: center;
+}
+
+.builder-data-state .section-shell {
+  display: grid;
+  max-width: 48rem;
+  justify-items: center;
+  gap: 1.25rem;
+}
+
+.builder-data-state h1 {
+  font-size: clamp(2.8rem, 6vw, 5rem);
+}
+
+.builder-data-state p:not(.eyebrow) {
+  width: min(100%, 36rem);
+  max-width: 36rem;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
 }
 
 .builder-intro {
