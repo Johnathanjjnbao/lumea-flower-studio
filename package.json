@@ -8,11 +8,13 @@
     "build": "tsc -b && vite build",
     "check:builder-persistence": "node --experimental-strip-types scripts/check-builder-persistence.mjs",
     "check:builder-pricing": "node --experimental-strip-types scripts/check-builder-pricing.mjs",
+    "check:supabase-foundation": "node scripts/check-supabase-foundation.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
+    "@supabase/supabase-js": "^2.117.2",
     "gsap": "^3.13.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

@@ -1,0 +1,2 @@
+-- Step 9A intentionally ships no catalog seed data.
+-- Add development-only records here in a later scoped migration/import task.
