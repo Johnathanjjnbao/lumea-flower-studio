@@ -9,6 +9,8 @@
     "check:builder-persistence": "node --experimental-strip-types scripts/check-builder-persistence.mjs",
     "check:builder-pricing": "node --experimental-strip-types scripts/check-builder-pricing.mjs",
     "check:supabase-foundation": "node scripts/check-supabase-foundation.mjs",
+    "check:admin-foundation": "node scripts/check-admin-foundation.mjs",
+    "check:admin-runtime": "node scripts/check-admin-runtime.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b"
   },

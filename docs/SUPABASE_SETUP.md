@@ -1,6 +1,6 @@
 # Luméa Supabase Setup
 
-This guide is the operational reference for the Step 9A Supabase foundation. It is for engineers working on the Luméa repository. It does not cover Admin UI, cart, checkout, orders, or Builder persistence.
+This guide is the operational reference for the Step 9A Supabase foundation. Step 9B Product/Media operations are documented in `docs/ADMIN_PRODUCT_MEDIA.md`. Cart, checkout, orders, and Builder persistence remain out of scope.
 
 ## Project identity
 
@@ -89,14 +89,14 @@ Cart, checkout, orders, payments, delivery, customers, custom requests, and Buil
 
 Supabase Auth owns identity. `public.admin_profiles` maps an Auth user to the application role.
 
-- Active `ADMIN` and `STAFF` profiles can manage the Step 9A catalog and media tables.
+- Active `ADMIN` profiles can manage the Step 9B Product/Media slice. `STAFF` remains blocked until the owner approves exact permissions.
 - Only an active `ADMIN` profile can manage Admin profile rows.
 - Public or ordinary authenticated users cannot create a profile or promote themselves.
 - UI route guards are not authorization; RLS remains authoritative.
 
 No Auth user or fake Admin is created by migration. Before Step 9B runtime testing, the owner must create the first Auth user through Supabase Auth. A trusted database owner then adds the initial `ADMIN` profile. Do not insert directly into `auth.users` and do not bootstrap the first role from the public client.
 
-Detailed STAFF permissions remain an owner decision. The current foundation gives active STAFF catalog/media access only; staff and Admin-profile management remains ADMIN-only.
+Detailed STAFF permissions remain an owner decision. The Step 9B forward migration narrows catalog/media mutation to ADMIN-only; staff and Admin-profile management also remain ADMIN-only.
 
 ## Storage strategy
 

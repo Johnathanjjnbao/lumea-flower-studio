@@ -606,6 +606,10 @@ export type Database = {
         Args: { target_product_id: string }
         Returns: string[]
       }
+      set_product_primary_image: {
+        Args: { target_image_id: string; target_product_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       admin_role: "ADMIN" | "STAFF"
