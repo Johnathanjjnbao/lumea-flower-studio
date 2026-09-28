@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       admin_profiles: {
@@ -134,6 +159,283 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      homepage_feature_item_translations: {
+        Row: {
+          body: string | null
+          created_at: string
+          homepage_feature_item_id: string
+          label: string | null
+          locale: Database["public"]["Enums"]["locale_code"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          homepage_feature_item_id: string
+          label?: string | null
+          locale: Database["public"]["Enums"]["locale_code"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          homepage_feature_item_id?: string
+          label?: string | null
+          locale?: Database["public"]["Enums"]["locale_code"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homepage_feature_item_translation_homepage_feature_item_id_fkey"
+            columns: ["homepage_feature_item_id"]
+            isOneToOne: false
+            referencedRelation: "homepage_feature_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homepage_feature_items: {
+        Row: {
+          active: boolean
+          created_at: string
+          homepage_section_id: string
+          id: string
+          item_key: string
+          media_asset_id: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          homepage_section_id: string
+          id?: string
+          item_key: string
+          media_asset_id?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          homepage_section_id?: string
+          id?: string
+          item_key?: string
+          media_asset_id?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homepage_feature_items_homepage_section_id_fkey"
+            columns: ["homepage_section_id"]
+            isOneToOne: false
+            referencedRelation: "homepage_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homepage_feature_items_media_asset_id_fkey"
+            columns: ["media_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homepage_product_curations: {
+        Row: {
+          active: boolean
+          created_at: string
+          homepage_section_id: string
+          product_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          homepage_section_id: string
+          product_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          homepage_section_id?: string
+          product_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homepage_product_curations_homepage_section_id_fkey"
+            columns: ["homepage_section_id"]
+            isOneToOne: false
+            referencedRelation: "homepage_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homepage_product_curations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homepage_section_media: {
+        Row: {
+          active: boolean
+          created_at: string
+          homepage_section_id: string
+          id: string
+          media_asset_id: string
+          slot_key: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          homepage_section_id: string
+          id?: string
+          media_asset_id: string
+          slot_key: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          homepage_section_id?: string
+          id?: string
+          media_asset_id?: string
+          slot_key?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homepage_section_media_homepage_section_id_fkey"
+            columns: ["homepage_section_id"]
+            isOneToOne: false
+            referencedRelation: "homepage_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homepage_section_media_media_asset_id_fkey"
+            columns: ["media_asset_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homepage_section_translations: {
+        Row: {
+          body: string | null
+          created_at: string
+          detail_one_label: string | null
+          detail_one_value: string | null
+          detail_two_label: string | null
+          detail_two_value: string | null
+          eyebrow: string | null
+          homepage_section_id: string
+          locale: Database["public"]["Enums"]["locale_code"]
+          note: string | null
+          primary_cta_label: string | null
+          secondary_body: string | null
+          secondary_cta_label: string | null
+          secondary_heading: string | null
+          title_line_one: string
+          title_line_two: string | null
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          detail_one_label?: string | null
+          detail_one_value?: string | null
+          detail_two_label?: string | null
+          detail_two_value?: string | null
+          eyebrow?: string | null
+          homepage_section_id: string
+          locale: Database["public"]["Enums"]["locale_code"]
+          note?: string | null
+          primary_cta_label?: string | null
+          secondary_body?: string | null
+          secondary_cta_label?: string | null
+          secondary_heading?: string | null
+          title_line_one: string
+          title_line_two?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          detail_one_label?: string | null
+          detail_one_value?: string | null
+          detail_two_label?: string | null
+          detail_two_value?: string | null
+          eyebrow?: string | null
+          homepage_section_id?: string
+          locale?: Database["public"]["Enums"]["locale_code"]
+          note?: string | null
+          primary_cta_label?: string | null
+          secondary_body?: string | null
+          secondary_cta_label?: string | null
+          secondary_heading?: string | null
+          title_line_one?: string
+          title_line_two?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homepage_section_translations_homepage_section_id_fkey"
+            columns: ["homepage_section_id"]
+            isOneToOne: false
+            referencedRelation: "homepage_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homepage_sections: {
+        Row: {
+          created_at: string
+          display_order: number
+          enabled: boolean
+          id: string
+          primary_cta_target: string | null
+          secondary_cta_target: string | null
+          section_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order: number
+          enabled?: boolean
+          id?: string
+          primary_cta_target?: string | null
+          secondary_cta_target?: string | null
+          section_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          enabled?: boolean
+          id?: string
+          primary_cta_target?: string | null
+          secondary_cta_target?: string | null
+          section_key?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       media_asset_translations: {
         Row: {
@@ -913,6 +1215,14 @@ export type Database = {
         Args: { target_product_id: string }
         Returns: string[]
       }
+      reorder_homepage_section_media: {
+        Args: { target_media_ids: string[]; target_section_id: string }
+        Returns: undefined
+      }
+      replace_homepage_product_curations: {
+        Args: { target_product_ids: string[]; target_section_id: string }
+        Returns: undefined
+      }
       set_product_primary_image: {
         Args: { target_image_id: string; target_product_id: string }
         Returns: undefined
@@ -1060,6 +1370,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       admin_role: ["ADMIN", "STAFF"],

@@ -10,6 +10,7 @@ Admin routes are Vietnamese-only:
 
 - `/admin/login`
 - `/admin`
+- `/admin/homepage`
 - `/admin/products`
 - `/admin/products/new`
 - `/admin/products/:id`
@@ -28,6 +29,8 @@ The first Admin must be bootstrapped by the owner:
    ```
 
 Do not share the password, access token, database password, `service_role`, or secret key in chat or source control.
+
+Homepage copy, media, Gallery, and Best Sellers operations are documented in `docs/HOMEPAGE_CONTENT_ADMIN.md`.
 
 ## Product workflow
 

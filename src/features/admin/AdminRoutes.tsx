@@ -11,6 +11,7 @@ import { AdminBuilderFlowerEditorPage } from "./pages/AdminBuilderFlowerEditorPa
 import { AdminBuilderFlowersPage } from "./pages/AdminBuilderFlowersPage";
 import { AdminBuilderWrappingEditorPage } from "./pages/AdminBuilderWrappingEditorPage";
 import { AdminBuilderWrappingsPage } from "./pages/AdminBuilderWrappingsPage";
+import { AdminHomepagePage } from "./pages/AdminHomepagePage";
 
 export default function AdminRoutes() {
   return (
@@ -19,6 +20,7 @@ export default function AdminRoutes() {
         <Route path="login" element={<AdminLoginPage />} />
         <Route element={<AdminGuard><AdminShell /></AdminGuard>}>
           <Route index element={<AdminDashboardPage />} />
+          <Route path="homepage" element={<AdminHomepagePage />} />
           <Route path="products" element={<AdminProductsPage />} />
           <Route path="products/new" element={<AdminProductEditorPage />} />
           <Route path="products/:id" element={<AdminProductEditorPage />} />

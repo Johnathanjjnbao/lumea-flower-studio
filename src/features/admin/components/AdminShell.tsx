@@ -17,6 +17,7 @@ export function AdminShell() {
         </button>
         <nav id="admin-navigation" className="admin-nav" data-open={menuOpen} aria-label="Điều hướng quản trị">
           <NavLink to="/admin" end onClick={() => setMenuOpen(false)}>Tổng quan</NavLink>
+          <NavLink to="/admin/homepage" onClick={() => setMenuOpen(false)}>Homepage</NavLink>
           <NavLink to="/admin/products" onClick={() => setMenuOpen(false)}>Sản phẩm</NavLink>
           <NavLink to="/admin/builder/flowers" onClick={() => setMenuOpen(false)}>Hoa Builder</NavLink>
           <NavLink to="/admin/builder/wrappings" onClick={() => setMenuOpen(false)}>Giấy gói</NavLink>

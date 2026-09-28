@@ -1,43 +1,50 @@
 import { Link } from "react-router-dom";
 import { AssetImage } from "../components/AssetImage";
+import { ManagedImage } from "../components/ManagedImage";
+import { resolveHomepageTarget } from "../features/homepage/cta";
+import { mediaBySlot, type HomepageSection } from "../features/homepage/types";
 import { useI18n } from "../i18n";
 
-export function SameDay() {
+export function SameDay({ section }: { section: HomepageSection }) {
   const { t, path } = useI18n();
+  const copy = section.copy;
+  const image = mediaBySlot(section, "same-day-main");
   return (
     <section className="same-day section-space section-shell" id="same-day" aria-labelledby="same-day-title">
       <div className="same-day-copy">
-        <p className="eyebrow"><span aria-hidden="true">05</span>{t.home.sameDay.eyebrow}</p>
-        <h2 id="same-day-title">{t.home.sameDay.titleOne}<br />{t.home.sameDay.titleTwo}</h2>
-        <p>{t.home.sameDay.intro}</p>
+        <p className="eyebrow"><span aria-hidden="true">05</span>{copy.eyebrow}</p>
+        <h2 id="same-day-title">{copy.titleOne}<br />{copy.titleTwo}</h2>
+        <p>{copy.body}</p>
         <div className="same-day-note">
           <span className="status-dot" aria-hidden="true" />
-          <span>{t.home.sameDay.note}</span>
+          <span>{copy.note}</span>
         </div>
-        <Link className="button button--dark" to={path("/flowers?sameDay=true")}>{t.home.sameDay.cta}</Link>
+        <Link className="button button--dark" to={resolveHomepageTarget(section.primaryCtaTarget, path)}>{copy.primaryCtaLabel}</Link>
       </div>
       <figure className="same-day-image">
-        <AssetImage asset="deliveryReady" alt={t.home.sameDay.imageAlt} loading="lazy" />
-        <figcaption>{t.home.sameDay.caption}</figcaption>
+        {image && <ManagedImage src={image.url} alt={image.altText} loading="lazy" />}
+        {image?.caption && <figcaption>{image.caption}</figcaption>}
       </figure>
     </section>
   );
 }
 
-export function FloristChoice() {
-  const { t } = useI18n();
+export function FloristChoice({ section }: { section: HomepageSection }) {
+  const { t, path } = useI18n();
+  const copy = section.copy;
+  const image = mediaBySlot(section, "florist-main");
   return (
     <section className="florist-choice section-space" id="florist-choice" aria-labelledby="florist-title">
       <div className="section-shell florist-layout">
         <figure className="florist-image">
-          <AssetImage asset="studioTable" alt={t.home.florist.imageAlt} loading="lazy" />
-          <figcaption>{t.home.florist.imageCaption}</figcaption>
+          {image && <ManagedImage src={image.url} alt={image.altText} loading="lazy" />}
+          {image?.caption && <figcaption>{image.caption}</figcaption>}
         </figure>
         <div className="florist-copy">
-          <p className="eyebrow eyebrow--light"><span aria-hidden="true">06</span>{t.home.florist.eyebrow}</p>
+          <p className="eyebrow eyebrow--light"><span aria-hidden="true">06</span>{copy.eyebrow}</p>
           <span className="botanical-hairline botanical-hairline--light" aria-hidden="true" />
-          <h2 id="florist-title">{t.home.florist.titleOne}<br /><em>{t.home.florist.titleTwo}</em></h2>
-          <p className="florist-intro">{t.home.florist.intro}</p>
+          <h2 id="florist-title">{copy.titleOne}<br /><em>{copy.titleTwo}</em></h2>
+          <p className="florist-intro">{copy.body}</p>
           <div className="florist-brief" aria-label={t.home.florist.briefAria}>
             <div className="florist-brief__head"><span>{t.home.florist.brief}</span><span>{t.home.florist.interprets}</span></div>
             <dl className="florist-brief__grid">
@@ -58,27 +65,29 @@ export function FloristChoice() {
             </dl>
             <p className="florist-brief__note">{t.home.florist.note}</p>
           </div>
-          <a className="button button--light" href="#florist-choice">{t.home.florist.cta}</a>
+          <a className="button button--light" href={resolveHomepageTarget(section.primaryCtaTarget, path)}>{copy.primaryCtaLabel}</a>
         </div>
       </div>
     </section>
   );
 }
 
-export function CustomBouquet() {
+export function CustomBouquet({ section }: { section: HomepageSection }) {
   const { t, path } = useI18n();
+  const copy = section.copy;
+  const image = mediaBySlot(section, "custom-main");
 
   return (
     <section className="custom section-space section-shell" id="custom" aria-labelledby="custom-title">
       <figure className="custom-image">
-        <AssetImage asset="studioFlorist" alt={t.home.custom.imageAlt} loading="lazy" />
-        <figcaption>{t.home.custom.imageCaption}</figcaption>
+        {image && <ManagedImage src={image.url} alt={image.altText} loading="lazy" />}
+        {image?.caption && <figcaption>{image.caption}</figcaption>}
       </figure>
       <div className="custom-copy">
-        <p className="eyebrow"><span aria-hidden="true">07</span>{t.home.custom.eyebrow}</p>
+        <p className="eyebrow"><span aria-hidden="true">07</span>{copy.eyebrow}</p>
         <span className="botanical-hairline" aria-hidden="true" />
-        <h2 id="custom-title">{t.home.custom.titleOne}<br />{t.home.custom.titleTwo}</h2>
-        <p className="custom-intro">{t.home.custom.intro}</p>
+        <h2 id="custom-title">{copy.titleOne}<br />{copy.titleTwo}</h2>
+        <p className="custom-intro">{copy.body}</p>
 
         <div className="bouquet-builder" aria-label={t.home.custom.builderAria}>
           <div className="bouquet-builder__head">
@@ -107,16 +116,16 @@ export function CustomBouquet() {
               <span><i className="wrap-swatch wrap-swatch--blush" />{t.home.custom.wrappingNames[2]}</span>
             </div>
           </div>
-          <Link className="button button--solid" to={path("/create-bouquet")}>{t.home.custom.cta}</Link>
+          <Link className="button button--solid" to={resolveHomepageTarget(section.primaryCtaTarget, path)}>{copy.primaryCtaLabel}</Link>
         </div>
 
         <aside className="custom-assist">
           <div>
             <p className="custom-path__label">{t.home.custom.assistLabel}</p>
-            <h3>{t.home.custom.assistTitle}</h3>
-            <p>{t.home.custom.assistText}</p>
+            <h3>{copy.secondaryHeading}</h3>
+            <p>{copy.secondaryBody}</p>
           </div>
-          <a className="text-link" href="#florist-choice">{t.home.custom.assistCta}</a>
+          <a className="text-link" href={resolveHomepageTarget(section.secondaryCtaTarget, path)}>{copy.secondaryCtaLabel}</a>
         </aside>
       </div>
     </section>

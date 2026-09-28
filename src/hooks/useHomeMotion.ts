@@ -107,7 +107,7 @@ function initFallbackMotion(root: HTMLElement) {
   };
 }
 
-export function useHomeMotion(rootRef: RefObject<HTMLElement | null>) {
+export function useHomeMotion(rootRef: RefObject<HTMLElement | null>, refreshKey = "") {
   useGSAP(() => {
     const root = rootRef.current;
     if (!root) return;
@@ -413,5 +413,5 @@ export function useHomeMotion(rootRef: RefObject<HTMLElement | null>) {
         fallbackCleanup?.();
       };
     }
-  }, { scope: rootRef });
+  }, { scope: rootRef, dependencies: [refreshKey], revertOnUpdate: true });
 }

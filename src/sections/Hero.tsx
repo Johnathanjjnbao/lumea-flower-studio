@@ -1,37 +1,42 @@
-import { AssetImage } from "../components/AssetImage";
+import { ManagedImage } from "../components/ManagedImage";
 import { siteConfig } from "../config/siteConfig";
+import { resolveHomepageTarget } from "../features/homepage/cta";
+import { mediaBySlot, type HomepageSection } from "../features/homepage/types";
 import { useI18n } from "../i18n";
 
-export function Hero() {
-  const { t } = useI18n();
+export function Hero({ section }: { section: HomepageSection }) {
+  const { t, path } = useI18n();
+  const mainImage = mediaBySlot(section, "hero-main");
+  const detailImage = mediaBySlot(section, "hero-detail");
+  const copy = section.copy;
   return (
     <section className="hero section-shell" id="top" aria-labelledby="hero-title">
       <div className="hero-copy">
         <p className="eyebrow hero-brand-kicker">
           <span className="brand-monogram" aria-hidden="true">{siteConfig.monogram}</span>
-          <strong>{t.home.hero.kicker}</strong>
+          <strong>{copy.eyebrow}</strong>
           <small>{t.brand.city}</small>
         </p>
-        <h1 id="hero-title">{t.home.hero.titleOne}<br />{t.home.hero.titleTwo}</h1>
-        <p className="hero-intro">{t.home.hero.intro}</p>
+        <h1 id="hero-title">{copy.titleOne}<br />{copy.titleTwo}</h1>
+        <p className="hero-intro">{copy.body}</p>
         <div className="hero-actions">
-          <a className="button button--solid" href="#best-sellers">{t.home.hero.collectionCta}</a>
-          <a className="button button--outline" href="#custom">{t.home.hero.customCta}</a>
+          <a className="button button--solid" href={resolveHomepageTarget(section.primaryCtaTarget, path)}>{copy.primaryCtaLabel}</a>
+          <a className="button button--outline" href={resolveHomepageTarget(section.secondaryCtaTarget, path)}>{copy.secondaryCtaLabel}</a>
         </div>
         <div className="hero-commerce">
           <span className="botanical-hairline" aria-hidden="true" />
-          <p>{t.home.hero.commerceBefore} <strong>450.000đ</strong> · {t.home.hero.commerceAfter}</p>
+          <p>{copy.detailOneLabel} <strong>{copy.detailOneValue}</strong> · {copy.detailTwoLabel}</p>
         </div>
       </div>
 
-      <div className="hero-media" aria-label={t.home.hero.mediaAria}>
+      <div className="hero-media" aria-label={mainImage?.altText || t.home.hero.mediaAria}>
         <figure className="hero-image hero-image--main">
-          <AssetImage asset="heroMain" alt={t.home.hero.mainAlt} fetchPriority="high" />
+          {mainImage && <ManagedImage src={mainImage.url} alt={mainImage.altText} fetchPriority="high" />}
         </figure>
         <figure className="hero-image hero-image--detail">
-          <AssetImage asset="heroDetail" alt={t.home.hero.detailAlt} />
+          {detailImage && <ManagedImage src={detailImage.url} alt={detailImage.altText} />}
         </figure>
-        <p className="hero-caption"><span>01</span> {t.home.hero.captionOne}<br />{t.home.hero.captionTwo}</p>
+        <p className="hero-caption"><span>01</span> {mainImage?.caption}</p>
       </div>
     </section>
   );

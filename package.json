@@ -13,8 +13,10 @@
     "check:admin-runtime": "node scripts/check-admin-runtime.mjs",
     "check:storefront-runtime": "node scripts/check-storefront-runtime.mjs",
     "check:builder-runtime": "node scripts/check-builder-runtime.mjs",
+    "check:homepage-runtime": "node scripts/check-homepage-runtime.mjs",
     "seed:live-catalog": "node scripts/seed-live-catalog.mjs",
     "seed:live-builder": "node scripts/seed-live-builder.mjs",
+    "seed:live-homepage": "node scripts/seed-live-homepage.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b"
   },

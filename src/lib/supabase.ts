@@ -43,6 +43,7 @@ export function getPublicSupabaseClient() {
           autoRefreshToken: false,
           detectSessionInUrl: false,
           persistSession: false,
+          storageKey: "lumea-public-storefront",
         },
       })
     : null;

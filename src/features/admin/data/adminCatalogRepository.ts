@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseClient } from "../../../lib/supabase";
 import type { Database } from "../../../types/database.generated";
-import { makeStableCode, validateProductImage } from "../productValidation";
+import { makeStableCode } from "../productValidation";
+import { discardUploadedPublicMediaAsset, updatePublicMediaCopy, uploadPublicMediaAsset } from "./adminMediaService";
 import type {
   AdminProductDraft,
   AdminProductFilters,
@@ -307,40 +308,18 @@ export class SupabaseAdminCatalogRepository implements AdminCatalogRepository {
 
   async uploadProductImage(product: AdminProductDraft, file: File, viAlt: string, koAlt: string) {
     if (!product.id) throw new Error("Hãy lưu sản phẩm nháp trước khi tải ảnh.");
-    const extension = validateProductImage(file);
-    const assetId = crypto.randomUUID();
-    const path = `products/${product.id}/${assetId}.${extension}`;
-    const upload = await this.client.storage.from("public-media").upload(path, file, { contentType: file.type, upsert: false });
-    if (upload.error) fail("Không thể tải ảnh lên Storage", upload.error);
-
-    let mediaInserted = false;
+    const uploaded = await uploadPublicMediaAsset(this.client, file, {
+      pathPrefix: `products/${product.id}`,
+      viAlt,
+      koAlt,
+      fallbackVi: product.vi.name.trim() || "Ảnh sản phẩm Luméa",
+      fallbackKo: product.ko.name.trim() || "Luméa 상품 이미지",
+    });
     try {
-      const profile = await this.client.rpc("current_admin_profile_id");
-      if (profile.error || !profile.data) fail("Không thể xác định hồ sơ Admin", profile.error);
-      const media = await this.client.from("media_assets").insert({
-        id: assetId,
-        storage_bucket: "public-media",
-        storage_path: path,
-        access: "PUBLIC",
-        mime_type: file.type,
-        byte_size: file.size,
-        uploaded_by: profile.data,
-      }).select("id").single();
-      if (media.error) fail("Không thể ghi metadata ảnh", media.error);
-      mediaInserted = true;
-
-      const fallbackVi = product.vi.name.trim() || "Ảnh sản phẩm Luméa";
-      const fallbackKo = product.ko.name.trim() || "Luméa 상품 이미지";
-      const translations = await this.client.from("media_asset_translations").insert([
-        { media_asset_id: assetId, locale: "vi", alt_text: viAlt.trim() || fallbackVi },
-        { media_asset_id: assetId, locale: "ko", alt_text: koAlt.trim() || fallbackKo },
-      ]);
-      if (translations.error) fail("Không thể lưu alt text ảnh", translations.error);
-
       const isFirst = !product.images.some((image) => image.active);
       const placement = await this.client.from("product_images").insert({
         product_id: product.id,
-        media_asset_id: assetId,
+        media_asset_id: uploaded.mediaAssetId,
         role: isFirst ? "PRIMARY" : "GALLERY",
         active: true,
         sort_order: product.images.length,
@@ -349,18 +328,17 @@ export class SupabaseAdminCatalogRepository implements AdminCatalogRepository {
       if (!placement.data) throw new Error("Database không trả về Image placement sau khi tạo.");
       return {
         id: placement.data.id,
-        mediaAssetId: assetId,
-        url: this.client.storage.from("public-media").getPublicUrl(path).data.publicUrl,
-        storagePath: path,
+        mediaAssetId: uploaded.mediaAssetId,
+        url: uploaded.url,
+        storagePath: uploaded.storagePath,
         role: placement.data.role,
         active: true,
         sortOrder: placement.data.sort_order,
-        viAlt: viAlt.trim() || fallbackVi,
-        koAlt: koAlt.trim() || fallbackKo,
+        viAlt: uploaded.viAlt,
+        koAlt: uploaded.koAlt,
       } satisfies AdminProductImage;
     } catch (error) {
-      if (mediaInserted) await this.client.from("media_assets").delete().eq("id", assetId);
-      await this.client.storage.from("public-media").remove([path]);
+      await discardUploadedPublicMediaAsset(this.client, uploaded);
       throw error;
     }
   }
@@ -371,12 +349,7 @@ export class SupabaseAdminCatalogRepository implements AdminCatalogRepository {
   }
 
   async updateImageAlt(mediaAssetId: string, viAlt: string, koAlt: string) {
-    if (!viAlt.trim() || !koAlt.trim()) throw new Error("Alt text VI và KO không được để trống.");
-    const { error } = await this.client.from("media_asset_translations").upsert([
-      { media_asset_id: mediaAssetId, locale: "vi", alt_text: viAlt.trim() },
-      { media_asset_id: mediaAssetId, locale: "ko", alt_text: koAlt.trim() },
-    ], { onConflict: "media_asset_id,locale" });
-    if (error) fail("Không thể cập nhật alt text", error);
+    await updatePublicMediaCopy(this.client, mediaAssetId, { viAlt, koAlt });
   }
 
   async deactivateImage(imageId: string) {

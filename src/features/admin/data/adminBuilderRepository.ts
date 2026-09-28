@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseClient } from "../../../lib/supabase";
 import type { Database } from "../../../types/database.generated";
-import { validateProductImage } from "../productValidation";
+import { discardUploadedPublicMediaAsset, uploadPublicMediaAsset } from "./adminMediaService";
 import type {
   AdminFlowerDraft, AdminFlowerImage, AdminFlowerListItem, AdminWrappingOptionDraft,
   AdminWrappingVariantDraft, LocalizedBuilderContent, VisibilityStatus,
@@ -135,36 +135,22 @@ export class SupabaseAdminBuilderRepository {
 
   async uploadFlowerImage(flower: AdminFlowerDraft, file: File, viAlt: string, koAlt: string): Promise<AdminFlowerImage> {
     if (!flower.id) throw new Error("Hãy lưu bản nháp trước khi tải ảnh.");
-    const extension = validateProductImage(file);
-    const assetId = crypto.randomUUID();
-    const path = `builder/flowers/${flower.id}/${assetId}.${extension}`;
-    const upload = await this.client.storage.from("public-media").upload(path, file, { contentType: file.type, upsert: false });
-    if (upload.error) fail("Không thể tải ảnh hoa lên Storage", upload.error);
-    let mediaInserted = false;
+    const uploaded = await uploadPublicMediaAsset(this.client, file, {
+      pathPrefix: `builder/flowers/${flower.id}`,
+      viAlt,
+      koAlt,
+      fallbackVi: flower.vi.name.trim() || "Hoa Luméa",
+      fallbackKo: flower.ko.name.trim() || "Luméa 꽃",
+    });
     try {
-      const media = await this.client.from("media_assets").insert({
-        id: assetId, storage_bucket: "public-media", storage_path: path, access: "PUBLIC",
-        mime_type: file.type, byte_size: file.size, uploaded_by: await profileId(this.client),
-      });
-      if (media.error) fail("Không thể lưu metadata ảnh hoa", media.error);
-      mediaInserted = true;
-      const safeViAlt = viAlt.trim() || flower.vi.name.trim() || "Hoa Luméa";
-      const safeKoAlt = koAlt.trim() || flower.ko.name.trim() || "Luméa 꽃";
-      const trans = await this.client.from("media_asset_translations").insert([
-        { media_asset_id: assetId, locale: "vi", alt_text: safeViAlt },
-        { media_asset_id: assetId, locale: "ko", alt_text: safeKoAlt },
-      ]);
-      if (trans.error) fail("Không thể lưu alt text ảnh hoa", trans.error);
-      const attach = await this.client.from("flower_stems").update({ media_asset_id: assetId }).eq("id", flower.id);
+      const attach = await this.client.from("flower_stems").update({ media_asset_id: uploaded.mediaAssetId }).eq("id", flower.id);
       if (attach.error) fail("Không thể gắn ảnh vào loại hoa", attach.error);
       return {
-        mediaAssetId: assetId, storagePath: path,
-        url: this.client.storage.from("public-media").getPublicUrl(path).data.publicUrl,
-        viAlt: safeViAlt, koAlt: safeKoAlt,
+        mediaAssetId: uploaded.mediaAssetId, storagePath: uploaded.storagePath,
+        url: uploaded.url, viAlt: uploaded.viAlt, koAlt: uploaded.koAlt,
       };
     } catch (error) {
-      if (mediaInserted) await this.client.from("media_assets").delete().eq("id", assetId);
-      await this.client.storage.from("public-media").remove([path]);
+      await discardUploadedPublicMediaAsset(this.client, uploaded);
       throw error;
     }
   }

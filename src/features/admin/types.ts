@@ -1,4 +1,5 @@
 import type { Database } from "../../types/database.generated";
+import type { HomepageSectionCopy, HomepageSectionKey } from "../homepage/types";
 
 export type ProductType = Database["public"]["Enums"]["product_type"];
 export type VisibilityStatus = Database["public"]["Enums"]["visibility_status"];
@@ -154,6 +155,59 @@ export interface AdminWrappingVariantDraft {
   vi: LocalizedBuilderContent;
   ko: LocalizedBuilderContent;
   updatedAt?: string;
+}
+
+export interface AdminHomepageMedia {
+  id: string;
+  sectionId: string;
+  mediaAssetId: string;
+  slotKey: string;
+  url: string;
+  storagePath: string;
+  active: boolean;
+  sortOrder: number;
+  viAlt: string;
+  koAlt: string;
+  viCaption: string;
+  koCaption: string;
+}
+
+export interface AdminHomepageFeature {
+  id: string;
+  itemKey: string;
+  mediaAssetId: string | null;
+  imageUrl: string | null;
+  sortOrder: number;
+  active: boolean;
+  vi: { label: string; title: string; body: string };
+  ko: { label: string; title: string; body: string };
+  viAlt: string;
+  koAlt: string;
+}
+
+export interface AdminHomepageSection {
+  id: string;
+  key: HomepageSectionKey;
+  enabled: boolean;
+  primaryCtaTarget: string | null;
+  secondaryCtaTarget: string | null;
+  vi: HomepageSectionCopy;
+  ko: HomepageSectionCopy;
+  media: AdminHomepageMedia[];
+  features: AdminHomepageFeature[];
+  curatedProductIds: string[];
+}
+
+export interface AdminHomepageProductOption {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl: string | null;
+}
+
+export interface AdminHomepageSnapshot {
+  sections: AdminHomepageSection[];
+  products: AdminHomepageProductOption[];
 }
 
 export function emptyLocalizedBuilderContent(): LocalizedBuilderContent {

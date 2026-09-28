@@ -149,6 +149,7 @@ React components must not query Supabase directly.
 - `src/lib/supabase.ts` owns two lazy browser clients: the persisted Admin client and a non-persisted public client that cannot inherit an Admin session.
 - `src/features/catalog/data/storefrontCatalog.ts` owns the shared repository boundary and short request cache; React views consume it through `useCatalogData.ts`.
 - `BuilderRepository` and `SupabaseBuilderRepository` provide the equivalent boundary for the public Builder; `storefrontBuilder.ts` owns its request cache and `useBuilderData.ts` exposes localized loading, retry, error, and empty states.
+- `HomepageRepository` and `SupabaseHomepageRepository` provide the boundary for the ten fixed Homepage content slots; `storefrontHomepage.ts` owns its short request cache and `useHomepageContent.ts` exposes localized loading, retry, and error states. Operational details are in `docs/HOMEPAGE_CONTENT_ADMIN.md`.
 
 Public repository queries explicitly require `PUBLISHED`, non-archived Products, active variants/relationships/media, and a public primary image. Database RLS remains authoritative and the query predicates keep behavior obvious in code.
 
@@ -191,6 +192,7 @@ npm run check:storefront-runtime
 npm run check:builder-pricing
 npm run check:builder-persistence
 npm run check:builder-runtime
+npm run check:homepage-runtime
 npm run typecheck
 npm run build
 npx supabase db lint --linked --level warning
