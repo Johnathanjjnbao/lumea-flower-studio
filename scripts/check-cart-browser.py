@@ -46,14 +46,17 @@ with sync_playwright() as playwright:
     assert page.get_by_label("Tìm trong bộ sưu tập").is_visible()
     product_links = page.locator(".product-card .product-image")
     product_links.first.wait_for(state="visible", timeout=20_000)
-    product_urls = product_links.evaluate_all("links => links.map(link => link.href)")
     product_url = None
-    for candidate_url in product_urls:
-        page.goto(candidate_url, wait_until="networkidle")
+    for index in range(product_links.count()):
+        product_links.nth(index).click()
+        page.wait_for_load_state("networkidle")
         page.locator(".product-detail h1").wait_for(state="visible", timeout=20_000)
         if page.locator('.size-option input[type="radio"]').count() >= 2:
-            product_url = candidate_url
+            product_url = page.url
             break
+        page.locator(".product-detail__back").click()
+        page.wait_for_load_state("networkidle")
+        product_links = page.locator(".product-card .product-image")
     assert product_url, "live catalog needs one product with two variants for browser QA"
 
     quantity = page.locator(".product-quantity input")
@@ -130,7 +133,7 @@ with sync_playwright() as playwright:
     empty_shot = ARTIFACT_DIR / "cart-empty-390-ko.png"
     page.screenshot(path=str(empty_shot), full_page=True)
 
-    page.goto(f"{BASE_URL}/admin/products", wait_until="networkidle")
+    page.evaluate("url => { history.pushState(null, '', url); window.dispatchEvent(new PopStateEvent('popstate')); }", f"{BASE_URL}/admin/products")
     page.locator(".admin-login").wait_for(state="visible", timeout=20_000)
     assert page.get_by_role("heading", name="Đăng nhập quản trị").is_visible()
 
