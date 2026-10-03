@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { siteConfig } from "../config/siteConfig";
 import { usePrototypeAction } from "../context/PrototypeActionContext";
-import { localizePath, stripLocalePrefix, useI18n } from "../i18n";
+import { useCart } from "../features/cart/CartContext";
+import { formatMessage, localizePath, stripLocalePrefix, useI18n } from "../i18n";
 import type { Locale } from "../types/content";
 
 function LanguageSwitch({ variant }: { variant: "desktop" | "mobile" }) {
@@ -28,6 +29,7 @@ export function Header() {
   const headerRef = useRef<HTMLElement>(null);
   const location = useLocation();
   const { t, path } = useI18n();
+  const { itemCount } = useCart();
   const { showPrototypeAction } = usePrototypeAction();
   const appPathname = stripLocalePrefix(location.pathname);
   const isHome = appPathname === "/";
@@ -93,7 +95,8 @@ export function Header() {
         <div className="header-actions">
           <LanguageSwitch variant="desktop" />
           <button className="icon-button search-button" type="button" aria-label={t.header.search} onClick={() => showPrototypeAction(t.header.search)}><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.6" /><path d="m16 16 4.2 4.2" /></svg></button>
-          <button className="cart-button" type="button" aria-label={t.header.cartAria} onClick={() => showPrototypeAction(t.header.cart)}><span>{t.header.cart}</span><span className="cart-count" aria-label={t.header.zeroItems}>0</span></button>
+          <Link className="cart-button" to={path("/cart")} aria-label={formatMessage(t.header.cartCountAria, { count: itemCount })}><span>{t.header.cart}</span><span className="cart-count" aria-hidden="true">{itemCount}</span></Link>
+          <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">{formatMessage(t.header.cartCountAria, { count: itemCount })}</span>
         </div>
       </div>
       <nav className="mobile-menu" id="mobile-menu" aria-label={t.header.mobileNavAria} hidden={!menuOpen}>

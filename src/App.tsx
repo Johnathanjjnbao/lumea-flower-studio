@@ -4,9 +4,11 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { PrototypeActionProvider } from "./context/PrototypeActionContext";
 import { CatalogPage } from "./pages/CatalogPage";
 import { BouquetBuilderPage } from "./pages/BouquetBuilderPage";
+import { CartPage } from "./pages/CartPage";
 import { HomePage } from "./pages/HomePage";
 import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { I18nProvider } from "./i18n";
+import { CartProvider } from "./features/cart/CartContext";
 
 const AdminRoutes = lazy(() => import("./features/admin/AdminRoutes"));
 
@@ -16,20 +18,24 @@ export default function App() {
   return (
     <BrowserRouter basename={basename}>
       <I18nProvider>
-        <PrototypeActionProvider>
+        <CartProvider>
+          <PrototypeActionProvider>
           <ScrollToTop />
           <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/flowers" element={<CatalogPage />} />
               <Route path="/flowers/:slug" element={<ProductDetailPage />} />
               <Route path="/create-bouquet" element={<BouquetBuilderPage />} />
+              <Route path="/cart" element={<CartPage />} />
               <Route path="/ko" element={<HomePage />} />
               <Route path="/ko/flowers" element={<CatalogPage />} />
               <Route path="/ko/flowers/:slug" element={<ProductDetailPage />} />
               <Route path="/ko/create-bouquet" element={<BouquetBuilderPage />} />
+              <Route path="/ko/cart" element={<CartPage />} />
             <Route path="/admin/*" element={<Suspense fallback={<main className="admin-gate" aria-busy="true"><p>Đang tải khu vực quản trị…</p></main>}><AdminRoutes /></Suspense>} />
           </Routes>
-        </PrototypeActionProvider>
+          </PrototypeActionProvider>
+        </CartProvider>
       </I18nProvider>
     </BrowserRouter>
   );

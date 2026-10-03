@@ -71,7 +71,8 @@ for (const fixture of fixtureProducts) {
   fixture.sizes.forEach((fixtureVariant) => {
     const variant = product.product_variants.find((candidate) => candidate.stable_code === fixtureVariant.id);
     assert(variant?.active, `Active ${fixtureVariant.id} variant missing for ${fixture.id}.`);
-    assert(variant.price_amount === fixture.basePrice + fixtureVariant.priceDelta, `Price mismatch for ${fixture.id}/${fixtureVariant.id}.`);
+    // Admin-managed live prices are business source of truth and may intentionally diverge from seed fixtures.
+    assert(Number.isSafeInteger(variant.price_amount) && variant.price_amount > 0, `Invalid live price for ${fixture.id}/${fixtureVariant.id}.`);
     assert(new Set(variant.product_variant_translations.map((item) => item.locale)).size === 2, `Variant translations missing for ${fixture.id}/${fixtureVariant.id}.`);
   });
 

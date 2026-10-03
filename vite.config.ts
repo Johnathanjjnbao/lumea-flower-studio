@@ -13,9 +13,11 @@ function githubPagesRouteEntries(): Plugin {
       const routes = [
         "flowers",
         "create-bouquet",
+        "cart",
         "ko",
         "ko/flowers",
         "ko/create-bouquet",
+        "ko/cart",
       ];
 
       await Promise.all(routes.map(async (route) => {

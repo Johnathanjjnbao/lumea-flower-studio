@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { PageFrame } from "../components/PageFrame";
 import { MAX_STEMS_PER_FLOWER } from "../features/bouquetBuilder/pricing";
 import type { BouquetBuilderCatalog, FlowerStem, WrappingTypeId, WrappingVariantId } from "../features/bouquetBuilder/types";
@@ -9,6 +10,8 @@ import { useDocumentMetadata } from "../hooks/useDocumentMetadata";
 import { useImagePipeline } from "../hooks/useImagePipeline";
 import { formatMessage, useI18n } from "../i18n";
 import { formatVnd } from "../utils/product";
+import { useCart } from "../features/cart/CartContext";
+import { createCustomBouquetCartItem } from "../features/cart/domain";
 
 const previewPositions = [
   ["50%", "18%", "-7deg"], ["30%", "27%", "-16deg"], ["68%", "28%", "12deg"],
@@ -24,7 +27,9 @@ function availabilityCopy(flower: FlowerStem, t: ReturnType<typeof useI18n>["t"]
 }
 
 function BouquetBuilderExperience({ catalog }: { catalog: BouquetBuilderCatalog }) {
-  const { t } = useI18n();
+  const { t, path } = useI18n();
+  const { addItem } = useCart();
+  const [addedToCart, setAddedToCart] = useState(false);
   const pageRef = useRef<HTMLDivElement>(null);
   const flowersSectionRef = useRef<HTMLElement>(null);
   const wrappingSectionRef = useRef<HTMLElement>(null);
@@ -47,8 +52,17 @@ function BouquetBuilderExperience({ catalog }: { catalog: BouquetBuilderCatalog 
   });
 
   useEffect(() => {
+    setAddedToCart(false);
     if (builder.completedResult) confirmationRef.current?.focus({ preventScroll: true });
   }, [builder.completedResult]);
+
+  const addCompletedBouquet = () => {
+    if (!builder.completedResult || addedToCart) return;
+    const item = createCustomBouquetCartItem(builder.completedResult, catalog);
+    if (!item) return;
+    addItem(item);
+    setAddedToCart(true);
+  };
 
   const previewFlowers = useMemo(() => builder.selectedFlowers.flatMap((flower) => {
     const visibleCount = Math.min(3, Math.max(1, Math.ceil(builder.quantities[flower.id] / 4)));
@@ -219,6 +233,10 @@ function BouquetBuilderExperience({ catalog }: { catalog: BouquetBuilderCatalog 
                     <div><dt>{t.builder.wrapping}</dt><dd>{wrappingName} · {variantName}</dd></div>
                     <div><dt>{t.builder.total}</dt><dd>{formatVnd(builder.completedResult.totalPrice)}</dd></div>
                   </dl>
+                  <div className="builder-confirmation__cart-actions">
+                    <button className="button button--solid" type="button" disabled={addedToCart} onClick={addCompletedBouquet}>{addedToCart ? t.builder.addedToCart : t.builder.addToCart}</button>
+                    {addedToCart && <Link to={path("/cart")}>{t.builder.viewCart}</Link>}
+                  </div>
                   <button
                     type="button"
                     onClick={() => {

@@ -11,6 +11,12 @@ export function ScrollToTop() {
 
     if (!location.hash) {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      if (pathChanged) {
+        const frame = window.requestAnimationFrame(() => {
+          document.getElementById("main-content")?.focus({ preventScroll: true });
+        });
+        return () => window.cancelAnimationFrame(frame);
+      }
       return;
     }
 

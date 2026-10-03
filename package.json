@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "check:builder-persistence": "node --experimental-strip-types scripts/check-builder-persistence.mjs",
     "check:builder-pricing": "node --experimental-strip-types scripts/check-builder-pricing.mjs",
+    "check:cart": "node --experimental-strip-types scripts/check-cart.mjs",
     "check:supabase-foundation": "node scripts/check-supabase-foundation.mjs",
     "check:admin-foundation": "node scripts/check-admin-foundation.mjs",
     "check:admin-runtime": "node scripts/check-admin-runtime.mjs",

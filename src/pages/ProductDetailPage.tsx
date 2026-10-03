@@ -2,7 +2,9 @@ import { useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { PageFrame } from "../components/PageFrame";
 import { ProductGallery } from "../components/ProductGallery";
-import { usePrototypeAction } from "../context/PrototypeActionContext";
+import { useCart } from "../features/cart/CartContext";
+import { clampCartQuantity, createReadyMadeCartItem } from "../features/cart/domain";
+import { MAX_CART_ITEM_QUANTITY } from "../features/cart/types";
 import type { CatalogProductRecord } from "../features/catalog/data/catalogRepository";
 import { usePublishedProduct } from "../features/catalog/useCatalogData";
 import { useDocumentMetadata } from "../hooks/useDocumentMetadata";
@@ -50,9 +52,11 @@ function ProductDetailContent({ product }: { product: CatalogProductRecord }) {
   const pageRef = useRef<HTMLDivElement>(null);
   const [variantId, setVariantId] = useState(product.variants[0]?.id ?? "");
   const [toneId, setToneId] = useState(product.tones[0]?.stableCode ?? "");
+  const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
   const { t, path } = useI18n();
-  const { showPrototypeAction } = usePrototypeAction();
-  const unavailable = product.availability === "UNAVAILABLE";
+  const { addItem } = useCart();
+  const unavailable = product.availability === "UNAVAILABLE" || !product.variants.some((variant) => variant.id === variantId);
   const selectedPrice = getProductPrice(product, variantId);
 
   useImagePipeline(pageRef, { observe: "images", prioritySelector: ".product-gallery__main", preloadMargin: "500px 0px" });
@@ -60,6 +64,14 @@ function ProductDetailContent({ product }: { product: CatalogProductRecord }) {
     product.seoTitle ?? `${product.name} — Luméa Flower Studio`,
     product.seoDescription ?? formatMessage(t.product.detail.metaDescription, { description: product.shortDescription ?? product.name, name: product.name }),
   );
+
+  const addToCart = () => {
+    if (added) return;
+    const item = createReadyMadeCartItem(product, variantId, toneId || null, quantity);
+    if (!item) return;
+    addItem(item);
+    setAdded(true);
+  };
 
   return <PageFrame pageRef={pageRef}><article className="product-detail section-shell section-space">
     <Link className="product-detail__back" to={path("/flowers")}>{t.product.detail.back}</Link>
@@ -69,15 +81,19 @@ function ProductDetailContent({ product }: { product: CatalogProductRecord }) {
         <div className="product-detail__heading"><p className="product-category">{t.product.typeLabels[product.productType]}</p><h1>{product.name}</h1>{product.description && <p className="product-detail__description">{product.description}</p>}</div>
         <div className="product-detail__commerce-head"><div><span>{t.product.detail.price}</span><strong aria-live="polite">{formatVnd(selectedPrice)}</strong></div><p className={`availability availability--${product.availability.toLowerCase()}`}>{t.product.availability[product.availability]}</p></div>
         <fieldset className="product-options"><legend>{t.product.detail.size}</legend><div className="size-options">
-          {product.variants.map((variant) => <label className="size-option" data-selected={variantId === variant.id} key={variant.id}><input type="radio" name="size" value={variant.id} checked={variantId === variant.id} onChange={() => setVariantId(variant.id)} /><span className="size-option__head"><strong>{variant.name}</strong><span>{getVariantPriceLabel(product, variant)}</span></span>{variant.description && <small>{variant.description}</small>}</label>)}
+          {product.variants.map((variant) => <label className="size-option" data-selected={variantId === variant.id} key={variant.id}><input type="radio" name="size" value={variant.id} checked={variantId === variant.id} onChange={() => { setVariantId(variant.id); setAdded(false); }} /><span className="size-option__head"><strong>{variant.name}</strong><span>{getVariantPriceLabel(product, variant)}</span></span>{variant.description && <small>{variant.description}</small>}</label>)}
         </div></fieldset>
         {product.tones.length > 0 && <fieldset className="product-options"><legend>{t.product.detail.tone}</legend><div className="tone-options">
-          {product.tones.map((tone) => <label className="tone-option" data-selected={toneId === tone.stableCode} key={tone.stableCode}><input type="radio" name="tone" value={tone.stableCode} checked={toneId === tone.stableCode} onChange={() => setToneId(tone.stableCode)} />{tone.swatchValue && <i style={{ backgroundColor: tone.swatchValue }} aria-hidden="true" />}<span>{tone.name}</span></label>)}
+          {product.tones.map((tone) => <label className="tone-option" data-selected={toneId === tone.stableCode} key={tone.stableCode}><input type="radio" name="tone" value={tone.stableCode} checked={toneId === tone.stableCode} onChange={() => { setToneId(tone.stableCode); setAdded(false); }} />{tone.swatchValue && <i style={{ backgroundColor: tone.swatchValue }} aria-hidden="true" />}<span>{tone.name}</span></label>)}
         </div></fieldset>}
         {product.composition.length > 0 && <div className="product-composition"><p>{t.product.detail.composition}</p><ul>{product.composition.map((flower) => <li key={flower}>{flower}</li>)}</ul><small>{t.product.detail.seasonalNote}</small></div>}
         <div className="product-purchase">
           {product.sameDayEligible && <p className="same-day-eligibility"><span className="status-dot" aria-hidden="true" />{t.product.detail.sameDay}</p>}
-          <button className="button button--solid product-purchase__button" type="button" disabled={unavailable} onClick={() => showPrototypeAction(t.product.detail.addToast, t.product.detail.addToastText)}>{unavailable ? t.product.detail.unavailable : t.product.detail.add}</button>
+          <div className="product-purchase__row">
+            <label className="product-quantity"><span>{t.product.detail.quantity}</span><input type="number" inputMode="numeric" min={1} max={MAX_CART_ITEM_QUANTITY} value={quantity} onChange={(event) => { setQuantity(clampCartQuantity(Number(event.target.value))); setAdded(false); }} /></label>
+            <button className="button button--solid product-purchase__button" type="button" disabled={unavailable || added} onClick={addToCart}>{unavailable ? t.product.detail.unavailable : added ? t.product.detail.added : t.product.detail.add}</button>
+          </div>
+          {added && <p className="product-add-status" role="status">{t.product.detail.addedText} <Link to={path("/cart")}>{t.product.detail.viewCart}</Link></p>}
           <p className="product-delivery-note">{t.product.detail.delivery}</p>
         </div>
       </div>

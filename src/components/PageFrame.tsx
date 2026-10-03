@@ -11,7 +11,7 @@ export function PageFrame({ children, pageRef }: PageFrameProps) {
   return (
     <div ref={pageRef}>
       <Header />
-      <main id="main-content">{children}</main>
+      <main id="main-content" tabIndex={-1}>{children}</main>
       <Footer />
     </div>
   );
