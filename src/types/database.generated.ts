@@ -1551,6 +1551,50 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_orders: {
+        Args: {
+          delivery_date_from?: string
+          delivery_date_to?: string
+          page_offset?: number
+          page_size?: number
+          payment_status_filter?: Database["public"]["Enums"]["payment_status"]
+          search_query?: string
+          status_filter?: Database["public"]["Enums"]["order_status"]
+        }
+        Returns: {
+          buyer_name: string
+          buyer_phone: string
+          item_count: number
+          item_summary: string
+          order_id: string
+          order_number: string
+          order_status: Database["public"]["Enums"]["order_status"]
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          placed_at: string
+          recipient_name: string
+          recipient_phone: string
+          requested_date: string
+          subtotal_amount: number
+          total_count: number
+        }[]
+      }
+      admin_transition_order_status: {
+        Args: {
+          expected_status: Database["public"]["Enums"]["order_status"]
+          next_status: Database["public"]["Enums"]["order_status"]
+          target_order_id: string
+          transition_reason?: string
+        }
+        Returns: {
+          changed_at: string
+          event_id: string
+          order_id: string
+          order_number: string
+          order_status: Database["public"]["Enums"]["order_status"]
+          previous_status: Database["public"]["Enums"]["order_status"]
+        }[]
+      }
       create_checkout_order: {
         Args: {
           checkout_idempotency_key: string

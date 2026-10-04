@@ -96,6 +96,8 @@ Changing an editable label does not change URLs or relationships. Slug changes r
 
 ### 3.5 Orders
 
+The Step 13 Order desk provides a newest-first, bounded list with search by Order number, buyer/recipient name, or phone; filters for Order status, Payment status, and requested delivery date; and responsive list/card layouts. Access is limited to active `ADMIN` profiles. `STAFF` remains blocked pending an explicit owner permission decision.
+
 Admin Order Detail must show:
 
 - Internal UUID only where operationally useful and the human-readable Order number prominently.
@@ -108,6 +110,16 @@ Admin Order Detail must show:
 - Custom item: exact flower rows, quantities, unit price snapshots, wrapping, modifiers, total stems, total price, and notes.
 
 Admin may perform only documented transitions. Editing a status column, historical price, or snapshot directly is not a supported operation.
+
+Implemented Step 13 transitions are:
+
+- `PENDING → CONFIRMED` or `PENDING → CANCELLED`.
+- `CONFIRMED → PREPARING`.
+- `PREPARING → READY`.
+- `READY → FULFILLING` or `READY → COMPLETED` for confirmed pickup.
+- `FULFILLING → COMPLETED`.
+
+`COMPLETED` and `CANCELLED` are terminal. The command compares the Admin screen's expected status with the locked database row, so a stale tab cannot silently overwrite a newer transition. Payment and Delivery controls remain outside Step 13.
 
 ### 3.6 Payments
 

@@ -278,6 +278,7 @@ Rules:
 - `READY → COMPLETED` is allowed for confirmed pickup.
 - Delivery `DELIVERED` can permit, but should not silently force, Order `COMPLETED` until the operational rule is approved.
 - No backward transition occurs by editing a row directly; correction uses an explicit authorized command and event.
+- Step 13 implements these transitions through `admin_transition_order_status(order_id, expected_status, next_status, reason)`. It locks the Order, rejects stale `expected_status`, records the active ADMIN actor, and writes exactly one event atomically. Payment and Delivery statuses are read-only in Step 13.
 
 ### Payment
 

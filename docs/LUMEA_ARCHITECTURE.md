@@ -318,31 +318,23 @@ Create environments, migrations, seed strategy, typed database access, initial R
 
 Implement one end-to-end Product workflow, including Auth, media upload, VI/KO content, variant pricing, publish/hide, Catalog, and Product Detail propagation.
 
-### Step 11 — Storefront live catalog/content reads
+### Step 11 — Cart
 
-Move remaining Product, taxonomy, homepage, site settings, and media reads behind repositories. Add loading, empty, error, unpublished, and cache-refresh behavior.
+Implement one versioned client-side Cart for ready-made and Builder items, live revalidation, stable identity, merge rules, persistence, and merchandise subtotal. Customer accounts remain out of scope.
 
-### Step 12 — Builder live data
+### Step 12 — Checkout + secure Order creation
 
-Move FlowerStem, wrapping, compatibility, price estimates, availability, and versioned configuration validation to the shared data model.
+Implement buyer/recipient and delivery requests, current-price revalidation, idempotent atomic Order creation, immutable item snapshots, Order number, and bank-transfer/cash metadata.
 
-### Step 13 — Cart
+### Step 13 — Admin Orders
 
-Implement server-side guest carts, discriminated items, revalidation, merge hooks for future Customer accounts, and expiry policy.
+Implement ADMIN-only bounded Order list/detail reads, exact ready-made/custom snapshots, read-only Payment/Delivery metadata, the approved manual Order lifecycle, stale-write protection, and actor-linked status history.
 
-### Step 14 — Checkout + Order creation
-
-Implement buyer/recipient, delivery/pickup, trusted totals, idempotency, snapshots, Order number, and bank-transfer/cash selection.
-
-### Step 15 — Admin Orders
-
-Implement protected Order detail, exact custom composition, Payment/Delivery views, valid manual transitions, and status history.
-
-### Step 16 — Payment, VietQR, and Delivery refinement
+### Step 14 — Payment, VietQR, and Delivery refinement
 
 Implement per-Order VietQR, protected payment settings, manual payment verification, zone/window logic, and delivery status operations.
 
-### Step 17 — Security and final QA
+### Step 15 — Security and final QA
 
 Audit RLS, authorization, private media, validation, abuse controls, PII logging, backups/recovery, accessibility, end-to-end flows, and production readiness.
 

@@ -5,7 +5,7 @@ import { useAdminAuth } from "../auth/AdminAuthContext";
 
 export function AdminShell() {
   const auth = useAdminAuth();
-  const { path } = useI18n();
+  const { path, t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="admin-app">
@@ -20,6 +20,7 @@ export function AdminShell() {
         <nav id="admin-navigation" className="admin-nav" data-open={menuOpen} aria-label="Điều hướng quản trị">
           <NavLink to={path("/admin")} end onClick={() => setMenuOpen(false)}>Tổng quan</NavLink>
           <NavLink to={path("/admin/homepage")} onClick={() => setMenuOpen(false)}>Homepage</NavLink>
+          <NavLink to={path("/admin/orders")} onClick={() => setMenuOpen(false)}>{t.adminOrders.nav}</NavLink>
           <NavLink to={path("/admin/products")} onClick={() => setMenuOpen(false)}>Sản phẩm</NavLink>
           <NavLink to={path("/admin/builder/flowers")} onClick={() => setMenuOpen(false)}>Hoa Builder</NavLink>
           <NavLink to={path("/admin/builder/wrappings")} onClick={() => setMenuOpen(false)}>Giấy gói</NavLink>

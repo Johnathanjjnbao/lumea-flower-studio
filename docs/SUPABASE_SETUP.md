@@ -1,6 +1,6 @@
 # Luméa Supabase Setup
 
-This guide is the operational reference for the Supabase foundation through Step 12. Product/Media operations are documented in `docs/ADMIN_PRODUCT_MEDIA.md`; Builder data operations are documented in `docs/BUILDER_DATA_ADMIN.md`. Step 12 adds guest Checkout and secure Order creation; Admin Order operations remain out of scope.
+This guide is the operational reference for the Supabase foundation through Step 13. Product/Media operations are documented in `docs/ADMIN_PRODUCT_MEDIA.md`; Builder data operations are documented in `docs/BUILDER_DATA_ADMIN.md`. Step 12 adds guest Checkout and secure Order creation; Step 13 adds protected Admin Order reads and guarded Order-status transitions.
 
 ## Project identity
 
@@ -82,6 +82,7 @@ The implemented foundation includes Product, Media, Bouquet Builder, and guest O
 - Wrapping options and colour variants with VI/KO content, integer-VND modifiers, safe swatches, and explicit compatibility relations.
 - Orders, immutable Order-item snapshots, recipient/address/delivery records, Payment metadata, and initial Order status events.
 - A single `create_checkout_order(jsonb, uuid, bigint)` transaction boundary for guest Checkout.
+- A bounded `admin_list_orders(...)` query and `admin_transition_order_status(...)` command for active ADMIN profiles.
 
 Product price is derived from active variants; there is no duplicate mutable Product base-price column. Visibility and availability remain separate. A `PUBLISHED + UNAVAILABLE` Product may be visible while not purchasable.
 
@@ -89,13 +90,17 @@ Publishing a Product requires Vietnamese copy, at least one active priced varian
 
 Cart and Builder draft persistence remain browser-local and store stable identities rather than trusted prices. Checkout sends only those identities, quantities, and customer-entered request fields. The database function reloads current Product/Builder records, validates publication/availability/compatibility, computes integer-VND item totals, and creates the complete Order aggregate atomically. Delivery fee and final total remain `null` until the owner-approved Step 14 delivery rule exists.
 
-All Order tables have RLS enabled and grant no direct access to `anon` or ordinary `authenticated` clients. Only `anon` may execute the narrowly scoped guest Checkout function; the isolated public storefront client does not reuse an Admin session. The function uses an empty `search_path`, exact JSON-field allowlists, bounded quantities and text, fixed server-side initial statuses, a hashed idempotency key, and transaction-scoped serialization for concurrent retries. Its result is a minimal receipt; there is no anonymous Order lookup, update, or delete endpoint.
+All Order tables have RLS enabled. `anon` has no direct Order-table access and may execute only the narrowly scoped guest Checkout function; the isolated public storefront client does not reuse an Admin session. Authenticated reads pass RLS only for an active `ADMIN`, and the `orders` column grant excludes checkout idempotency/request hashes. No browser role receives direct Order mutation rights.
+
+`admin_list_orders(...)` validates active ADMIN membership, caps each page at 50 rows, and searches only the documented order/buyer/recipient fields. `admin_transition_order_status(...)` accepts only typed status values, locks the authoritative Order row, compares `expected_status`, enforces the V1 transition matrix, updates the Order, and creates one actor-linked status event in the same transaction. Both functions use an empty `search_path`; neither is executable by `anon`. Payment and Delivery mutation remain out of scope for Step 13.
+
+The Checkout function uses an empty `search_path`, exact JSON-field allowlists, bounded quantities and text, fixed server-side initial statuses, a hashed idempotency key, and transaction-scoped serialization for concurrent retries. Its result is a minimal receipt; there is no anonymous Order lookup, update, or delete endpoint.
 
 ## Auth and roles
 
 Supabase Auth owns identity. `public.admin_profiles` maps an Auth user to the application role.
 
-- Active `ADMIN` profiles can manage Product/Media and Builder data. `STAFF` remains blocked until the owner approves exact permissions.
+- Active `ADMIN` profiles can manage Product/Media and Builder data, read Order operations data, and perform approved Order-status transitions. `STAFF` remains blocked until the owner approves exact permissions.
 - Only an active `ADMIN` profile can manage Admin profile rows.
 - Public or ordinary authenticated users cannot create a profile or promote themselves.
 - UI route guards are not authorization; RLS remains authoritative.

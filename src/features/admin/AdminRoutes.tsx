@@ -15,6 +15,8 @@ import { AdminBuilderWrappingsPage } from "./pages/AdminBuilderWrappingsPage";
 import { AdminHomepagePage } from "./pages/AdminHomepagePage";
 import { AdminForgotPasswordPage } from "./pages/AdminForgotPasswordPage";
 import { AdminResetPasswordPage } from "./pages/AdminResetPasswordPage";
+import { AdminOrdersPage } from "./pages/AdminOrdersPage";
+import { AdminOrderDetailPage } from "./pages/AdminOrderDetailPage";
 
 export default function AdminRoutes() {
   const { path } = useI18n();
@@ -27,6 +29,8 @@ export default function AdminRoutes() {
         <Route element={<AdminGuard><AdminShell /></AdminGuard>}>
           <Route index element={<AdminDashboardPage />} />
           <Route path="homepage" element={<AdminHomepagePage />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="orders/:id" element={<AdminOrderDetailPage />} />
           <Route path="products" element={<AdminProductsPage />} />
           <Route path="products/new" element={<AdminProductEditorPage />} />
           <Route path="products/:id" element={<AdminProductEditorPage />} />
