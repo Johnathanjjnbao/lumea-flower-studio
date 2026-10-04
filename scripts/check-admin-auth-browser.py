@@ -124,8 +124,13 @@ with sync_playwright() as playwright:
     request_page = request_context.new_page()
     request_errors = []
     request_console_errors = []
+    request_failures = []
     request_page.on("pageerror", lambda error: request_errors.append(str(error)))
     request_page.on("console", lambda message: request_console_errors.append(message.text) if message.type == "error" else None)
+    request_page.on("requestfailed", lambda request: request_failures.append({
+        "url": request.url,
+        "failure": request.failure,
+    }))
     recovery_requests = []
 
     def recover(route, request):
@@ -175,15 +180,29 @@ with sync_playwright() as playwright:
     assert_no_overflow(request_page, "forgot password mobile")
     request_page.screenshot(path=ARTIFACT_DIR / "forgot-password-390-ko.png", full_page=True)
     assert not request_errors, f"forgot-password page errors: {request_errors}"
-    assert not request_console_errors, f"forgot-password console errors: {request_console_errors}"
+    assert not request_failures, f"forgot-password failed requests: {request_failures}"
+    assert not request_console_errors, (
+        f"forgot-password console errors: {request_console_errors}; failed requests: {request_failures}"
+    )
     request_context.close()
 
     reset_context = browser.new_context(viewport={"width": 1440, "height": 1000})
     reset_page = reset_context.new_page()
     reset_errors = []
     reset_console_errors = []
+    reset_response_errors = []
+    reset_failures = []
     reset_page.on("pageerror", lambda error: reset_errors.append(str(error)))
     reset_page.on("console", lambda message: reset_console_errors.append(message.text) if message.type == "error" else None)
+    reset_page.on("requestfailed", lambda request: reset_failures.append({
+        "url": request.url,
+        "failure": request.failure,
+    }))
+    reset_page.on("response", lambda response: reset_response_errors.append({
+        "status": response.status,
+        "url": response.url,
+        "resource_type": response.request.resource_type,
+    }) if response.status >= 400 else None)
     state = {"password_updates": 0, "updated_password_length": 0, "login_attempts": [], "auth_user_methods": [], "profile_requests": 0}
     token = install_auth_mocks(reset_page, state)
 
@@ -198,6 +217,15 @@ with sync_playwright() as playwright:
     reset_page = reset_context.new_page()
     reset_page.on("pageerror", lambda error: reset_errors.append(str(error)))
     reset_page.on("console", lambda message: reset_console_errors.append(message.text) if message.type == "error" else None)
+    reset_page.on("requestfailed", lambda request: reset_failures.append({
+        "url": request.url,
+        "failure": request.failure,
+    }))
+    reset_page.on("response", lambda response: reset_response_errors.append({
+        "status": response.status,
+        "url": response.url,
+        "resource_type": response.request.resource_type,
+    }) if response.status >= 400 else None)
     token = install_auth_mocks(reset_page, state)
 
     expires_at = int(time.time()) + 3600
@@ -244,6 +272,7 @@ with sync_playwright() as playwright:
     reset_page.locator("#admin-login-email").fill("admin.qa@example.test")
     reset_page.locator("#admin-login-password").fill("old-password-qa")
     console_count_before_invalid_login = len(reset_console_errors)
+    response_count_before_invalid_login = len(reset_response_errors)
     reset_page.get_by_role("button", name="Đăng nhập").click()
     assert reset_page.get_by_role("alert").inner_text() == "Email hoặc mật khẩu không đúng."
     expected_login_errors = reset_console_errors[console_count_before_invalid_login:]
@@ -252,6 +281,12 @@ with sync_playwright() as playwright:
         for message in expected_login_errors
     ), f"unexpected invalid-login console errors: {expected_login_errors}"
     del reset_console_errors[console_count_before_invalid_login:]
+    expected_login_responses = reset_response_errors[response_count_before_invalid_login:]
+    assert expected_login_responses and all(
+        response["status"] == 400 and "/auth/v1/token" in response["url"]
+        for response in expected_login_responses
+    ), f"unexpected invalid-login responses: {expected_login_responses}"
+    del reset_response_errors[response_count_before_invalid_login:]
     reset_page.locator("#admin-login-password").fill("new-password-qa")
     reset_page.get_by_role("button", name="Đăng nhập").click()
     reset_page.locator(".admin-app").wait_for(state="visible", timeout=20_000)
@@ -295,7 +330,47 @@ with sync_playwright() as playwright:
 
     assert state["login_attempts"] == ["old-password-qa", "new-password-qa", "new-password-qa"]
     assert not reset_errors, f"reset/Admin page errors: {reset_errors}"
-    assert not reset_console_errors, f"reset/Admin console errors: {reset_console_errors}"
+    expected_admin_fallback_routes = {
+        "/admin/products",
+        "/admin/homepage",
+        "/admin/builder/flowers",
+        "/admin/builder/wrappings",
+        "/admin/products/new",
+        "/ko/admin/homepage",
+    }
+    admin_document_fallbacks = [
+        response for response in reset_response_errors
+        if response["status"] == 404
+        and response["resource_type"] == "document"
+        and any(response["url"].endswith(route) for route in expected_admin_fallback_routes)
+    ]
+    assert reset_response_errors == admin_document_fallbacks, (
+        f"unexpected reset/Admin failed responses: {reset_response_errors}"
+    )
+    if admin_document_fallbacks:
+        fallback_console_errors = [
+            message for message in reset_console_errors
+            if "Failed to load resource" in message and "404" in message
+        ]
+        assert len(fallback_console_errors) == len(admin_document_fallbacks), (
+            f"Admin fallback console/response mismatch: console={fallback_console_errors}; "
+            f"responses={admin_document_fallbacks}"
+        )
+        reset_console_errors = [
+            message for message in reset_console_errors
+            if message not in fallback_console_errors
+        ]
+    expected_mock_logout_aborts = [
+        failure for failure in reset_failures
+        if failure["url"].endswith("/auth/v1/logout?scope=global")
+        and failure["failure"] == "net::ERR_ABORTED"
+    ]
+    assert reset_failures == expected_mock_logout_aborts and len(expected_mock_logout_aborts) <= 3, (
+        f"reset/Admin failed requests: {reset_failures}"
+    )
+    assert not reset_console_errors, (
+        f"reset/Admin console errors: {reset_console_errors}; failed requests: {reset_failures}"
+    )
     reset_context.close()
     browser.close()
 

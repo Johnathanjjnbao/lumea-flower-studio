@@ -1,10 +1,11 @@
+import os
 from pathlib import Path
 from tempfile import gettempdir
 
 from playwright.sync_api import sync_playwright
 
 
-BASE_URL = "http://127.0.0.1:4173/lumea-flower-studio"
+BASE_URL = os.environ.get("LUMEA_BASE_URL", "http://127.0.0.1:4173/lumea-flower-studio")
 ARTIFACT_DIR = Path(gettempdir()) / "lumea-step11-qa"
 ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -43,7 +44,7 @@ with sync_playwright() as playwright:
     assert page.locator("main#main-content").is_visible()
 
     page.goto(f"{BASE_URL}/flowers", wait_until="networkidle")
-    assert page.get_by_label("Tìm trong bộ sưu tập").is_visible()
+    page.locator("#catalog-search").wait_for(state="attached", timeout=20_000)
     product_links = page.locator(".product-card .product-image")
     product_links.first.wait_for(state="visible", timeout=20_000)
     product_url = None

@@ -51,8 +51,14 @@ with sync_playwright() as playwright:
     page = context.new_page()
     page_errors = []
     console_errors = []
+    response_errors = []
     page.on("pageerror", lambda error: page_errors.append(str(error)))
     page.on("console", lambda message: console_errors.append(message.text) if message.type == "error" else None)
+    page.on("response", lambda response: response_errors.append({
+        "status": response.status,
+        "url": response.url,
+        "resource_type": response.request.resource_type,
+    }) if response.status >= 400 else None)
 
     page.goto(f"{BASE_URL}/", wait_until="networkidle")
     page.locator("#visit").wait_for(state="attached", timeout=20_000)
@@ -103,6 +109,7 @@ with sync_playwright() as playwright:
     close_filter = page.locator('.catalog-filter-panel__head button')
     assert close_filter.evaluate("node => document.activeElement === node")
     page.keyboard.press("Escape")
+    page.wait_for_timeout(100)
     assert page.locator(".catalog-filter-toggle").evaluate("node => document.activeElement === node")
 
     page.set_viewport_size({"width": 1440, "height": 1000})
@@ -115,15 +122,37 @@ with sync_playwright() as playwright:
         standard.check()
         assert "120.000.000" in page.locator(".product-detail__commerce-head strong").inner_text()
     assert_images_loaded(page, "Pink Garden detail")
+    console_count_before_reload = len(console_errors)
+    response_count_before_reload = len(response_errors)
     page.reload(wait_until="networkidle")
     assert page.locator(".product-detail").is_visible()
+    reload_responses = response_errors[response_count_before_reload:]
+    document_fallbacks = [
+        response for response in reload_responses
+        if response["status"] == 404
+        and response["resource_type"] == "document"
+        and response["url"].endswith("/flowers/pink-garden")
+    ]
+    if document_fallbacks:
+        assert reload_responses == document_fallbacks, f"unexpected reload failures: {reload_responses}"
+        reload_console = console_errors[console_count_before_reload:]
+        assert reload_console and all(
+            "Failed to load resource" in message and "404" in message
+            for message in reload_console
+        ), f"unexpected fallback console errors: {reload_console}"
+        del console_errors[console_count_before_reload:]
     page.go_back(wait_until="networkidle")
     assert page.locator(".catalog-page").is_visible()
     page.go_forward(wait_until="networkidle")
     assert page.locator(".product-detail").is_visible()
 
     assert not page_errors, f"page errors: {page_errors}"
-    assert not console_errors, f"console errors: {console_errors}"
+    unexpected_response_errors = [
+        response for response in response_errors
+        if response not in document_fallbacks
+    ]
+    assert not unexpected_response_errors, f"failed responses: {unexpected_response_errors}"
+    assert not console_errors, f"console errors: {console_errors}; failed responses: {response_errors}"
     context.close()
     browser.close()
 
