@@ -10,7 +10,7 @@ function unavailable(item: CartItem): CartLine {
 
 function reconcileReadyMade(item: ReadyMadeCartItem, products: readonly CatalogProductRecord[]): CartLine {
   const product = products.find((option) => option.id === item.productId || option.stableCode === item.productCode || option.slug === item.productSlug);
-  if (!product || product.availability === "UNAVAILABLE") return unavailable(item);
+  if (!product || product.availability !== "AVAILABLE") return unavailable(item);
   const variant = product.variants.find((option) => option.id === item.variantId || option.stableCode === item.variantCode);
   const tone = item.toneCode ? product.tones.find((option) => option.stableCode === item.toneCode) : null;
   if (!variant || (product.tones.length > 0 && !tone) || (product.tones.length === 0 && item.toneCode)) return unavailable(item);
@@ -40,7 +40,7 @@ function reconcileReadyMade(item: ReadyMadeCartItem, products: readonly CatalogP
 function reconcileCustomBouquet(item: CustomBouquetCartItem, catalog: BouquetBuilderCatalog): CartLine {
   const selectedFlowers = item.flowers.map((selection) => {
     const flower = catalog.flowers.find((option) => option.id === selection.flowerId || option.stableCode === selection.flowerCode);
-    return flower && flower.availability !== "UNAVAILABLE" ? { flower, quantity: selection.quantity } : null;
+    return flower && flower.availability === "AVAILABLE" ? { flower, quantity: selection.quantity } : null;
   });
   if (selectedFlowers.some((selection) => !selection)) return unavailable(item);
   const wrappingType = catalog.wrappingTypes.find((option) => option.id === item.wrapping.typeId || option.stableCode === item.wrapping.typeCode);

@@ -1,6 +1,6 @@
 # Luméa Supabase Setup
 
-This guide is the operational reference for the Supabase foundation through Step 10. Product/Media operations are documented in `docs/ADMIN_PRODUCT_MEDIA.md`; Builder data operations are documented in `docs/BUILDER_DATA_ADMIN.md`. Cart, checkout, and orders remain out of scope.
+This guide is the operational reference for the Supabase foundation through Step 12. Product/Media operations are documented in `docs/ADMIN_PRODUCT_MEDIA.md`; Builder data operations are documented in `docs/BUILDER_DATA_ADMIN.md`. Step 12 adds guest Checkout and secure Order creation; Admin Order operations remain out of scope.
 
 ## Project identity
 
@@ -31,7 +31,7 @@ Only a browser-safe `sb_publishable_...` key may use the `VITE_` prefix. Do not 
 
 `.env.local`, `.env`, and `.env.*` are ignored by Git. `.env.example` is intentionally tracked and contains names only.
 
-The live storefront and Builder require both public values and fail with localized retry states when Supabase access is unavailable; neither silently falls back to local production data. Supplying only one value, an invalid URL, or a non-publishable key produces a clear configuration error when the Supabase client is requested.
+The live storefront, Builder, and Checkout require both public values and fail with localized retry states when Supabase access is unavailable; none silently falls back to local production data. Supplying only one value, an invalid URL, or a non-publishable key produces a clear configuration error when the Supabase client is requested.
 
 ## CLI and migration workflow
 
@@ -70,7 +70,7 @@ Commit the generated type update with its migration. Never hand-edit generated d
 
 ## Implemented schema boundary
 
-The implemented foundation includes Product, Media, and Bouquet Builder data:
+The implemented foundation includes Product, Media, Bouquet Builder, and guest Order data:
 
 - Product identity, type, visibility, availability, merchandising flags, same-day eligibility, ordering, and archive timestamps.
 - VI/KO Product translations with unique `(product_id, locale)` identity.
@@ -80,12 +80,16 @@ The implemented foundation includes Product, Media, and Bouquet Builder data:
 - Supabase Auth-linked `ADMIN` and `STAFF` application profiles.
 - Flower stems with availability, integer-VND per-stem pricing, VI/KO content, sort order, media, and lifecycle state.
 - Wrapping options and colour variants with VI/KO content, integer-VND modifiers, safe swatches, and explicit compatibility relations.
+- Orders, immutable Order-item snapshots, recipient/address/delivery records, Payment metadata, and initial Order status events.
+- A single `create_checkout_order(jsonb, uuid, bigint)` transaction boundary for guest Checkout.
 
 Product price is derived from active variants; there is no duplicate mutable Product base-price column. Visibility and availability remain separate. A `PUBLISHED + UNAVAILABLE` Product may be visible while not purchasable.
 
 Publishing a Product requires Vietnamese copy, at least one active priced variant for Product-backed bouquet types, and one active public primary image. The database permits only one active primary image per Product.
 
-Cart, checkout, orders, payments, delivery, customers, and custom requests are deliberately absent. Builder draft persistence remains browser-local and stores stable codes only; mutable names, availability, compatibility, media, and prices are always reloaded from Supabase.
+Cart and Builder draft persistence remain browser-local and store stable identities rather than trusted prices. Checkout sends only those identities, quantities, and customer-entered request fields. The database function reloads current Product/Builder records, validates publication/availability/compatibility, computes integer-VND item totals, and creates the complete Order aggregate atomically. Delivery fee and final total remain `null` until the owner-approved Step 14 delivery rule exists.
+
+All Order tables have RLS enabled and grant no direct access to `anon` or ordinary `authenticated` clients. Only `anon` may execute the narrowly scoped guest Checkout function; the isolated public storefront client does not reuse an Admin session. The function uses an empty `search_path`, exact JSON-field allowlists, bounded quantities and text, fixed server-side initial statuses, a hashed idempotency key, and transaction-scoped serialization for concurrent retries. Its result is a minimal receipt; there is no anonymous Order lookup, update, or delete endpoint.
 
 ## Auth and roles
 
@@ -193,6 +197,8 @@ npm run check:builder-pricing
 npm run check:builder-persistence
 npm run check:builder-runtime
 npm run check:homepage-runtime
+npm run check:checkout
+npm run check:checkout-runtime
 npm run typecheck
 npm run build
 npx supabase db lint --linked --level warning

@@ -16,7 +16,7 @@ interface CartContextValue {
   removeItem: (itemId: string) => void;
   setQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
-  reconcileCart: () => Promise<void>;
+  reconcileCart: () => Promise<CartLine[]>;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -42,7 +42,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const reconcileCart = useCallback(async () => {
     const currentItems = linesRef.current.map(({ validation: _validation, ...item }) => item);
-    if (currentItems.length === 0) return;
+    if (currentItems.length === 0) return [];
     const reconciliationItemIds = new Set(currentItems.map((item) => item.id));
     const runId = ++reconciliationId.current;
     setLines((current) => current.map((line) => reconciliationItemIds.has(line.id)
@@ -54,18 +54,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
       needsProducts ? loadPublishedCatalog(locale, true) : Promise.resolve([]),
       needsBuilder ? loadPublishedBuilder(locale, true) : Promise.resolve({ flowers: [], wrappingTypes: [], wrappingVariants: [] }),
     ]);
-    if (runId !== reconciliationId.current) return;
-    setLines((current) => current.map((line) => {
-      if (!reconciliationItemIds.has(line.id)) return line;
-      if (line.type === "READY_MADE_PRODUCT" && productsResult.status === "rejected") return { ...line, validation: { state: "error" } };
-      if (line.type === "CUSTOM_BOUQUET" && builderResult.status === "rejected") return { ...line, validation: { state: "error" } };
-      const item = (({ validation: _validation, ...rest }) => rest)(line);
+    if (runId !== reconciliationId.current) return linesRef.current;
+    const reconciled = currentItems.map((item) => {
+      if (item.type === "READY_MADE_PRODUCT" && productsResult.status === "rejected") return { ...item, validation: { state: "error" as const } };
+      if (item.type === "CUSTOM_BOUQUET" && builderResult.status === "rejected") return { ...item, validation: { state: "error" as const } };
       return reconcileCartItems(
         [item],
         productsResult.status === "fulfilled" ? productsResult.value : [],
         builderResult.status === "fulfilled" ? builderResult.value : { flowers: [], wrappingTypes: [], wrappingVariants: [] },
       )[0];
-    }));
+    });
+    const byId = new Map(reconciled.map((line) => [line.id, line]));
+    const byPreviousId = new Map(currentItems.map((item, index) => [item.id, reconciled[index]]));
+    let nextSnapshot: CartLine[] = [];
+    setLines((current) => {
+      nextSnapshot = current.map((line) => {
+        if (!reconciliationItemIds.has(line.id)) return line;
+        const checked = byId.get(line.id) ?? byPreviousId.get(line.id);
+        return checked ? { ...checked, quantity: line.quantity } : line;
+      });
+      linesRef.current = nextSnapshot;
+      return nextSnapshot;
+    });
+    return nextSnapshot.length > 0 ? nextSnapshot : reconciled;
   }, [locale]);
 
   const value = useMemo<CartContextValue>(() => ({

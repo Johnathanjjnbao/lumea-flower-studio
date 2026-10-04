@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       admin_profiles: {
@@ -68,6 +43,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      deliveries: {
+        Row: {
+          created_at: string
+          delivery_notes: string | null
+          id: string
+          order_id: string
+          requested_date: string
+          requested_window: string | null
+          status: Database["public"]["Enums"]["delivery_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_notes?: string | null
+          id?: string
+          order_id: string
+          requested_date: string
+          requested_window?: string | null
+          status?: Database["public"]["Enums"]["delivery_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivery_notes?: string | null
+          id?: string
+          order_id?: string
+          requested_date?: string
+          requested_window?: string | null
+          status?: Database["public"]["Enums"]["delivery_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deliveries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       flower_stem_translations: {
         Row: {
@@ -612,6 +628,337 @@ export type Database = {
             columns: ["media_asset_id"]
             isOneToOne: false
             referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_addresses: {
+        Row: {
+          address_text: string
+          created_at: string
+          id: string
+          order_id: string
+        }
+        Insert: {
+          address_text: string
+          created_at?: string
+          id?: string
+          order_id: string
+        }
+        Update: {
+          address_text?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_addresses_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_items: {
+        Row: {
+          configuration_summary_snapshot: Json | null
+          created_at: string
+          id: string
+          item_type: Database["public"]["Enums"]["order_item_type"]
+          line_total: number
+          order_id: string
+          primary_media_path_snapshot: string | null
+          product_code_snapshot: string | null
+          product_name_snapshot: string
+          product_slug_snapshot: string | null
+          quantity: number
+          source_product_id: string | null
+          source_tone_id: string | null
+          source_variant_id: string | null
+          source_wrapping_option_id: string | null
+          source_wrapping_variant_id: string | null
+          tone_code_snapshot: string | null
+          tone_name_snapshot: string | null
+          unit_price_snapshot: number
+          variant_code_snapshot: string | null
+          variant_name_snapshot: string | null
+        }
+        Insert: {
+          configuration_summary_snapshot?: Json | null
+          created_at?: string
+          id?: string
+          item_type: Database["public"]["Enums"]["order_item_type"]
+          line_total: number
+          order_id: string
+          primary_media_path_snapshot?: string | null
+          product_code_snapshot?: string | null
+          product_name_snapshot: string
+          product_slug_snapshot?: string | null
+          quantity: number
+          source_product_id?: string | null
+          source_tone_id?: string | null
+          source_variant_id?: string | null
+          source_wrapping_option_id?: string | null
+          source_wrapping_variant_id?: string | null
+          tone_code_snapshot?: string | null
+          tone_name_snapshot?: string | null
+          unit_price_snapshot: number
+          variant_code_snapshot?: string | null
+          variant_name_snapshot?: string | null
+        }
+        Update: {
+          configuration_summary_snapshot?: Json | null
+          created_at?: string
+          id?: string
+          item_type?: Database["public"]["Enums"]["order_item_type"]
+          line_total?: number
+          order_id?: string
+          primary_media_path_snapshot?: string | null
+          product_code_snapshot?: string | null
+          product_name_snapshot?: string
+          product_slug_snapshot?: string | null
+          quantity?: number
+          source_product_id?: string | null
+          source_tone_id?: string | null
+          source_variant_id?: string | null
+          source_wrapping_option_id?: string | null
+          source_wrapping_variant_id?: string | null
+          tone_code_snapshot?: string | null
+          tone_name_snapshot?: string | null
+          unit_price_snapshot?: number
+          variant_code_snapshot?: string | null
+          variant_name_snapshot?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_source_product_id_fkey"
+            columns: ["source_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_source_tone_id_fkey"
+            columns: ["source_tone_id"]
+            isOneToOne: false
+            referencedRelation: "tones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_source_variant_id_fkey"
+            columns: ["source_variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_source_wrapping_option_id_fkey"
+            columns: ["source_wrapping_option_id"]
+            isOneToOne: false
+            referencedRelation: "wrapping_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_source_wrapping_variant_id_fkey"
+            columns: ["source_wrapping_variant_id"]
+            isOneToOne: false
+            referencedRelation: "wrapping_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_recipients: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          order_id: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          order_id: string
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          order_id?: string
+          phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_recipients_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_status_events: {
+        Row: {
+          actor_admin_id: string | null
+          created_at: string
+          from_status: Database["public"]["Enums"]["order_status"] | null
+          id: string
+          order_id: string
+          reason: string | null
+          to_status: Database["public"]["Enums"]["order_status"]
+        }
+        Insert: {
+          actor_admin_id?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["order_status"] | null
+          id?: string
+          order_id: string
+          reason?: string | null
+          to_status: Database["public"]["Enums"]["order_status"]
+        }
+        Update: {
+          actor_admin_id?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["order_status"] | null
+          id?: string
+          order_id?: string
+          reason?: string | null
+          to_status?: Database["public"]["Enums"]["order_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_events_actor_admin_id_fkey"
+            columns: ["actor_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_status_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          buyer_email: string | null
+          buyer_is_recipient: boolean
+          buyer_name: string
+          buyer_phone: string
+          card_message: string | null
+          created_at: string
+          currency: string
+          delivery_fee_amount: number | null
+          fulfillment_type: Database["public"]["Enums"]["fulfillment_type"]
+          id: string
+          idempotency_key_hash: string
+          is_surprise: boolean
+          locale: Database["public"]["Enums"]["locale_code"]
+          order_number: string
+          placed_at: string
+          request_fingerprint: string
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal_amount: number
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          buyer_email?: string | null
+          buyer_is_recipient: boolean
+          buyer_name: string
+          buyer_phone: string
+          card_message?: string | null
+          created_at?: string
+          currency?: string
+          delivery_fee_amount?: number | null
+          fulfillment_type?: Database["public"]["Enums"]["fulfillment_type"]
+          id?: string
+          idempotency_key_hash: string
+          is_surprise?: boolean
+          locale: Database["public"]["Enums"]["locale_code"]
+          order_number: string
+          placed_at?: string
+          request_fingerprint: string
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal_amount: number
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          buyer_email?: string | null
+          buyer_is_recipient?: boolean
+          buyer_name?: string
+          buyer_phone?: string
+          card_message?: string | null
+          created_at?: string
+          currency?: string
+          delivery_fee_amount?: number | null
+          fulfillment_type?: Database["public"]["Enums"]["fulfillment_type"]
+          id?: string
+          idempotency_key_hash?: string
+          is_surprise?: boolean
+          locale?: Database["public"]["Enums"]["locale_code"]
+          order_number?: string
+          placed_at?: string
+          request_fingerprint?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal_amount?: number
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number | null
+          created_at: string
+          currency: string
+          id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          order_id: string
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          currency?: string
+          id?: string
+          method: Database["public"]["Enums"]["payment_method"]
+          order_id: string
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          currency?: string
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          order_id?: string
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -1204,6 +1551,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_checkout_order: {
+        Args: {
+          checkout_idempotency_key: string
+          checkout_payload: Json
+          reviewed_subtotal: number
+        }
+        Returns: {
+          delivery_fee_amount: number
+          order_id: string
+          order_number: string
+          order_status: Database["public"]["Enums"]["order_status"]
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          placed_at: string
+          subtotal_amount: number
+          total_amount: number
+          was_duplicate: boolean
+        }[]
+      }
       current_admin_profile_id: { Args: never; Returns: string }
       flower_stem_publication_issues: {
         Args: { target_flower_stem_id: string }
@@ -1239,9 +1605,35 @@ export type Database = {
     Enums: {
       admin_role: "ADMIN" | "STAFF"
       availability_status: "AVAILABLE" | "UNAVAILABLE" | "SEASONAL"
+      delivery_status:
+        | "PENDING"
+        | "SCHEDULED"
+        | "READY_FOR_DISPATCH"
+        | "OUT_FOR_DELIVERY"
+        | "DELIVERED"
+        | "FAILED"
+        | "CANCELLED"
+      fulfillment_type: "DELIVERY" | "PICKUP"
       locale_code: "vi" | "ko"
       media_access: "PUBLIC" | "PRIVATE"
       media_status: "ACTIVE" | "ARCHIVED"
+      order_item_type: "READY_MADE_PRODUCT" | "CUSTOM_BOUQUET"
+      order_status:
+        | "PENDING"
+        | "CONFIRMED"
+        | "PREPARING"
+        | "READY"
+        | "FULFILLING"
+        | "COMPLETED"
+        | "CANCELLED"
+      payment_method: "BANK_TRANSFER" | "CASH"
+      payment_status:
+        | "UNPAID"
+        | "PENDING"
+        | "PAID"
+        | "FAILED"
+        | "REFUNDED"
+        | "CANCELLED"
       product_image_role: "PRIMARY" | "GALLERY"
       product_type: "READY_MADE_BOUQUET" | "FLORIST_CHOICE" | "CUSTOM_BOUQUET"
       visibility_status: "DRAFT" | "PUBLISHED" | "HIDDEN" | "ARCHIVED"
@@ -1370,16 +1762,42 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       admin_role: ["ADMIN", "STAFF"],
       availability_status: ["AVAILABLE", "UNAVAILABLE", "SEASONAL"],
+      delivery_status: [
+        "PENDING",
+        "SCHEDULED",
+        "READY_FOR_DISPATCH",
+        "OUT_FOR_DELIVERY",
+        "DELIVERED",
+        "FAILED",
+        "CANCELLED",
+      ],
+      fulfillment_type: ["DELIVERY", "PICKUP"],
       locale_code: ["vi", "ko"],
       media_access: ["PUBLIC", "PRIVATE"],
       media_status: ["ACTIVE", "ARCHIVED"],
+      order_item_type: ["READY_MADE_PRODUCT", "CUSTOM_BOUQUET"],
+      order_status: [
+        "PENDING",
+        "CONFIRMED",
+        "PREPARING",
+        "READY",
+        "FULFILLING",
+        "COMPLETED",
+        "CANCELLED",
+      ],
+      payment_method: ["BANK_TRANSFER", "CASH"],
+      payment_status: [
+        "UNPAID",
+        "PENDING",
+        "PAID",
+        "FAILED",
+        "REFUNDED",
+        "CANCELLED",
+      ],
       product_image_role: ["PRIMARY", "GALLERY"],
       product_type: ["READY_MADE_BOUQUET", "FLORIST_CHOICE", "CUSTOM_BOUQUET"],
       visibility_status: ["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"],

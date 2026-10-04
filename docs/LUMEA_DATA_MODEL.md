@@ -1,6 +1,6 @@
 # Luméa Supabase-Ready Data Model
 
-**Status:** Schema proposal locked for conversion into Step 9 migrations
+**Status:** Product/Builder and guest Checkout/Order boundaries implemented through Step 12; later operational domains remain proposals
 
 **Database target:** PostgreSQL through Supabase
 
@@ -30,7 +30,7 @@ This document is a logical schema, not executable SQL. Step 9 must translate it 
 | `availability_status` | `AVAILABLE`, `UNAVAILABLE`, `SEASONAL` | Operational purchasability/seasonality; not publication state. |
 | `cart_status` | `ACTIVE`, `CONVERTED`, `ABANDONED`, `EXPIRED` | Cart lifecycle. |
 | `cart_item_type` | `READY_MADE`, `CUSTOM_BOUQUET` | Discriminates item references without parsing descriptions. |
-| `order_item_type` | `READY_MADE`, `CUSTOM_BOUQUET` | Immutable item-kind snapshot. |
+| `order_item_type` | `READY_MADE_PRODUCT`, `CUSTOM_BOUQUET` | Immutable item-kind snapshot aligned with the Step 11 Cart discriminant. |
 | `order_status` | `PENDING`, `CONFIRMED`, `PREPARING`, `READY`, `FULFILLING`, `COMPLETED`, `CANCELLED` | Commercial/fulfillment lifecycle independent of payment. |
 | `payment_status` | `UNPAID`, `PENDING`, `PAID`, `FAILED`, `REFUNDED`, `CANCELLED` | Payment lifecycle independent of Order. |
 | `payment_method` | `BANK_TRANSFER`, `CASH` | V1 methods. VietQR belongs to bank-transfer presentation. |
@@ -147,8 +147,8 @@ Builder rules:
 | Table / entity | Purpose | Important fields | Relationships | Admin editable? | Snapshot required? |
 |---|---|---|---|---|---|
 | `customers` | Optional future customer profile, not required for V1 guest checkout. | `id`, optional unique `auth_user_id`, name/contact fields, timestamps. | 1:N Carts/Orders. | No routine Admin edits; protected support access only. | Orders still keep buyer snapshots. |
-| `carts` | One server-side cart for guest or customer. | `id`, `status`, nullable `customer_id`, `guest_token_hash`, `currency`, `expires_at`, timestamps. | 1:N CartItems; optional N:1 Customer. | No | No; revalidated before Order. |
-| `cart_items` | One discriminated item collection. | `id`, `cart_id`, `item_type`, nullable `product_id`, `product_variant_id`, `bouquet_configuration_id`, optional `tone_id`, `quantity`, `card_message`, timestamps. | N:1 Cart; conditional references by item type. | No | No; price display may be cached but not trusted. |
+| `carts` | Optional future server-side cart for guest or customer. Step 11 V1 deliberately keeps Cart browser-local. | `id`, `status`, nullable `customer_id`, `guest_token_hash`, `currency`, `expires_at`, timestamps. | 1:N CartItems; optional N:1 Customer. | No | No; not implemented in V1. |
+| `cart_items` | Optional future persisted discriminated Cart collection. Step 11 V1 sends only stable identities/configuration from its versioned local Cart. | `id`, `cart_id`, `item_type`, nullable `product_id`, `product_variant_id`, `bouquet_configuration_id`, optional `tone_id`, `quantity`, timestamps. | N:1 Cart; conditional references by item type. | No | No; prices are revalidated by the Step 12 trusted Order function. |
 
 Cart ownership rules:
 

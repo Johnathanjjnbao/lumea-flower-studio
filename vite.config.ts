@@ -14,10 +14,14 @@ function githubPagesRouteEntries(): Plugin {
         "flowers",
         "create-bouquet",
         "cart",
+        "checkout",
+        "order-confirmation",
         "ko",
         "ko/flowers",
         "ko/create-bouquet",
         "ko/cart",
+        "ko/checkout",
+        "ko/order-confirmation",
       ];
 
       await Promise.all(routes.map(async (route) => {

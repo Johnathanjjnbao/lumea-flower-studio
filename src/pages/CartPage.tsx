@@ -121,6 +121,7 @@ export function CartPage() {
   const { lines, itemCount, subtotal, isReconciling, clearCart, reconcileCart } = useCart();
   const hasErrors = lines.some((line) => line.validation.state === "error");
   const invalidCount = lines.filter((line) => line.validation.state === "unavailable" || line.validation.state === "error").length;
+  const canCheckout = !isReconciling && lines.every((line) => line.validation.state === "valid" || line.validation.state === "changed");
 
   useDocumentMetadata(t.meta.cartTitle, t.meta.cartDescription);
   useEffect(() => { void reconcileCart(); }, [reconcileCart]);
@@ -148,7 +149,9 @@ export function CartPage() {
         </dl>
         {invalidCount > 0 && <p className="cart-summary__warning" role="status">{formatMessage(t.cart.invalidExcluded, { count: invalidCount })}</p>}
         <p className="cart-summary__delivery">{t.cart.deliveryNote}</p>
-        <button className="button button--solid cart-summary__checkout" type="button" disabled>{t.cart.checkoutComing}</button>
+        {canCheckout
+          ? <Link className="button button--solid cart-summary__checkout" to={path("/checkout")}>{t.cart.checkoutComing}</Link>
+          : <button className="button button--solid cart-summary__checkout" type="button" disabled>{t.cart.checkoutComing}</button>}
         <p className="cart-summary__roadmap">{t.cart.checkoutNote}</p>
         <Link className="cart-summary__continue" to={path("/flowers")}>{t.cart.continueShopping}</Link>
       </aside>
