@@ -324,8 +324,8 @@ with sync_playwright() as playwright:
     reset_page.get_by_role("button", name="로그인").click()
     reset_page.get_by_role("heading", name="Homepage", exact=True).wait_for(state="visible", timeout=20_000)
     assert reset_page.url.endswith("/ko/admin/homepage"), "Korean Admin return path lost its locale"
-    reset_page.get_by_role("button", name="Menu").click()
-    reset_page.get_by_role("button", name="Đăng xuất").click()
+    reset_page.get_by_role("button", name="메뉴").click()
+    reset_page.get_by_role("button", name="로그아웃").click()
     reset_page.get_by_role("heading", name="관리자 로그인").wait_for(state="visible", timeout=20_000)
 
     assert state["login_attempts"] == ["old-password-qa", "new-password-qa", "new-password-qa"]

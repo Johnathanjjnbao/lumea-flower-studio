@@ -37,6 +37,8 @@ USER = {
 PROFILE = {"id": "33333333-3333-4333-8333-333333333333", "auth_user_id": USER["id"], "display_name": "Luméa QA", "role": "ADMIN", "active": True}
 ORDER_ID = "24a77a42-8599-498d-a876-05c9264c92af"
 OTHER_ID = "44444444-4444-4444-8444-444444444444"
+PAGE_ONE_SECOND_ID = "22222222-2222-4222-8222-222222222222"
+PAGE_TWO_ID = "77777777-7777-4777-8777-777777777777"
 
 
 def install_mocks(page, state):
@@ -53,13 +55,13 @@ def install_mocks(page, state):
 
     page.route("**/auth/v1/token**", token_exchange)
 
-    def list_row():
+    def list_row(order_id=ORDER_ID, order_number="LUM-26935E75CB064623", buyer_name="Nguyễn An", total_count=21):
         return {
-            "order_id": ORDER_ID, "order_number": "LUM-26935E75CB064623", "placed_at": "2026-10-04T05:22:00Z",
-            "order_status": state["status"], "buyer_name": "Nguyễn An", "buyer_phone": "0909 111 222",
+            "order_id": order_id, "order_number": order_number, "placed_at": "2026-10-04T05:22:00Z",
+            "order_status": state["status"], "buyer_name": buyer_name, "buyer_phone": "0909 111 222",
             "recipient_name": "Trần Bình", "recipient_phone": "0909 333 444", "requested_date": "2026-10-08",
             "subtotal_amount": 120045000, "payment_method": "BANK_TRANSFER", "payment_status": "UNPAID",
-            "item_count": 2, "item_summary": "Pink Garden × 1 · Bó hoa của bạn × 1", "total_count": 21,
+            "item_count": 2, "item_summary": "Pink Garden × 1 · Bó hoa của bạn × 1", "total_count": total_count,
         }
 
     order = {
@@ -97,9 +99,18 @@ def install_mocks(page, state):
             payload = request.post_data_json or {}
             state["list_payloads"].append(payload)
             query = payload.get("search_query")
-            if query == "fail":
+            if query == "fail" and state["list_failures_remaining"] > 0:
+                state["list_failures_remaining"] -= 1
                 route.fulfill(status=500, content_type="application/json", body=json.dumps({"code": "XX000", "message": "QA_LIST_FAILURE"})); return
-            route.fulfill(status=200, content_type="application/json", body=json.dumps([] if query == "none" else [list_row()])); return
+            if query == "none" or payload.get("delivery_date_from") == "2030-01-01":
+                rows = []
+            elif payload.get("page_offset", 0) >= 20:
+                rows = [list_row(PAGE_TWO_ID, "LUM-PAGE2-000000000001", "Page Two Buyer")]
+            elif query:
+                rows = [list_row(total_count=1)]
+            else:
+                rows = [list_row(), list_row(PAGE_ONE_SECOND_ID, "LUM-PAGE1-000000000002", "Second Buyer")]
+            route.fulfill(status=200, content_type="application/json", body=json.dumps(rows)); return
         if "/rpc/admin_transition_order_status" in url:
             payload = request.post_data_json or {}
             state["transitions"].append(payload)
@@ -137,7 +148,7 @@ with sync_playwright() as playwright:
     page_errors, console_errors = [], []
     page.on("pageerror", lambda error: page_errors.append(str(error)))
     page.on("console", lambda message: console_errors.append(message.text) if message.type == "error" and "409" not in message.text and "500" not in message.text else None)
-    state = {"status": "PENDING", "list_payloads": [], "transitions": [], "conflict_once": False, "events": [{"id": "event-0", "order_id": ORDER_ID, "from_status": None, "to_status": "PENDING", "actor_admin_id": None, "reason": "ORDER_PLACED", "created_at": "2026-10-04T05:22:00Z"}]}
+    state = {"status": "PENDING", "list_payloads": [], "list_failures_remaining": 1, "transitions": [], "conflict_once": False, "events": [{"id": "event-0", "order_id": ORDER_ID, "from_status": None, "to_status": "PENDING", "actor_admin_id": None, "reason": "ORDER_PLACED", "created_at": "2026-10-04T05:22:00Z"}]}
     install_mocks(page, state)
 
     page.goto(f"{BASE_URL}/admin/login", wait_until="networkidle")
@@ -148,6 +159,13 @@ with sync_playwright() as playwright:
     page.get_by_role("link", name="Đơn hàng").click()
     page.get_by_role("heading", name="Đơn hàng", exact=True).wait_for(state="visible")
     assert page.get_by_text("LUM-26935E75CB064623").first.is_visible()
+    assert page.get_by_role("columnheader", name="Mở đơn", exact=True).is_visible()
+    assert page.get_by_text("Mở đơn {code}").count() == 0
+    primary_open = page.get_by_role("link", name="Mở đơn LUM-26935E75CB064623").first
+    secondary_open = page.get_by_role("link", name="Mở đơn LUM-PAGE1-000000000002").first
+    assert primary_open.is_visible() and secondary_open.is_visible()
+    primary_open.focus()
+    assert page.evaluate("() => document.activeElement?.getAttribute('aria-label')") == "Mở đơn LUM-26935E75CB064623"
     assert_no_overflow(page, "orders list desktop")
     page.screenshot(path=ARTIFACT_DIR / "orders-list-1440-vi.png", full_page=True)
 
@@ -159,6 +177,9 @@ with sync_playwright() as playwright:
     page.get_by_label("Tìm đơn").fill("fail")
     page.get_by_role("button", name="Áp dụng").click()
     page.get_by_role("alert").wait_for(state="visible")
+    page.get_by_role("button", name="Thử lại").click()
+    page.get_by_text("LUM-26935E75CB064623").first.wait_for(state="visible")
+    assert state["list_failures_remaining"] == 0
     page.get_by_role("button", name="Xóa bộ lọc").first.click()
     page.get_by_text("LUM-26935E75CB064623").first.wait_for(state="visible")
 
@@ -172,14 +193,39 @@ with sync_playwright() as playwright:
     assert state["list_payloads"][-1]["payment_status_filter"] == "UNPAID"
     assert state["list_payloads"][-1]["delivery_date_from"] == "2026-10-08"
     assert state["list_payloads"][-1]["delivery_date_to"] == "2026-10-09"
+    assert page.get_by_label("Giao từ ngày").input_value() == "2026-10-08"
+    assert page.get_by_label("Đến ngày").input_value() == "2026-10-09"
+    page.get_by_role("button", name="Xóa bộ lọc").first.click()
+    page.get_by_text("LUM-26935E75CB064623").first.wait_for(state="visible")
+    assert page.get_by_label("Giao từ ngày").input_value() == ""
+    assert page.get_by_label("Đến ngày").input_value() == ""
+
+    page.get_by_label("Giao từ ngày").fill("2030-01-01")
+    page.get_by_label("Đến ngày").fill("2030-01-01")
+    page.get_by_role("button", name="Áp dụng").click()
+    page.get_by_role("heading", name="Không tìm thấy đơn phù hợp.").wait_for(state="visible")
+    assert state["list_payloads"][-1]["delivery_date_from"] == "2030-01-01"
+    assert state["list_payloads"][-1]["delivery_date_to"] == "2030-01-01"
     page.get_by_role("button", name="Xóa bộ lọc").first.click()
     page.get_by_text("LUM-26935E75CB064623").first.wait_for(state="visible")
 
     page.get_by_role("button", name="Trang sau").click()
     page.get_by_text("Trang 2 / 2", exact=True).wait_for(state="visible")
     assert state["list_payloads"][-1]["page_offset"] == 20
+    page.get_by_text("LUM-PAGE2-000000000001").first.wait_for(state="visible")
+    assert page.get_by_text("LUM-26935E75CB064623").count() == 0
     page.get_by_role("button", name="Trang trước").click()
     page.get_by_text("Trang 1 / 2", exact=True).wait_for(state="visible")
+    page.get_by_text("LUM-26935E75CB064623").first.wait_for(state="visible")
+    assert page.get_by_text("LUM-PAGE2-000000000001").count() == 0
+    page.get_by_role("button", name="Trang sau").click()
+    page.get_by_text("Trang 2 / 2", exact=True).wait_for(state="visible")
+    page.get_by_text("LUM-PAGE2-000000000001").first.wait_for(state="visible")
+    page.get_by_label("Tìm đơn").fill("LUM-26935E75CB064623")
+    page.get_by_role("button", name="Áp dụng").click()
+    page.get_by_text("Trang 1 / 1", exact=True).wait_for(state="visible")
+    page.get_by_text("LUM-26935E75CB064623").first.wait_for(state="visible")
+    assert state["list_payloads"][-1]["page_offset"] == 0
 
     page.get_by_role("link", name="Mở đơn LUM-26935E75CB064623").first.click()
     page.get_by_role("heading", name="LUM-26935E75CB064623").wait_for(state="visible")
@@ -214,10 +260,29 @@ with sync_playwright() as playwright:
     assert page.locator(".admin-order-card").first.is_visible()
     assert_no_overflow(page, "orders list tablet")
 
+    page.set_viewport_size({"width": 1440, "height": 1000})
     page.goto(f"{BASE_URL}/ko/admin/orders", wait_until="networkidle")
     page.get_by_role("heading", name="주문 관리").wait_for(state="visible")
+    assert page.get_by_role("link", name="Luméa Admin — 홈").is_visible()
+    assert page.get_by_role("navigation", name="관리자 메뉴").is_visible()
+    for label in ["대시보드", "Homepage", "주문", "상품", "꽃 관리", "포장지", "웹사이트 보기 ↗"]:
+        assert page.get_by_role("link", name=label, exact=True).is_visible()
+    assert page.get_by_role("button", name="로그아웃").first.is_visible()
+    assert page.get_by_role("columnheader", name="주문 열기", exact=True).is_visible()
+    assert page.get_by_text("주문 {code} 열기").count() == 0
     assert page.get_by_role("link", name="주문 LUM-26935E75CB064623 열기").first.is_visible()
     assert_no_overflow(page, "orders list Korean")
+    page.set_viewport_size({"width": 390, "height": 844})
+    page.get_by_role("button", name="메뉴", exact=True).click()
+    assert page.get_by_role("button", name="닫기", exact=True).is_visible()
+    assert page.get_by_role("button", name="로그아웃").first.is_visible()
+    assert_no_overflow(page, "orders list Korean mobile menu")
+    page.get_by_role("button", name="닫기", exact=True).click()
+    page.get_by_role("link", name="주문 LUM-26935E75CB064623 열기").first.click()
+    page.get_by_role("heading", name="상태 이력").wait_for(state="visible")
+    page.get_by_role("button", name="메뉴", exact=True).click()
+    assert page.get_by_role("button", name="로그아웃").first.is_visible()
+    assert_no_overflow(page, "order detail Korean mobile")
 
     page.goto(f"{BASE_URL}/admin/orders/{OTHER_ID}", wait_until="networkidle")
     assert page.get_by_role("heading", name="Không tìm thấy đơn này.").is_visible()

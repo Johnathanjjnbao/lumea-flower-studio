@@ -9,28 +9,28 @@ export function AdminShell() {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="admin-app">
-      <a className="skip-link" href="#admin-main">Bỏ qua điều hướng</a>
+      <a className="skip-link" href="#admin-main">{t.adminShell.skipNavigation}</a>
       <header className="admin-header">
-        <Link className="admin-brand" to={path("/admin")} aria-label="Luméa Admin — Trang chính">
+        <Link className="admin-brand" to={path("/admin")} aria-label={t.adminShell.homeAria}>
           <strong>LUMÉA</strong><span>FLOWER STUDIO · ADMIN</span>
         </Link>
         <button className="admin-menu-button" type="button" aria-expanded={menuOpen} aria-controls="admin-navigation" onClick={() => setMenuOpen((open) => !open)}>
-          {menuOpen ? "Đóng" : "Menu"}
+          {menuOpen ? t.adminShell.closeMenu : t.adminShell.openMenu}
         </button>
-        <nav id="admin-navigation" className="admin-nav" data-open={menuOpen} aria-label="Điều hướng quản trị">
-          <NavLink to={path("/admin")} end onClick={() => setMenuOpen(false)}>Tổng quan</NavLink>
-          <NavLink to={path("/admin/homepage")} onClick={() => setMenuOpen(false)}>Homepage</NavLink>
+        <nav id="admin-navigation" className="admin-nav" data-open={menuOpen} aria-label={t.adminShell.navigationAria}>
+          <NavLink to={path("/admin")} end onClick={() => setMenuOpen(false)}>{t.adminShell.overview}</NavLink>
+          <NavLink to={path("/admin/homepage")} onClick={() => setMenuOpen(false)}>{t.adminShell.homepage}</NavLink>
           <NavLink to={path("/admin/orders")} onClick={() => setMenuOpen(false)}>{t.adminOrders.nav}</NavLink>
-          <NavLink to={path("/admin/products")} onClick={() => setMenuOpen(false)}>Sản phẩm</NavLink>
-          <NavLink to={path("/admin/builder/flowers")} onClick={() => setMenuOpen(false)}>Hoa Builder</NavLink>
-          <NavLink to={path("/admin/builder/wrappings")} onClick={() => setMenuOpen(false)}>Giấy gói</NavLink>
-          <Link to={path("/")} target="_blank" rel="noreferrer">Xem website ↗</Link>
-          <button className="admin-nav__signout" type="button" onClick={() => void auth.signOut()}>Đăng xuất</button>
+          <NavLink to={path("/admin/products")} onClick={() => setMenuOpen(false)}>{t.adminShell.products}</NavLink>
+          <NavLink to={path("/admin/builder/flowers")} onClick={() => setMenuOpen(false)}>{t.adminShell.builderFlowers}</NavLink>
+          <NavLink to={path("/admin/builder/wrappings")} onClick={() => setMenuOpen(false)}>{t.adminShell.wrappings}</NavLink>
+          <Link to={path("/")} target="_blank" rel="noreferrer">{t.adminShell.viewSite}</Link>
+          <button className="admin-nav__signout" type="button" onClick={() => void auth.signOut()}>{t.adminShell.signOut}</button>
         </nav>
         <div className="admin-identity">
           <span>{auth.profile?.displayName || auth.email}</span>
           <small>{auth.profile?.role}</small>
-          <button type="button" onClick={() => void auth.signOut()}>Đăng xuất</button>
+          <button type="button" onClick={() => void auth.signOut()}>{t.adminShell.signOut}</button>
         </div>
       </header>
       <main id="admin-main" className="admin-main"><Outlet /></main>
