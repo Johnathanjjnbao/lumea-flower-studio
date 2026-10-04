@@ -20,7 +20,7 @@ export function isOrderReceipt(value: unknown): value is OrderReceipt {
   const subtotal = receipt.subtotalAmount;
   const deliveryFee = receipt.deliveryFeeAmount;
   const total = receipt.totalAmount;
-  return receipt.version === 1
+  const baseValid = (receipt.version === 1 || receipt.version === 2)
     && typeof receipt.orderId === "string"
     && UUID_PATTERN.test(receipt.orderId)
     && typeof receipt.orderNumber === "string"
@@ -38,6 +38,43 @@ export function isOrderReceipt(value: unknown): value is OrderReceipt {
     && typeof receipt.placedAt === "string"
     && !Number.isNaN(Date.parse(receipt.placedAt))
     && (receipt.locale === "vi" || receipt.locale === "ko");
+  if (!baseValid) return false;
+  if (receipt.version === 1) return true;
+  const fulfillmentValid = receipt.fulfillmentType === "DELIVERY"
+    ? typeof receipt.fulfillmentName === "string" && Boolean(receipt.fulfillmentName.trim())
+      && typeof receipt.deliveryAreaName === "string" && Boolean(receipt.deliveryAreaName.trim())
+      && typeof receipt.deliveryWindowLabel === "string" && Boolean(receipt.deliveryWindowLabel.trim())
+    : receipt.fulfillmentType === "PICKUP"
+      && typeof receipt.fulfillmentName === "string" && Boolean(receipt.fulfillmentName.trim())
+      && receipt.deliveryAreaName === null && receipt.deliveryWindowLabel === null;
+  const paymentValid = receipt.paymentMethod === "BANK_TRANSFER"
+    ? typeof total === "number" && total <= 9_999_999_999_999
+      && typeof receipt.paymentReference === "string" && /^[A-Za-z0-9 ]{1,50}$/.test(receipt.paymentReference)
+      && typeof receipt.bankId === "string" && /^[A-Za-z0-9]{2,20}$/.test(receipt.bankId)
+      && typeof receipt.bankName === "string" && Boolean(receipt.bankName.trim())
+      && typeof receipt.accountNumber === "string" && /^[A-Za-z0-9]{1,19}$/.test(receipt.accountNumber)
+      && typeof receipt.accountHolder === "string" && Boolean(receipt.accountHolder.trim())
+      && typeof receipt.vietqrTemplate === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(receipt.vietqrTemplate)
+      && typeof receipt.paymentInstruction === "string" && Boolean(receipt.paymentInstruction.trim())
+    : receipt.paymentReference === null && receipt.bankId === null && receipt.bankName === null
+      && receipt.accountNumber === null && receipt.accountHolder === null && receipt.vietqrTemplate === null
+      && typeof receipt.paymentInstruction === "string" && Boolean(receipt.paymentInstruction.trim());
+  return fulfillmentValid && paymentValid
+    && typeof deliveryFee === "number"
+    && typeof total === "number"
+    && (receipt.paymentDeadlineAt === null || (typeof receipt.paymentDeadlineAt === "string" && !Number.isNaN(Date.parse(receipt.paymentDeadlineAt))));
+}
+
+export function vietQrImageUrl(receipt: OrderReceipt) {
+  if (receipt.version !== 2 || receipt.paymentMethod !== "BANK_TRANSFER" || receipt.totalAmount === null
+    || !receipt.bankId || !receipt.accountNumber || !receipt.accountHolder || !receipt.vietqrTemplate || !receipt.paymentReference) return null;
+  const path = [receipt.bankId, receipt.accountNumber, receipt.vietqrTemplate].map(encodeURIComponent).join("-");
+  const query = new URLSearchParams({
+    amount: String(receipt.totalAmount),
+    addInfo: receipt.paymentReference,
+    accountName: receipt.accountHolder,
+  });
+  return `https://img.vietqr.io/image/${path}.png?${query.toString()}`;
 }
 
 export function writeOrderReceipt(receipt: OrderReceipt) {

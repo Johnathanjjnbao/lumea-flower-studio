@@ -11,11 +11,48 @@ BASE_URL = os.environ.get("LUMEA_BASE_URL", "http://127.0.0.1:4173/lumea-flower-
 CREATE_REAL_ORDER = os.environ.get("LUMEA_CHECKOUT_CREATE_ORDER") == "1"
 ARTIFACT_DIR = Path(gettempdir()) / "lumea-step12-qa"
 ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+QA_AREA_ID = "77777777-7777-4777-8777-777777777777"
+QA_WINDOW_ID = "88888888-8888-4888-8888-888888888888"
+
+
+def checkout_options(route):
+    locale = "ko" if '"requested_locale":"ko"' in (route.request.post_data or "") else "vi"
+    route.fulfill(
+        status=200,
+        content_type="application/json",
+        body=json.dumps({
+            "delivery_enabled": True,
+            "pickup_enabled": True,
+            "same_day_enabled": True,
+            "same_day_cutoff": "23:59:00",
+            "delivery_help": "QA delivery configuration",
+            "pickup": {"name": "Luméa QA Studio", "address": "QA only", "hours": "09:00–18:00"},
+            "zones": [{
+                "id": "99999999-9999-4999-8999-999999999999",
+                "code": "qa-central",
+                "name": "QA 중심" if locale == "ko" else "QA nội thành",
+                "help": None,
+                "fee_amount": 30000,
+                "same_day_eligible": True,
+                "areas": [{"id": QA_AREA_ID, "code": "qa-area", "name": "QA 지역" if locale == "ko" else "Khu vực QA"}],
+            }],
+            "windows": [{
+                "id": QA_WINDOW_ID,
+                "code": "qa-window",
+                "label": "QA 시간" if locale == "ko" else "Khung giờ QA",
+                "help": None,
+                "start_time": "09:00:00",
+                "end_time": "18:00:00",
+                "same_day_eligible": True,
+            }],
+            "payment_methods": {"bank_transfer": True, "cash": True, "cash_delivery": True, "cash_pickup": True},
+        }),
+    )
 
 
 def wait_for_checkout(page):
     page.locator(".checkout-page").wait_for(state="visible", timeout=20_000)
-    page.locator(".checkout-cart-status").wait_for(state="detached", timeout=20_000)
+    page.wait_for_function("!document.querySelector('.checkout-cart-status')", timeout=20_000)
 
 
 def assert_no_overflow(page, label):
@@ -66,6 +103,8 @@ with sync_playwright() as playwright:
         executable_path=r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
     )
     page = browser.new_page(viewport={"width": 1440, "height": 1000}, device_scale_factor=1)
+    if not CREATE_REAL_ORDER:
+        page.route("**/rest/v1/rpc/get_checkout_options", checkout_options)
     console_errors = []
     page_errors = []
     page.on("console", lambda message: console_errors.append(f"{message.text} @ {message.location}") if message.type == "error" else None)
@@ -159,6 +198,8 @@ with sync_playwright() as playwright:
     page.locator("#recipientName").fill("LUMEA QA RECIPIENT - DO NOT FULFILL")
     page.locator("#recipientPhone").fill("0900000013")
     page.locator("#is-surprise").check()
+    page.locator("#deliveryAreaId").select_option(QA_AREA_ID)
+    page.locator("#deliveryWindowId").select_option(QA_WINDOW_ID)
     page.locator("#deliveryAddress").fill("QA ONLY - KHÔNG GIAO - 12 Test Street, Ho Chi Minh City")
     page.locator("#deliveryDate").fill(date.today().isoformat())
     page.locator("#deliveryNotes").fill("STEP 12 QA ORDER - DO NOT FULFILL OR CONTACT")
@@ -207,15 +248,27 @@ with sync_playwright() as playwright:
         assert page.locator(".checkout-empty").is_visible()
     else:
         page.evaluate("""receipt => localStorage.setItem('lumea.order-receipt.v1', JSON.stringify({ savedAt: Date.now(), receipt }))""", {
-            "version": 1,
+            "version": 2,
             "orderId": "66666666-6666-4666-8666-666666666666",
             "orderNumber": "LUM-0123456789ABCDEF",
             "subtotalAmount": 120_045_000,
-            "deliveryFeeAmount": None,
-            "totalAmount": None,
+            "deliveryFeeAmount": 30000,
+            "totalAmount": 120075000,
             "orderStatus": "PENDING",
             "paymentStatus": "UNPAID",
             "paymentMethod": "BANK_TRANSFER",
+            "fulfillmentType": "DELIVERY",
+            "fulfillmentName": "QA nội thành",
+            "deliveryAreaName": "Khu vực QA",
+            "deliveryWindowLabel": "Khung giờ QA",
+            "paymentReference": "LUMEA LUM0123456789ABCDEF",
+            "bankId": "970436",
+            "bankName": "Vietcombank",
+            "accountNumber": "123456789",
+            "accountHolder": "LUMEA FLOWER STUDIO",
+            "vietqrTemplate": "compact2",
+            "paymentInstruction": "QA only — không chuyển khoản.",
+            "paymentDeadlineAt": "2026-10-05T12:00:00.000Z",
             "placedAt": "2026-10-04T00:00:00.000Z",
             "locale": "vi",
         })

@@ -6,7 +6,11 @@ import type {
   AdminOrderDetail,
   AdminOrderFilters,
   AdminOrderPage,
+  DeliveryStatus,
+  DeliveryTransitionResult,
   OrderStatus,
+  PaymentStatus,
+  PaymentTransitionResult,
   StatusTransitionResult,
 } from "./types";
 
@@ -14,6 +18,8 @@ const ADMIN_ORDER_SELECT = `
   id, order_number, locale, status, fulfillment_type,
   buyer_name, buyer_phone, buyer_email, buyer_is_recipient, is_surprise,
   card_message, currency, subtotal_amount, delivery_fee_amount, total_amount,
+  requested_fulfillment_date, delivery_zone_name_snapshot, delivery_area_name_snapshot,
+  delivery_window_label_snapshot, pickup_name_snapshot, pickup_address_snapshot, pickup_hours_snapshot,
   placed_at, created_at, updated_at
 ` as const;
 
@@ -36,6 +42,8 @@ export interface AdminOrdersRepository {
   listOrders(filters: AdminOrderFilters): Promise<AdminOrderPage>;
   getOrder(orderId: string): Promise<AdminOrderDetail | null>;
   transitionStatus(orderId: string, expected: OrderStatus, next: OrderStatus, reason?: string): Promise<StatusTransitionResult>;
+  markPaymentPaid(paymentId: string, expected: PaymentStatus, reason?: string): Promise<PaymentTransitionResult>;
+  transitionDelivery(deliveryId: string, expected: DeliveryStatus, next: DeliveryStatus, reason?: string): Promise<DeliveryTransitionResult>;
 }
 
 export class SupabaseAdminOrdersRepository implements AdminOrdersRepository {
@@ -78,7 +86,8 @@ export class SupabaseAdminOrdersRepository implements AdminOrdersRepository {
   }
 
   async getOrder(orderId: string): Promise<AdminOrderDetail | null> {
-    const orderResult = await this.client.from("orders").select(ADMIN_ORDER_SELECT).eq("id", orderId).maybeSingle();
+    const untypedClient = this.client as SupabaseClient<any>;
+    const orderResult = await untypedClient.from("orders").select(ADMIN_ORDER_SELECT).eq("id", orderId).maybeSingle();
     if (orderResult.error) throw repositoryError("Không thể tải đơn", orderResult.error);
     if (!orderResult.data) return null;
 
@@ -87,15 +96,25 @@ export class SupabaseAdminOrdersRepository implements AdminOrdersRepository {
       this.client.from("order_recipients").select("*").eq("order_id", orderId).maybeSingle(),
       this.client.from("order_addresses").select("*").eq("order_id", orderId).maybeSingle(),
       this.client.from("deliveries").select("*").eq("order_id", orderId).maybeSingle(),
-      this.client.from("payments").select("*").eq("order_id", orderId).maybeSingle(),
+      untypedClient.from("payments").select("*").eq("order_id", orderId).maybeSingle(),
       this.client.from("order_status_events").select("*").eq("order_id", orderId).order("created_at").order("id"),
     ]);
 
     const firstError = [itemsResult.error, recipientResult.error, addressResult.error, deliveryResult.error, paymentResult.error, eventsResult.error].find(Boolean);
     if (firstError) throw repositoryError("Không thể tải đầy đủ chi tiết đơn", firstError);
 
+    const payment = required(paymentResult.data, "PAYMENT");
+    const [paymentEventsResult, deliveryEventsResult] = await Promise.all([
+      untypedClient.from("payment_status_events").select("*").eq("payment_id", payment.id).order("created_at").order("id"),
+      deliveryResult.data
+        ? untypedClient.from("delivery_status_events").select("*").eq("delivery_id", deliveryResult.data.id).order("created_at").order("id")
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+    if (paymentEventsResult.error || deliveryEventsResult.error) throw repositoryError("Không thể tải lịch sử thanh toán/giao hàng", paymentEventsResult.error || deliveryEventsResult.error);
     const events = eventsResult.data ?? [];
-    const actorIds = [...new Set(events.flatMap((event) => event.actor_admin_id ? [event.actor_admin_id] : []))];
+    const paymentEvents = paymentEventsResult.data ?? [];
+    const deliveryEvents = deliveryEventsResult.data ?? [];
+    const actorIds = [...new Set([...events, ...paymentEvents, ...deliveryEvents].flatMap((event) => event.actor_admin_id ? [event.actor_admin_id] : []))];
     const actorNames = new Map<string, string | null>();
     if (actorIds.length > 0) {
       const profileResult = await this.client.from("admin_profiles").select("id, display_name").in("id", actorIds);
@@ -104,16 +123,18 @@ export class SupabaseAdminOrdersRepository implements AdminOrdersRepository {
     }
 
     return {
-      order: orderResult.data,
+      order: orderResult.data as AdminOrderDetail["order"],
       items: (itemsResult.data ?? []).map((item) => ({
         ...item,
         bouquet: item.item_type === "CUSTOM_BOUQUET" ? parseCustomBouquetSnapshot(item.configuration_summary_snapshot) : null,
       })),
       recipient: required(recipientResult.data, "RECIPIENT"),
-      address: required(addressResult.data, "ADDRESS"),
-      delivery: required(deliveryResult.data, "DELIVERY"),
-      payment: required(paymentResult.data, "PAYMENT"),
+      address: addressResult.data,
+      delivery: deliveryResult.data,
+      payment: payment as AdminOrderDetail["payment"],
       events: events.map((event) => ({ ...event, actorName: event.actor_admin_id ? actorNames.get(event.actor_admin_id) ?? null : null })),
+      paymentEvents: paymentEvents.map((event: any) => ({ ...event, actorName: event.actor_admin_id ? actorNames.get(event.actor_admin_id) ?? null : null })),
+      deliveryEvents: deliveryEvents.map((event: any) => ({ ...event, actorName: event.actor_admin_id ? actorNames.get(event.actor_admin_id) ?? null : null })),
     };
   }
 
@@ -135,6 +156,26 @@ export class SupabaseAdminOrdersRepository implements AdminOrdersRepository {
       changedAt: row.changed_at,
       eventId: row.event_id,
     };
+  }
+
+  async markPaymentPaid(paymentId: string, expected: PaymentStatus, reason?: string): Promise<PaymentTransitionResult> {
+    const { data, error } = await (this.client as SupabaseClient<any>).rpc("admin_mark_payment_paid", {
+      target_payment_id: paymentId, expected_status: expected, transition_reason: reason?.trim() || undefined,
+    });
+    if (error) throw repositoryError("Không thể xác nhận thanh toán", error);
+    const row = data?.[0];
+    if (!row) throw new Error("PAYMENT_STATUS_EMPTY_RESPONSE");
+    return { paymentId: row.payment_id, previousStatus: row.previous_status, status: row.payment_status, paidAt: row.paid_at, eventId: row.event_id };
+  }
+
+  async transitionDelivery(deliveryId: string, expected: DeliveryStatus, next: DeliveryStatus, reason?: string): Promise<DeliveryTransitionResult> {
+    const { data, error } = await (this.client as SupabaseClient<any>).rpc("admin_transition_delivery_status", {
+      target_delivery_id: deliveryId, expected_status: expected, next_status: next, transition_reason: reason?.trim() || undefined,
+    });
+    if (error) throw repositoryError("Không thể cập nhật giao hàng", error);
+    const row = data?.[0];
+    if (!row) throw new Error("DELIVERY_STATUS_EMPTY_RESPONSE");
+    return { deliveryId: row.delivery_id, previousStatus: row.previous_status, status: row.delivery_status, changedAt: row.changed_at, eventId: row.event_id };
   }
 }
 

@@ -119,7 +119,7 @@ Implemented Step 13 transitions are:
 - `READY → FULFILLING` or `READY → COMPLETED` for confirmed pickup.
 - `FULFILLING → COMPLETED`.
 
-`COMPLETED` and `CANCELLED` are terminal. The command compares the Admin screen's expected status with the locked database row, so a stale tab cannot silently overwrite a newer transition. Payment and Delivery controls remain outside Step 13.
+`COMPLETED` and `CANCELLED` are terminal. The command compares the Admin screen's expected status with the locked database row, so a stale tab cannot silently overwrite a newer transition. Step 14 adds separately authorized Payment confirmation and Delivery transitions; neither transition silently changes Order status.
 
 ### 3.6 Payments
 
@@ -128,7 +128,7 @@ Authorized Admin can:
 - Manage current bank-transfer/VietQR inputs and customer instructions.
 - Manage approved cash instructions/eligibility.
 - View Order-specific payment reference, amount, method, and safe instruction snapshot.
-- Manually move a Payment through allowed states with an actor and reason.
+- Confirm an `UNPAID` or `PENDING` Payment as `PAID` with an explicit confirmation, expected-current-status protection, actor, time, and optional reason.
 
 Admin does not claim automatic reconciliation in V1. Secret credentials are held in approved secret storage, never site content or browser-readable settings.
 
@@ -136,13 +136,16 @@ Admin does not claim automatic reconciliation in V1. Secret credentials are held
 
 Admin can:
 
-- Manage delivery zones, fees, same-day eligibility, and localized help text.
-- Manage available delivery windows and pickup information.
-- Manage same-day enabled state and cutoff time.
+- Create and edit delivery zones, integer-VND fees, enabled state, same-day eligibility, and ordering.
+- Add, remove, localize, enable, and order supported areas inside each zone.
+- Create and edit localized delivery windows, enabled state, same-day eligibility, and ordering.
+- Manage delivery/pickup enabled state, same-day enabled state, cutoff time, localized delivery help, and pickup details.
 - View delivery-specific recipient/address/surprise/notes.
 - Move Delivery through allowed states with an actor and reason.
 
 Advanced inventory, courier assignment, route optimization, and live tracking remain out of scope.
+
+Delivery and payment configuration starts disabled and contains no invented production business values. The owner enables a method only after saving complete real configuration. Public checkout receives only safe eligibility/options; bank details and order-specific instructions are returned only in the trusted Order-creation receipt.
 
 ### 3.8 Florist-led custom requests
 
@@ -256,7 +259,7 @@ Customer selects ready-made/Builder item → Cart revalidates → Checkout recor
 
 1. Exact STAFF permissions and whether content publication needs ADMIN approval.
 2. Variant pricing/valid combinations and seasonal-purchase behavior.
-3. Delivery zones, fees, cutoff, capacity, pickup, and time-window promise.
+3. Real production delivery zones, supported areas, fees, cutoff, pickup details, and time-window promise to enter through Admin. Capacity rules remain a separate owner decision.
 4. Surprise-delivery contact policy.
 5. Cash eligibility/collection timing and bank-transfer verification/deadline.
 6. Cancellation, refund, reschedule, privacy, and retention policies.

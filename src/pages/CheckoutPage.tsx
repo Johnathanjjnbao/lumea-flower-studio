@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PageFrame } from "../components/PageFrame";
 import { useCart } from "../features/cart/CartContext";
 import type { CartLine } from "../features/cart/types";
 import { clearCheckoutAttempt } from "../features/checkout/attempt";
 import { checkoutSubtotal, createCheckoutPayload, inspectCheckoutLines } from "../features/checkout/domain";
+import { checkoutPreviewFee, loadCheckoutOptions } from "../features/checkout/options";
 import { CheckoutOrderError, createCheckoutOrder } from "../features/checkout/repository";
 import { writeOrderReceipt } from "../features/checkout/receipt";
 import type {
   CheckoutFieldName,
   CheckoutFormValues,
+  CheckoutOptions,
   CheckoutPaymentMethod,
   CheckoutValidationErrors,
 } from "../features/checkout/types";
@@ -30,12 +32,31 @@ const initialValues: CheckoutFormValues = {
   recipientName: "",
   recipientPhone: "",
   isSurprise: false,
+  fulfillmentType: "DELIVERY",
+  deliveryAreaId: "",
+  deliveryWindowId: "",
   deliveryAddress: "",
   deliveryDate: "",
   deliveryNotes: "",
   cardMessage: "",
   paymentMethod: "BANK_TRANSFER",
 };
+
+function addBusinessDays(dateText: string, days: number) {
+  const date = new Date(`${dateText}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function businessTimeInVietnam(date = new Date()) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
+}
 
 function CheckoutField({
   field,
@@ -79,7 +100,7 @@ function CheckoutLineSummary({ line }: { line: CartLine }) {
   </li>;
 }
 
-function CheckoutSummary({ lines }: { lines: readonly CartLine[] }) {
+function CheckoutSummary({ lines, deliveryFee }: { lines: readonly CartLine[]; deliveryFee: number | null }) {
   const { t } = useI18n();
   const subtotal = checkoutSubtotal(lines);
   const count = lines.reduce((sum, line) => sum + line.quantity, 0);
@@ -90,9 +111,10 @@ function CheckoutSummary({ lines }: { lines: readonly CartLine[] }) {
     <ul>{lines.map((line) => <CheckoutLineSummary key={line.id} line={line} />)}</ul>
     <dl>
       <div><dt>{t.checkout.merchandiseSubtotal}</dt><dd>{formatVnd(subtotal)}</dd></div>
-      <div><dt>{t.checkout.deliveryFee}</dt><dd>{t.checkout.deliveryPending}</dd></div>
+      <div><dt>{t.checkout.deliveryFee}</dt><dd>{deliveryFee === null ? t.checkout.deliveryPending : formatVnd(deliveryFee)}</dd></div>
+      <div className="checkout-summary__total"><dt>{t.checkout.total}</dt><dd>{deliveryFee === null ? t.checkout.deliveryPending : formatVnd(subtotal + deliveryFee)}</dd></div>
     </dl>
-    <p className="checkout-summary__pending">{t.checkout.totalPending}</p>
+    {deliveryFee === null && <p className="checkout-summary__pending">{t.checkout.totalPending}</p>}
   </aside>;
 }
 
@@ -113,6 +135,9 @@ export function CheckoutPage() {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<CheckoutValidationErrors>({});
   const [checking, setChecking] = useState(lines.length > 0);
+  const [options, setOptions] = useState<CheckoutOptions | null>(null);
+  const [optionsLoading, setOptionsLoading] = useState(lines.length > 0);
+  const [optionsError, setOptionsError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [priceReviewRequired, setPriceReviewRequired] = useState(false);
@@ -121,8 +146,56 @@ export function CheckoutPage() {
   const submitLock = useRef(false);
   const dateBounds = useMemo(() => checkoutDeliveryDateBounds(), []);
   const lineStatus = inspectCheckoutLines(lines);
+  const previewFee = checkoutPreviewFee(options, values.fulfillmentType, values.deliveryAreaId);
+  const selectedZone = options?.zones.find((zone) => zone.areas.some((area) => area.id === values.deliveryAreaId));
+  const selectedWindow = options?.windows.find((window) => window.id === values.deliveryWindowId);
+  const sameDayDeliveryAvailable = Boolean(options?.sameDayEnabled && selectedZone?.sameDayEligible
+    && selectedWindow?.sameDayEligible && options.sameDayCutoff
+    && businessTimeInVietnam() < options.sameDayCutoff);
+  const deliveryDateMin = values.fulfillmentType === "DELIVERY" && !sameDayDeliveryAvailable
+    ? addBusinessDays(dateBounds.min, 1)
+    : dateBounds.min;
+  const fulfillmentAvailable = Boolean(options && (
+    (options.deliveryEnabled && options.zones.some((zone) => zone.areas.length > 0) && options.windows.length > 0)
+    || (options.pickupEnabled && options.pickup)
+  ));
+  const availablePaymentMethods = useMemo<CheckoutPaymentMethod[]>(() => {
+    if (!options) return [];
+    const methods: CheckoutPaymentMethod[] = [];
+    if (options.paymentMethods.bankTransfer) methods.push("BANK_TRANSFER");
+    const cashAllowed = options.paymentMethods.cash && (
+      values.fulfillmentType === "DELIVERY" ? options.paymentMethods.cashDelivery : options.paymentMethods.cashPickup
+    );
+    if (cashAllowed) methods.push("CASH");
+    return methods;
+  }, [options, values.fulfillmentType]);
 
   useDocumentMetadata(t.meta.checkoutTitle, t.meta.checkoutDescription);
+
+  const applyOptions = useCallback((next: CheckoutOptions) => {
+    setOptions(next);
+    setOptionsError(false);
+    setValues((current) => {
+      const deliveryReady = next.deliveryEnabled && next.zones.some((zone) => zone.areas.length > 0) && next.windows.length > 0;
+      const pickupReady = next.pickupEnabled && Boolean(next.pickup);
+      let fulfillmentType = current.fulfillmentType;
+      if (fulfillmentType === "DELIVERY" && !deliveryReady) fulfillmentType = "PICKUP";
+      if (fulfillmentType === "PICKUP" && !pickupReady) fulfillmentType = "DELIVERY";
+      const areaStillActive = next.zones.some((zone) => zone.areas.some((area) => area.id === current.deliveryAreaId));
+      const windowStillActive = next.windows.some((window) => window.id === current.deliveryWindowId);
+      const cashAllowed = next.paymentMethods.cash && (fulfillmentType === "DELIVERY" ? next.paymentMethods.cashDelivery : next.paymentMethods.cashPickup);
+      let paymentMethod = current.paymentMethod;
+      if (paymentMethod === "BANK_TRANSFER" && !next.paymentMethods.bankTransfer) paymentMethod = "CASH";
+      if (paymentMethod === "CASH" && !cashAllowed && next.paymentMethods.bankTransfer) paymentMethod = "BANK_TRANSFER";
+      return {
+        ...current,
+        fulfillmentType,
+        deliveryAreaId: fulfillmentType === "DELIVERY" && areaStillActive ? current.deliveryAreaId : "",
+        deliveryWindowId: fulfillmentType === "DELIVERY" && windowStillActive ? current.deliveryWindowId : "",
+        paymentMethod,
+      };
+    });
+  }, []);
 
   useEffect(() => {
     if (lines.length === 0) { setChecking(false); return; }
@@ -137,6 +210,25 @@ export function CheckoutPage() {
     // Reconcile once on route entry; live submit performs the second mandatory check.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reconcileCart]);
+
+  useEffect(() => {
+    if (lines.length === 0) return;
+    let active = true;
+    setOptionsLoading(true);
+    setOptionsError(false);
+    void loadCheckoutOptions(locale).then((next) => {
+      if (!active) return;
+      applyOptions(next);
+    }).catch(() => { if (active) setOptionsError(true); })
+      .finally(() => { if (active) setOptionsLoading(false); });
+    return () => { active = false; };
+  }, [applyOptions, locale, lines.length]);
+
+  useEffect(() => {
+    if (availablePaymentMethods.length > 0 && !availablePaymentMethods.includes(values.paymentMethod)) {
+      setValues((current) => ({ ...current, paymentMethod: availablePaymentMethods[0] }));
+    }
+  }, [availablePaymentMethods, values.paymentMethod]);
 
   if (lines.length === 0) return <EmptyCheckout />;
 
@@ -184,9 +276,18 @@ export function CheckoutPage() {
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitLock.current) return;
+    if (!options || availablePaymentMethods.length === 0) {
+      setServerError(t.checkout.errors.configurationUnavailable);
+      return;
+    }
     const nextErrors = validateCheckout(values);
+    if (values.deliveryDate && values.deliveryDate < deliveryDateMin) nextErrors.deliveryDate = "sameDayUnavailable";
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) { focusErrors(); return; }
+    if (previewFee === null) {
+      setServerError(t.checkout.errors.configurationUnavailable);
+      return;
+    }
     if (priceReviewRequired && !priceReviewed) {
       setServerError(t.checkout.errors.priceAcknowledgement);
       window.requestAnimationFrame(() => document.getElementById("price-reviewed")?.focus());
@@ -210,7 +311,7 @@ export function CheckoutPage() {
         return;
       }
       const reviewedSubtotal = checkoutSubtotal(checkedLines);
-      const payload = createCheckoutPayload(values, checkedLines, locale);
+      const payload = createCheckoutPayload(values, checkedLines, locale, previewFee);
       const receipt = await createCheckoutOrder({ payload, reviewedSubtotal });
       const stored = writeOrderReceipt(receipt);
       clearCheckoutAttempt();
@@ -222,12 +323,20 @@ export function CheckoutPage() {
     } catch (error) {
       if (error instanceof CheckoutOrderError) {
         if (error.code === "REVIEW_CHANGED") {
-          const checkedLines = await reconcileCart();
+          const [checkedLines, nextOptions] = await Promise.all([
+            reconcileCart(),
+            loadCheckoutOptions(locale),
+          ]);
+          applyOptions(nextOptions);
           if (inspectCheckoutLines(checkedLines).hasChangedPrices) {
             setPriceReviewRequired(true);
             setPriceReviewed(false);
           }
-          setServerError(t.checkout.errors.priceChanged);
+          setServerError(t.checkout.errors.reviewChanged);
+        } else if (error.code === "FULFILLMENT_UNAVAILABLE") {
+          try { applyOptions(await loadCheckoutOptions(locale)); }
+          catch { setOptionsError(true); }
+          setServerError(t.checkout.errors.fulfillmentUnavailable);
         } else if (error.code === "ITEM_UNAVAILABLE") {
           await reconcileCart();
           setServerError(t.checkout.errors.itemUnavailable);
@@ -251,13 +360,18 @@ export function CheckoutPage() {
     </header>
 
     {checking && <p className="checkout-cart-status" role="status" aria-live="polite">{t.checkout.checkingCart}</p>}
+    {optionsLoading && <p className="checkout-cart-status" role="status" aria-live="polite">{t.checkout.loadingOptions}</p>}
+    {!optionsLoading && (optionsError || !fulfillmentAvailable || availablePaymentMethods.length === 0) && <section className="checkout-cart-blocked" aria-labelledby="checkout-configuration-title">
+      <h2 id="checkout-configuration-title">{t.checkout.configurationUnavailableTitle}</h2>
+      <p>{t.checkout.configurationUnavailableText}</p>
+    </section>}
     {!checking && cartBlocked && <section className="checkout-cart-blocked" aria-labelledby="checkout-cart-blocked-title">
       <h2 id="checkout-cart-blocked-title">{t.checkout.cartNeedsReviewTitle}</h2>
       <p>{t.checkout.cartNeedsReviewText}</p>
       <div><Link className="button button--solid" to={path("/cart")}>{t.checkout.reviewCart}</Link><button className="button button--outline" type="button" onClick={() => void reconcileCart()}>{t.checkout.retryCart}</button></div>
     </section>}
 
-    {!cartBlocked && <div className="checkout-layout">
+    {!cartBlocked && !optionsLoading && !optionsError && fulfillmentAvailable && availablePaymentMethods.length > 0 && <div className="checkout-layout">
       <form className="checkout-form" noValidate onSubmit={(event) => void submit(event)}>
         {Object.keys(errors).length > 0 && <div className="checkout-error-summary" ref={errorSummaryRef} role="alert" tabIndex={-1} aria-labelledby="checkout-error-title">
           <h2 id="checkout-error-title">{t.checkout.errorSummaryTitle}</h2>
@@ -299,12 +413,38 @@ export function CheckoutPage() {
         </CheckoutSection>
 
         <CheckoutSection title={t.checkout.sections.delivery} note={t.checkout.sectionNotes.delivery}>
+          <fieldset className="checkout-payment checkout-fulfillment">
+            <legend>{t.checkout.fields.fulfillmentType}</legend>
+            {options?.deliveryEnabled && options.zones.some((zone) => zone.areas.length > 0) && options.windows.length > 0 && <label className="checkout-choice checkout-choice--radio" data-selected={values.fulfillmentType === "DELIVERY"}>
+              <input type="radio" name="fulfillmentType" value="DELIVERY" checked={values.fulfillmentType === "DELIVERY"} onChange={() => update("fulfillmentType", "DELIVERY")} />
+              <span><strong>{t.checkout.fulfillment.delivery}</strong><small>{options.deliveryHelp || t.checkout.fulfillment.deliveryNote}</small></span>
+            </label>}
+            {options?.pickupEnabled && options.pickup && <label className="checkout-choice checkout-choice--radio" data-selected={values.fulfillmentType === "PICKUP"}>
+              <input type="radio" name="fulfillmentType" value="PICKUP" checked={values.fulfillmentType === "PICKUP"} onChange={() => update("fulfillmentType", "PICKUP")} />
+              <span><strong>{t.checkout.fulfillment.pickup}</strong><small>{options.pickup.name} · {options.pickup.hours}</small></span>
+            </label>}
+          </fieldset>
           <div className="checkout-field-grid">
+            {values.fulfillmentType === "DELIVERY" && <>
+            <CheckoutField field="deliveryAreaId" label={t.checkout.fields.deliveryArea} error={errorText("deliveryAreaId")} help={t.checkout.areaHelp}>
+              <select {...inputProps("deliveryAreaId", true)} value={values.deliveryAreaId} onChange={(event) => update("deliveryAreaId", event.target.value)}>
+                <option value="">{t.checkout.selectArea}</option>
+                {options?.zones.map((zone) => <optgroup label={`${zone.name} · ${formatVnd(zone.feeAmount)}`} key={zone.id}>{zone.areas.map((area) => <option value={area.id} key={area.id}>{area.name}</option>)}</optgroup>)}
+              </select>
+            </CheckoutField>
+            <CheckoutField field="deliveryWindowId" label={t.checkout.fields.deliveryWindow} error={errorText("deliveryWindowId")}>
+              <select {...inputProps("deliveryWindowId")} value={values.deliveryWindowId} onChange={(event) => update("deliveryWindowId", event.target.value)}>
+                <option value="">{t.checkout.selectWindow}</option>
+                {options?.windows.map((window) => <option value={window.id} key={window.id}>{window.label}</option>)}
+              </select>
+            </CheckoutField>
             <CheckoutField field="deliveryAddress" label={t.checkout.fields.deliveryAddress} error={errorText("deliveryAddress")} help={t.checkout.addressHelp}>
               <textarea {...inputProps("deliveryAddress", true)} autoComplete="shipping street-address" rows={3} value={values.deliveryAddress} onChange={(event) => update("deliveryAddress", event.target.value)} />
             </CheckoutField>
+            </>}
+            {values.fulfillmentType === "PICKUP" && options?.pickup && <div className="checkout-pickup-card"><strong>{options.pickup.name}</strong><span>{options.pickup.address}</span><small>{options.pickup.hours}</small></div>}
             <CheckoutField field="deliveryDate" label={t.checkout.fields.deliveryDate} error={errorText("deliveryDate")} help={t.checkout.dateHelp}>
-              <input {...inputProps("deliveryDate", true)} min={dateBounds.min} max={dateBounds.max} type="date" value={values.deliveryDate} onChange={(event) => update("deliveryDate", event.target.value)} />
+              <input {...inputProps("deliveryDate", true)} min={deliveryDateMin} max={dateBounds.max} type="date" value={values.deliveryDate} onChange={(event) => update("deliveryDate", event.target.value)} />
             </CheckoutField>
             <CheckoutField field="deliveryNotes" label={t.checkout.fields.deliveryNotes} optional={t.checkout.optional} error={errorText("deliveryNotes")}>
               <textarea {...inputProps("deliveryNotes")} rows={3} value={values.deliveryNotes} placeholder={t.checkout.deliveryNotesPlaceholder} onChange={(event) => update("deliveryNotes", event.target.value)} />
@@ -321,7 +461,7 @@ export function CheckoutPage() {
         <CheckoutSection title={t.checkout.sections.payment} note={t.checkout.sectionNotes.payment}>
           <fieldset className="checkout-payment">
             <legend className="sr-only">{t.checkout.sections.payment}</legend>
-            {(["BANK_TRANSFER", "CASH"] as CheckoutPaymentMethod[]).map((method) => <label className="checkout-choice checkout-choice--radio" key={method} data-selected={values.paymentMethod === method}>
+            {availablePaymentMethods.map((method) => <label className="checkout-choice checkout-choice--radio" key={method} data-selected={values.paymentMethod === method}>
               <input type="radio" name="paymentMethod" value={method} checked={values.paymentMethod === method} onChange={(event: ChangeEvent<HTMLInputElement>) => update("paymentMethod", event.target.value as CheckoutPaymentMethod)} />
               <span><strong>{method === "BANK_TRANSFER" ? t.checkout.payment.bank : t.checkout.payment.cash}</strong><small>{method === "BANK_TRANSFER" ? t.checkout.payment.bankNote : t.checkout.payment.cashNote}</small></span>
             </label>)}
@@ -337,7 +477,7 @@ export function CheckoutPage() {
           <p className="checkout-submit-note">{t.checkout.submitNote}</p>
         </CheckoutSection>
       </form>
-      <CheckoutSummary lines={lines} />
+      <CheckoutSummary lines={lines} deliveryFee={previewFee} />
     </div>}
   </section></PageFrame>;
 }

@@ -332,7 +332,7 @@ Implement ADMIN-only bounded Order list/detail reads, exact ready-made/custom sn
 
 ### Step 14 — Payment, VietQR, and Delivery refinement
 
-Implement per-Order VietQR, protected payment settings, manual payment verification, zone/window logic, and delivery status operations.
+Implement Admin-managed delivery zones/areas/fees/windows and fulfillment/payment settings; trusted checkout pricing; immutable Order/Payment snapshots; per-Order VietQR; explicit manual payment verification; and Delivery status operations. Production settings start disabled and are activated only after the owner enters real business values through Admin.
 
 ### Step 15 — Security and final QA
 

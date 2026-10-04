@@ -52,8 +52,10 @@ export type Database = {
           order_id: string
           requested_date: string
           requested_window: string | null
+          source_delivery_window_id: string | null
           status: Database["public"]["Enums"]["delivery_status"]
           updated_at: string
+          window_label_snapshot: string | null
         }
         Insert: {
           created_at?: string
@@ -62,8 +64,10 @@ export type Database = {
           order_id: string
           requested_date: string
           requested_window?: string | null
+          source_delivery_window_id?: string | null
           status?: Database["public"]["Enums"]["delivery_status"]
           updated_at?: string
+          window_label_snapshot?: string | null
         }
         Update: {
           created_at?: string
@@ -72,8 +76,10 @@ export type Database = {
           order_id?: string
           requested_date?: string
           requested_window?: string | null
+          source_delivery_window_id?: string | null
           status?: Database["public"]["Enums"]["delivery_status"]
           updated_at?: string
+          window_label_snapshot?: string | null
         }
         Relationships: [
           {
@@ -83,7 +89,264 @@ export type Database = {
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "deliveries_source_delivery_window_id_fkey"
+            columns: ["source_delivery_window_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_windows"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      delivery_settings: {
+        Row: {
+          delivery_enabled: boolean
+          delivery_help_ko: string | null
+          delivery_help_vi: string | null
+          pickup_address_ko: string | null
+          pickup_address_vi: string | null
+          pickup_enabled: boolean
+          pickup_hours_ko: string | null
+          pickup_hours_vi: string | null
+          pickup_name_ko: string | null
+          pickup_name_vi: string | null
+          same_day_cutoff: string | null
+          same_day_enabled: boolean
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          delivery_enabled?: boolean
+          delivery_help_ko?: string | null
+          delivery_help_vi?: string | null
+          pickup_address_ko?: string | null
+          pickup_address_vi?: string | null
+          pickup_enabled?: boolean
+          pickup_hours_ko?: string | null
+          pickup_hours_vi?: string | null
+          pickup_name_ko?: string | null
+          pickup_name_vi?: string | null
+          same_day_cutoff?: string | null
+          same_day_enabled?: boolean
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          delivery_enabled?: boolean
+          delivery_help_ko?: string | null
+          delivery_help_vi?: string | null
+          pickup_address_ko?: string | null
+          pickup_address_vi?: string | null
+          pickup_enabled?: boolean
+          pickup_hours_ko?: string | null
+          pickup_hours_vi?: string | null
+          pickup_name_ko?: string | null
+          pickup_name_vi?: string | null
+          same_day_cutoff?: string | null
+          same_day_enabled?: boolean
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      delivery_status_events: {
+        Row: {
+          actor_admin_id: string | null
+          created_at: string
+          delivery_id: string
+          from_status: Database["public"]["Enums"]["delivery_status"] | null
+          id: string
+          reason: string | null
+          to_status: Database["public"]["Enums"]["delivery_status"]
+        }
+        Insert: {
+          actor_admin_id?: string | null
+          created_at?: string
+          delivery_id: string
+          from_status?: Database["public"]["Enums"]["delivery_status"] | null
+          id?: string
+          reason?: string | null
+          to_status: Database["public"]["Enums"]["delivery_status"]
+        }
+        Update: {
+          actor_admin_id?: string | null
+          created_at?: string
+          delivery_id?: string
+          from_status?: Database["public"]["Enums"]["delivery_status"] | null
+          id?: string
+          reason?: string | null
+          to_status?: Database["public"]["Enums"]["delivery_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_status_events_actor_admin_id_fkey"
+            columns: ["actor_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_status_events_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_windows: {
+        Row: {
+          active: boolean
+          created_at: string
+          end_time: string
+          help_ko: string | null
+          help_vi: string | null
+          id: string
+          label_ko: string
+          label_vi: string
+          same_day_eligible: boolean
+          sort_order: number
+          stable_code: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          end_time: string
+          help_ko?: string | null
+          help_vi?: string | null
+          id?: string
+          label_ko: string
+          label_vi: string
+          same_day_eligible?: boolean
+          sort_order?: number
+          stable_code: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          end_time?: string
+          help_ko?: string | null
+          help_vi?: string | null
+          id?: string
+          label_ko?: string
+          label_vi?: string
+          same_day_eligible?: boolean
+          sort_order?: number
+          stable_code?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      delivery_zone_areas: {
+        Row: {
+          active: boolean
+          created_at: string
+          delivery_zone_id: string
+          id: string
+          name_ko: string
+          name_vi: string
+          sort_order: number
+          stable_code: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          delivery_zone_id: string
+          id?: string
+          name_ko: string
+          name_vi: string
+          sort_order?: number
+          stable_code: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          delivery_zone_id?: string
+          id?: string
+          name_ko?: string
+          name_vi?: string
+          sort_order?: number
+          stable_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_zone_areas_delivery_zone_id_fkey"
+            columns: ["delivery_zone_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_zone_translations: {
+        Row: {
+          delivery_zone_id: string
+          help_text: string | null
+          locale: Database["public"]["Enums"]["locale_code"]
+          name: string
+        }
+        Insert: {
+          delivery_zone_id: string
+          help_text?: string | null
+          locale: Database["public"]["Enums"]["locale_code"]
+          name: string
+        }
+        Update: {
+          delivery_zone_id?: string
+          help_text?: string | null
+          locale?: Database["public"]["Enums"]["locale_code"]
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_zone_translations_delivery_zone_id_fkey"
+            columns: ["delivery_zone_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_zones: {
+        Row: {
+          active: boolean
+          created_at: string
+          fee_amount: number
+          id: string
+          same_day_eligible: boolean
+          sort_order: number
+          stable_code: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          fee_amount: number
+          id?: string
+          same_day_eligible?: boolean
+          sort_order?: number
+          stable_code: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          fee_amount?: number
+          id?: string
+          same_day_eligible?: boolean
+          sort_order?: number
+          stable_code?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       flower_stem_translations: {
         Row: {
@@ -635,21 +898,30 @@ export type Database = {
       order_addresses: {
         Row: {
           address_text: string
+          area_name_snapshot: string | null
           created_at: string
           id: string
           order_id: string
+          source_delivery_area_id: string | null
+          zone_name_snapshot: string | null
         }
         Insert: {
           address_text: string
+          area_name_snapshot?: string | null
           created_at?: string
           id?: string
           order_id: string
+          source_delivery_area_id?: string | null
+          zone_name_snapshot?: string | null
         }
         Update: {
           address_text?: string
+          area_name_snapshot?: string | null
           created_at?: string
           id?: string
           order_id?: string
+          source_delivery_area_id?: string | null
+          zone_name_snapshot?: string | null
         }
         Relationships: [
           {
@@ -657,6 +929,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: true
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_addresses_source_delivery_area_id_fkey"
+            columns: ["source_delivery_area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_zone_areas"
             referencedColumns: ["id"]
           },
         ]
@@ -862,15 +1141,27 @@ export type Database = {
           card_message: string | null
           created_at: string
           currency: string
+          delivery_area_code_snapshot: string | null
+          delivery_area_id: string | null
+          delivery_area_name_snapshot: string | null
           delivery_fee_amount: number | null
+          delivery_window_id: string | null
+          delivery_window_label_snapshot: string | null
+          delivery_zone_code_snapshot: string | null
+          delivery_zone_id: string | null
+          delivery_zone_name_snapshot: string | null
           fulfillment_type: Database["public"]["Enums"]["fulfillment_type"]
           id: string
           idempotency_key_hash: string
           is_surprise: boolean
           locale: Database["public"]["Enums"]["locale_code"]
           order_number: string
+          pickup_address_snapshot: string | null
+          pickup_hours_snapshot: string | null
+          pickup_name_snapshot: string | null
           placed_at: string
           request_fingerprint: string
+          requested_fulfillment_date: string
           status: Database["public"]["Enums"]["order_status"]
           subtotal_amount: number
           total_amount: number | null
@@ -884,15 +1175,27 @@ export type Database = {
           card_message?: string | null
           created_at?: string
           currency?: string
+          delivery_area_code_snapshot?: string | null
+          delivery_area_id?: string | null
+          delivery_area_name_snapshot?: string | null
           delivery_fee_amount?: number | null
+          delivery_window_id?: string | null
+          delivery_window_label_snapshot?: string | null
+          delivery_zone_code_snapshot?: string | null
+          delivery_zone_id?: string | null
+          delivery_zone_name_snapshot?: string | null
           fulfillment_type?: Database["public"]["Enums"]["fulfillment_type"]
           id?: string
           idempotency_key_hash: string
           is_surprise?: boolean
           locale: Database["public"]["Enums"]["locale_code"]
           order_number: string
+          pickup_address_snapshot?: string | null
+          pickup_hours_snapshot?: string | null
+          pickup_name_snapshot?: string | null
           placed_at?: string
           request_fingerprint: string
+          requested_fulfillment_date?: string
           status?: Database["public"]["Enums"]["order_status"]
           subtotal_amount: number
           total_amount?: number | null
@@ -906,52 +1209,218 @@ export type Database = {
           card_message?: string | null
           created_at?: string
           currency?: string
+          delivery_area_code_snapshot?: string | null
+          delivery_area_id?: string | null
+          delivery_area_name_snapshot?: string | null
           delivery_fee_amount?: number | null
+          delivery_window_id?: string | null
+          delivery_window_label_snapshot?: string | null
+          delivery_zone_code_snapshot?: string | null
+          delivery_zone_id?: string | null
+          delivery_zone_name_snapshot?: string | null
           fulfillment_type?: Database["public"]["Enums"]["fulfillment_type"]
           id?: string
           idempotency_key_hash?: string
           is_surprise?: boolean
           locale?: Database["public"]["Enums"]["locale_code"]
           order_number?: string
+          pickup_address_snapshot?: string | null
+          pickup_hours_snapshot?: string | null
+          pickup_name_snapshot?: string | null
           placed_at?: string
           request_fingerprint?: string
+          requested_fulfillment_date?: string
           status?: Database["public"]["Enums"]["order_status"]
           subtotal_amount?: number
           total_amount?: number | null
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "orders_delivery_area_id_fkey"
+            columns: ["delivery_area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_zone_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_delivery_window_id_fkey"
+            columns: ["delivery_window_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_windows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_delivery_zone_id_fkey"
+            columns: ["delivery_zone_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_settings: {
+        Row: {
+          account_holder: string | null
+          account_number: string | null
+          bank_id: string | null
+          bank_instructions_ko: string | null
+          bank_instructions_vi: string | null
+          bank_name: string | null
+          bank_transfer_enabled: boolean
+          cash_delivery_enabled: boolean
+          cash_enabled: boolean
+          cash_instructions_ko: string | null
+          cash_instructions_vi: string | null
+          cash_pickup_enabled: boolean
+          payment_deadline_hours: number | null
+          singleton: boolean
+          transfer_reference_template: string | null
+          updated_at: string
+          vietqr_template: string | null
+        }
+        Insert: {
+          account_holder?: string | null
+          account_number?: string | null
+          bank_id?: string | null
+          bank_instructions_ko?: string | null
+          bank_instructions_vi?: string | null
+          bank_name?: string | null
+          bank_transfer_enabled?: boolean
+          cash_delivery_enabled?: boolean
+          cash_enabled?: boolean
+          cash_instructions_ko?: string | null
+          cash_instructions_vi?: string | null
+          cash_pickup_enabled?: boolean
+          payment_deadline_hours?: number | null
+          singleton?: boolean
+          transfer_reference_template?: string | null
+          updated_at?: string
+          vietqr_template?: string | null
+        }
+        Update: {
+          account_holder?: string | null
+          account_number?: string | null
+          bank_id?: string | null
+          bank_instructions_ko?: string | null
+          bank_instructions_vi?: string | null
+          bank_name?: string | null
+          bank_transfer_enabled?: boolean
+          cash_delivery_enabled?: boolean
+          cash_enabled?: boolean
+          cash_instructions_ko?: string | null
+          cash_instructions_vi?: string | null
+          cash_pickup_enabled?: boolean
+          payment_deadline_hours?: number | null
+          singleton?: boolean
+          transfer_reference_template?: string | null
+          updated_at?: string
+          vietqr_template?: string | null
+        }
         Relationships: []
+      }
+      payment_status_events: {
+        Row: {
+          actor_admin_id: string | null
+          created_at: string
+          from_status: Database["public"]["Enums"]["payment_status"] | null
+          id: string
+          payment_id: string
+          reason: string | null
+          to_status: Database["public"]["Enums"]["payment_status"]
+        }
+        Insert: {
+          actor_admin_id?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["payment_status"] | null
+          id?: string
+          payment_id: string
+          reason?: string | null
+          to_status: Database["public"]["Enums"]["payment_status"]
+        }
+        Update: {
+          actor_admin_id?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["payment_status"] | null
+          id?: string
+          payment_id?: string
+          reason?: string | null
+          to_status?: Database["public"]["Enums"]["payment_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_status_events_actor_admin_id_fkey"
+            columns: ["actor_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_status_events_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
+          account_holder_snapshot: string | null
+          account_number_snapshot: string | null
           amount: number | null
+          bank_id_snapshot: string | null
+          bank_name_snapshot: string | null
           created_at: string
           currency: string
           id: string
+          instruction_snapshot: string | null
           method: Database["public"]["Enums"]["payment_method"]
           order_id: string
+          paid_at: string | null
+          payment_deadline_at: string | null
+          payment_reference: string | null
           status: Database["public"]["Enums"]["payment_status"]
           updated_at: string
+          vietqr_template_snapshot: string | null
         }
         Insert: {
+          account_holder_snapshot?: string | null
+          account_number_snapshot?: string | null
           amount?: number | null
+          bank_id_snapshot?: string | null
+          bank_name_snapshot?: string | null
           created_at?: string
           currency?: string
           id?: string
+          instruction_snapshot?: string | null
           method: Database["public"]["Enums"]["payment_method"]
           order_id: string
+          paid_at?: string | null
+          payment_deadline_at?: string | null
+          payment_reference?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           updated_at?: string
+          vietqr_template_snapshot?: string | null
         }
         Update: {
+          account_holder_snapshot?: string | null
+          account_number_snapshot?: string | null
           amount?: number | null
+          bank_id_snapshot?: string | null
+          bank_name_snapshot?: string | null
           created_at?: string
           currency?: string
           id?: string
+          instruction_snapshot?: string | null
           method?: Database["public"]["Enums"]["payment_method"]
           order_id?: string
+          paid_at?: string | null
+          payment_deadline_at?: string | null
+          payment_reference?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           updated_at?: string
+          vietqr_template_snapshot?: string | null
         }
         Relationships: [
           {
@@ -1579,6 +2048,51 @@ export type Database = {
           total_count: number
         }[]
       }
+      admin_mark_payment_paid: {
+        Args: {
+          expected_status: Database["public"]["Enums"]["payment_status"]
+          target_payment_id: string
+          transition_reason?: string
+        }
+        Returns: {
+          event_id: string
+          paid_at: string
+          payment_id: string
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          previous_status: Database["public"]["Enums"]["payment_status"]
+        }[]
+      }
+      admin_save_delivery_zone: {
+        Args: {
+          target_zone_id: string
+          zone_active: boolean
+          zone_areas: Json
+          zone_fee_amount: number
+          zone_help_ko: string
+          zone_help_vi: string
+          zone_name_ko: string
+          zone_name_vi: string
+          zone_same_day_eligible: boolean
+          zone_sort_order: number
+          zone_stable_code: string
+        }
+        Returns: string
+      }
+      admin_transition_delivery_status: {
+        Args: {
+          expected_status: Database["public"]["Enums"]["delivery_status"]
+          next_status: Database["public"]["Enums"]["delivery_status"]
+          target_delivery_id: string
+          transition_reason?: string
+        }
+        Returns: {
+          changed_at: string
+          delivery_id: string
+          delivery_status: Database["public"]["Enums"]["delivery_status"]
+          event_id: string
+          previous_status: Database["public"]["Enums"]["delivery_status"]
+        }[]
+      }
       admin_transition_order_status: {
         Args: {
           expected_status: Database["public"]["Enums"]["order_status"]
@@ -1602,6 +2116,37 @@ export type Database = {
           reviewed_subtotal: number
         }
         Returns: {
+          account_holder: string
+          account_number: string
+          bank_id: string
+          bank_name: string
+          delivery_area_name: string
+          delivery_fee_amount: number
+          delivery_window_label: string
+          fulfillment_name: string
+          fulfillment_type: Database["public"]["Enums"]["fulfillment_type"]
+          order_id: string
+          order_number: string
+          order_status: Database["public"]["Enums"]["order_status"]
+          payment_deadline_at: string
+          payment_instruction: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_reference: string
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          placed_at: string
+          subtotal_amount: number
+          total_amount: number
+          vietqr_template: string
+          was_duplicate: boolean
+        }[]
+      }
+      create_checkout_order_v12_internal: {
+        Args: {
+          checkout_idempotency_key: string
+          checkout_payload: Json
+          reviewed_subtotal: number
+        }
+        Returns: {
           delivery_fee_amount: number
           order_id: string
           order_number: string
@@ -1618,6 +2163,10 @@ export type Database = {
       flower_stem_publication_issues: {
         Args: { target_flower_stem_id: string }
         Returns: string[]
+      }
+      get_checkout_options: {
+        Args: { requested_locale: Database["public"]["Enums"]["locale_code"] }
+        Returns: Json
       }
       is_admin: { Args: never; Returns: boolean }
       is_catalog_manager: { Args: never; Returns: boolean }

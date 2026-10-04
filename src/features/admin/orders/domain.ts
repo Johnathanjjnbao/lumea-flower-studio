@@ -1,5 +1,5 @@
 import type { Json } from "../../../types/database.generated";
-import type { CustomBouquetSnapshot, NextOrderStatus, OrderStatus } from "./types";
+import type { CustomBouquetSnapshot, DeliveryStatus, NextOrderStatus, OrderStatus } from "./types";
 
 export const ORDER_PAGE_SIZE = 20;
 
@@ -20,6 +20,16 @@ export const ORDER_TRANSITIONS: Readonly<Record<OrderStatus, readonly NextOrderS
   READY: ["FULFILLING", "COMPLETED"],
   FULFILLING: ["COMPLETED"],
   COMPLETED: [],
+  CANCELLED: [],
+};
+
+export const DELIVERY_TRANSITIONS: Readonly<Record<DeliveryStatus, readonly DeliveryStatus[]>> = {
+  PENDING: ["SCHEDULED", "CANCELLED"],
+  SCHEDULED: ["READY_FOR_DISPATCH", "CANCELLED"],
+  READY_FOR_DISPATCH: ["OUT_FOR_DELIVERY", "CANCELLED"],
+  OUT_FOR_DELIVERY: ["DELIVERED", "FAILED"],
+  DELIVERED: [],
+  FAILED: ["SCHEDULED", "CANCELLED"],
   CANCELLED: [],
 };
 
@@ -86,6 +96,10 @@ export function orderErrorCode(error: unknown) {
     "ORDER_STATUS_INVALID_TRANSITION",
     "ORDER_STATUS_INVALID_REQUEST",
     "ORDER_STATUS_REASON_TOO_LONG",
+    "PAYMENT_STATUS_CONFLICT",
+    "PAYMENT_STATUS_INVALID_TRANSITION",
+    "DELIVERY_STATUS_CONFLICT",
+    "DELIVERY_STATUS_INVALID_TRANSITION",
   ].find((code) => message.includes(code));
   return known ?? null;
 }

@@ -1,6 +1,6 @@
 # Luméa Supabase-Ready Data Model
 
-**Status:** Product/Builder and guest Checkout/Order boundaries implemented through Step 12; later operational domains remain proposals
+**Status:** Product/Builder, guest Checkout/Order, Admin Orders, and the Step 14 Payment/Delivery change set are implemented. Production delivery/payment methods remain disabled until the owner saves real business configuration in Admin.
 
 **Database target:** PostgreSQL through Supabase
 
@@ -189,16 +189,16 @@ Order number rules:
 |---|---|---|---|---|---|
 | `payments` | Payment attempt/state independent from Order status. | `id`, `order_id`, `method`, `status`, `amount`, unique nullable `payment_reference`, nullable external/transaction reference, safe `instruction_snapshot`, `paid_at`, timestamps. | N:1 Order. | Manual status through validated command; protected settings are not edited here. | Amount/method/instructions shown at Order time. |
 | `payment_status_events` | Audit trail for Payment transitions. | `id`, `payment_id`, `from_status`, `to_status`, `actor_admin_id`, reason, `created_at`. | N:1 Payment/AdminProfile. | Created through transition command. | Immutable. |
-| `payment_settings` | Protected current bank/VietQR/cash configuration. | singleton/version, bank/provider fields, transfer template, cash eligibility settings, `active`, timestamps. | Read only by trusted payment operation/Admin. | Restricted Admin only. | Safe shown subset copied to Payment; secrets are never snapshotted to public data. |
-| `delivery_zones` | Admin-managed service area and fee. | `id`, `stable_code`, `visibility`, `fee_amount`, optional structured ward/district rules, `same_day_eligible`, `display_order`, timestamps. | 1:N translations and Orders/Deliveries by source reference. | Yes | Name/rule/fee used are copied to Order/Delivery. |
+| `payment_settings` | Protected current bank/VietQR/cash configuration. | singleton, enabled flags, bank/provider fields, transfer-reference template, payment deadline, VI/KO bank and cash instructions, timestamps. | Read only by the trusted checkout operation and authorized Admin. | Restricted Admin only. | The safe values needed to complete that Order are copied to Payment; secrets are not stored here or exposed by public options. |
+| `delivery_zones` | Admin-managed service zone and fee. | `id`, `stable_code`, `fee_amount`, `active`, `same_day_eligible`, `sort_order`, timestamps. | 1:N translations and supported areas; optional source reference from Orders. | Yes | Zone code/name and charged fee are copied to Order. |
 | `delivery_zone_translations` | VI/KO zone label/help text. | `delivery_zone_id`, `locale`, `name`, `help_text`. | N:1 DeliveryZone. | Yes | Name snapshot required. |
-| `delivery_windows` | Customer-visible time windows. | `id`, `stable_code`, `start_time`, `end_time`, `visibility`, `same_day_eligible`, `display_order`. | Referenced by Delivery. | Yes | Window label/time copied to Delivery. |
-| `delivery_window_translations` | VI/KO window labels. | `delivery_window_id`, `locale`, `label`, optional `help_text`. | N:1 DeliveryWindow. | Yes | Label snapshot required. |
-| `delivery_settings` | Current fulfillment rules. | singleton/version, `same_day_enabled`, cutoff time/timezone, capacity mode placeholder, pickup details, customer help settings, timestamps. | Used by trusted validation. | Yes | Applicable cutoff/help/pickup facts copied where needed. |
+| `delivery_zone_areas` | Admin-managed supported areas contained by a zone. | `id`, `delivery_zone_id`, `stable_code`, VI/KO names, `active`, `sort_order`, timestamps. | N:1 DeliveryZone; optional source reference from Orders/addresses. | Yes | Area code/name are copied to Order/address. |
+| `delivery_windows` | Customer-visible time windows. | `id`, `stable_code`, `start_time`, `end_time`, inline VI/KO label/help fields, `active`, `same_day_eligible`, `sort_order`, timestamps. | Optional source reference from Orders/Deliveries. | Yes | Customer-visible window label is copied to Order/Delivery. |
+| `delivery_settings` | Current fulfillment rules. | singleton, delivery/pickup/same-day enabled flags, cutoff, VI/KO pickup details and delivery help, timestamp. | Read by the trusted checkout operation; edited by authorized Admin. | Yes | Selected pickup details are copied to Order. |
 | `deliveries` | One delivery execution record for a delivery Order. | `id`, `order_id`, `status`, `delivery_date`, nullable source zone/window IDs, zone/window snapshots, `recipient_id`, `address_id`, notes, timestamps. | 1:1 Order; 1:1 recipient/address; source zone/window optional. Canonical fee and surprise flag come from Order. | Status and operational notes through commands. | Yes. |
 | `delivery_status_events` | Audit trail for Delivery transitions. | `id`, `delivery_id`, `from_status`, `to_status`, `actor_admin_id`, reason, `created_at`. | N:1 Delivery/AdminProfile. | Created through transition command. | Immutable. |
 
-There is no Delivery row for `PICKUP`. Pickup details selected at checkout are snapshotted on Order using explicit pickup fields or a small validated fulfillment snapshot defined in the Step 14 migration. Do not store arbitrary fulfillment JSON supplied by the browser.
+There is no Delivery row or delivery-address row for `PICKUP`. Pickup details selected at checkout are snapshotted on Order using explicit validated fields. Do not store arbitrary fulfillment JSON supplied by the browser.
 
 ### 4.6 Media, homepage, site content, and Admin identity
 
@@ -254,14 +254,14 @@ Order screens must never reconstruct historical names or prices only from curren
 1. Load the active Cart and lock it for the creation attempt.
 2. Validate guest/customer ownership and the idempotency key.
 3. Reload Product, Variant, Tone, FlowerStem, wrapping compatibility, availability, and visibility.
-4. Validate delivery/pickup, date, window, same-day cutoff, zone, and current fee.
+4. Reload current delivery/payment settings, then validate delivery/pickup, area, date, window, same-day cutoff, current fee, and payment eligibility.
 5. Recalculate each line with integer arithmetic.
 6. Build item, configuration, buyer, recipient, address, delivery-fee, and payment-instruction snapshots.
 7. Create Order, OrderItems, Payment, Delivery when applicable, and initial status events in one database transaction.
 8. Mark Cart `CONVERTED` only when the transaction succeeds.
 9. Return the authoritative Order number, totals, Order status, and Payment status.
 
-If the current total differs from the user's review, the trusted operation returns a price/availability change response for explicit customer confirmation; it does not silently accept the client total.
+The browser submits only fulfillment intent plus its reviewed subtotal, delivery fee, and total. The trusted operation calculates the authoritative item subtotal and current delivery fee from database data. If any reviewed amount differs, it returns a review-changed response; it never accepts a browser-supplied fee or final total as authority.
 
 ## 7. State transitions
 
@@ -278,11 +278,11 @@ Rules:
 - `READY → COMPLETED` is allowed for confirmed pickup.
 - Delivery `DELIVERED` can permit, but should not silently force, Order `COMPLETED` until the operational rule is approved.
 - No backward transition occurs by editing a row directly; correction uses an explicit authorized command and event.
-- Step 13 implements these transitions through `admin_transition_order_status(order_id, expected_status, next_status, reason)`. It locks the Order, rejects stale `expected_status`, records the active ADMIN actor, and writes exactly one event atomically. Payment and Delivery statuses are read-only in Step 13.
+- Step 13 implements these transitions through `admin_transition_order_status(order_id, expected_status, next_status, reason)`. It locks the Order, rejects stale `expected_status`, records the active ADMIN actor, and writes exactly one event atomically.
 
 ### Payment
 
-- Bank transfer: `UNPAID → PENDING → PAID`; `PENDING → FAILED` or `CANCELLED`; `PAID → REFUNDED` only through an approved manual process.
+- Step 14 allows an authorized Admin to confirm `UNPAID → PAID` or `PENDING → PAID` through `admin_mark_payment_paid`, with a row lock, expected-current-status check, actor, optional reason, and immutable event. Other payment transitions remain out of scope until approved.
 - Cash: may remain `UNPAID` while Order is confirmed; it becomes `PAID` only at the owner-approved collection moment.
 - Payment status never confirms or cancels an Order automatically in V1.
 
@@ -291,7 +291,7 @@ Rules:
 `PENDING → SCHEDULED → READY_FOR_DISPATCH → OUT_FOR_DELIVERY → DELIVERED`
 
 - Active delivery states may move to `FAILED` or `CANCELLED` with a reason.
-- Retry/re-schedule policy remains an owner decision and, if added, records a new event rather than overwriting history.
+- Step 14 implements this path through `admin_transition_delivery_status`, including stale-state protection and immutable events. A failed delivery may return to `SCHEDULED` or move to `CANCELLED`; other retry/re-schedule policy remains an owner decision.
 
 ## 8. Constraint and index checklist for Step 9
 

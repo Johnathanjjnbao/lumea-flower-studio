@@ -55,7 +55,11 @@ export function validateCheckoutField(
     }
     case "recipientName": return values.buyerIsRecipient ? undefined : checkName(values.recipientName);
     case "recipientPhone": return values.buyerIsRecipient ? undefined : checkPhone(values.recipientPhone);
+    case "fulfillmentType": return values.fulfillmentType ? undefined : "fulfillmentRequired";
+    case "deliveryAreaId": return values.fulfillmentType === "DELIVERY" && !values.deliveryAreaId ? "areaRequired" : undefined;
+    case "deliveryWindowId": return values.fulfillmentType === "DELIVERY" && !values.deliveryWindowId ? "windowRequired" : undefined;
     case "deliveryAddress": {
+      if (values.fulfillmentType === "PICKUP") return undefined;
       const address = values.deliveryAddress.trim();
       if (address.length < 5) return "addressRequired";
       return address.length > 500 ? "addressTooLong" : undefined;
@@ -83,6 +87,9 @@ export function validateCheckout(values: CheckoutFormValues): CheckoutValidation
     "buyerEmail",
     "recipientName",
     "recipientPhone",
+    "fulfillmentType",
+    "deliveryAreaId",
+    "deliveryWindowId",
     "deliveryAddress",
     "deliveryDate",
     "deliveryNotes",
@@ -106,7 +113,9 @@ export function normalizeCheckoutForm(values: CheckoutFormValues): CheckoutFormV
     recipientName: values.buyerIsRecipient ? buyerName : values.recipientName.trim(),
     recipientPhone: values.buyerIsRecipient ? buyerPhone : values.recipientPhone.trim(),
     isSurprise: values.buyerIsRecipient ? false : values.isSurprise,
-    deliveryAddress: values.deliveryAddress.trim(),
+    deliveryAreaId: values.fulfillmentType === "DELIVERY" ? values.deliveryAreaId : "",
+    deliveryWindowId: values.fulfillmentType === "DELIVERY" ? values.deliveryWindowId : "",
+    deliveryAddress: values.fulfillmentType === "DELIVERY" ? values.deliveryAddress.trim() : "",
     deliveryNotes: values.deliveryNotes.trim(),
     cardMessage: values.cardMessage.trim(),
   };

@@ -21,6 +21,7 @@ export function AdminShell() {
           <NavLink to={path("/admin")} end onClick={() => setMenuOpen(false)}>{t.adminShell.overview}</NavLink>
           <NavLink to={path("/admin/homepage")} onClick={() => setMenuOpen(false)}>{t.adminShell.homepage}</NavLink>
           <NavLink to={path("/admin/orders")} onClick={() => setMenuOpen(false)}>{t.adminOrders.nav}</NavLink>
+          <NavLink to={path("/admin/operations")} onClick={() => setMenuOpen(false)}>{t.adminOperations.nav}</NavLink>
           <NavLink to={path("/admin/products")} onClick={() => setMenuOpen(false)}>{t.adminShell.products}</NavLink>
           <NavLink to={path("/admin/builder/flowers")} onClick={() => setMenuOpen(false)}>{t.adminShell.builderFlowers}</NavLink>
           <NavLink to={path("/admin/builder/wrappings")} onClick={() => setMenuOpen(false)}>{t.adminShell.wrappings}</NavLink>

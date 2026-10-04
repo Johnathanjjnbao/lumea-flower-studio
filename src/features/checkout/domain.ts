@@ -52,6 +52,7 @@ export function createCheckoutPayload(
   values: CheckoutFormValues,
   lines: readonly CartLine[],
   locale: Locale,
+  reviewedDeliveryFee: number,
 ): CheckoutOrderPayload {
   if (lines.length === 0) throw new Error("CHECKOUT_CART_EMPTY");
   const status = inspectCheckoutLines(lines);
@@ -71,10 +72,14 @@ export function createCheckoutPayload(
       is_surprise: normalized.isSurprise,
     },
     delivery: {
+      fulfillment_type: normalized.fulfillmentType,
+      area_id: normalized.fulfillmentType === "DELIVERY" ? normalized.deliveryAreaId : null,
+      window_id: normalized.fulfillmentType === "DELIVERY" ? normalized.deliveryWindowId : null,
       address: normalized.deliveryAddress,
       notes: normalized.deliveryNotes || null,
       requested_date: normalized.deliveryDate,
     },
+    review: { delivery_fee: reviewedDeliveryFee, total: checkoutSubtotal(lines) + reviewedDeliveryFee },
     card_message: normalized.cardMessage || null,
     payment_method: normalized.paymentMethod,
     items: lines.map(mapCartLineToCheckoutItem),

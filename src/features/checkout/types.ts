@@ -2,6 +2,7 @@ import type { CartLine } from "../cart/types";
 import type { Locale } from "../../types/content";
 
 export type CheckoutPaymentMethod = "BANK_TRANSFER" | "CASH";
+export type CheckoutFulfillmentType = "DELIVERY" | "PICKUP";
 export type CheckoutOrderStatus = "PENDING";
 export type CheckoutPaymentStatus = "UNPAID";
 
@@ -13,6 +14,9 @@ export interface CheckoutFormValues {
   recipientName: string;
   recipientPhone: string;
   isSurprise: boolean;
+  fulfillmentType: CheckoutFulfillmentType;
+  deliveryAreaId: string;
+  deliveryWindowId: string;
   deliveryAddress: string;
   deliveryDate: string;
   deliveryNotes: string;
@@ -28,11 +32,15 @@ export type CheckoutValidationCode =
   | "phoneRequired"
   | "phoneInvalid"
   | "emailInvalid"
+  | "fulfillmentRequired"
+  | "areaRequired"
+  | "windowRequired"
   | "addressRequired"
   | "addressTooLong"
   | "dateRequired"
   | "dateInvalid"
   | "datePast"
+  | "sameDayUnavailable"
   | "dateTooFar"
   | "notesTooLong"
   | "messageTooLong";
@@ -76,7 +84,15 @@ export interface CheckoutOrderPayload {
     buyer_is_recipient: boolean;
     is_surprise: boolean;
   };
-  delivery: { address: string; notes: string | null; requested_date: string };
+  delivery: {
+    fulfillment_type: CheckoutFulfillmentType;
+    area_id: string | null;
+    window_id: string | null;
+    address: string;
+    notes: string | null;
+    requested_date: string;
+  };
+  review: { delivery_fee: number; total: number };
   card_message: string | null;
   payment_method: CheckoutPaymentMethod;
   items: CheckoutPayloadItem[];
@@ -88,7 +104,7 @@ export interface CheckoutOrderRequest {
 }
 
 export interface OrderReceipt {
-  version: 1;
+  version: 1 | 2;
   orderId: string;
   orderNumber: string;
   subtotalAmount: number;
@@ -97,8 +113,63 @@ export interface OrderReceipt {
   orderStatus: CheckoutOrderStatus;
   paymentStatus: CheckoutPaymentStatus;
   paymentMethod: CheckoutPaymentMethod;
+  fulfillmentType: CheckoutFulfillmentType;
+  fulfillmentName: string | null;
+  deliveryAreaName: string | null;
+  deliveryWindowLabel: string | null;
+  paymentReference: string | null;
+  bankId: string | null;
+  bankName: string | null;
+  accountNumber: string | null;
+  accountHolder: string | null;
+  vietqrTemplate: string | null;
+  paymentInstruction: string | null;
+  paymentDeadlineAt: string | null;
   placedAt: string;
   locale: Locale;
+}
+
+export interface CheckoutDeliveryArea {
+  id: string;
+  code: string;
+  name: string;
+}
+
+export interface CheckoutDeliveryZone {
+  id: string;
+  code: string;
+  name: string;
+  help: string | null;
+  feeAmount: number;
+  sameDayEligible: boolean;
+  areas: CheckoutDeliveryArea[];
+}
+
+export interface CheckoutDeliveryWindow {
+  id: string;
+  code: string;
+  label: string;
+  help: string | null;
+  startTime: string;
+  endTime: string;
+  sameDayEligible: boolean;
+}
+
+export interface CheckoutOptions {
+  deliveryEnabled: boolean;
+  pickupEnabled: boolean;
+  sameDayEnabled: boolean;
+  sameDayCutoff: string | null;
+  deliveryHelp: string | null;
+  pickup: { name: string; address: string; hours: string } | null;
+  zones: CheckoutDeliveryZone[];
+  windows: CheckoutDeliveryWindow[];
+  paymentMethods: {
+    bankTransfer: boolean;
+    cash: boolean;
+    cashDelivery: boolean;
+    cashPickup: boolean;
+  };
 }
 
 export interface CheckoutRevalidationResult {
