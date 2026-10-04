@@ -1,22 +1,32 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useI18n } from "../../../i18n";
 import { useAdminAuth } from "../auth/AdminAuthContext";
+import { AdminAuthLayout } from "../components/AdminAuthLayout";
 
 export function AdminLoginPage() {
   const auth = useAdminAuth();
+  const { path, t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const from = (location.state as { from?: string } | null)?.from || "/admin/products";
+  const routeState = location.state as { from?: string; passwordReset?: boolean } | null;
+  const returnPath = routeState?.from;
+  const from = returnPath === "/admin"
+    || returnPath?.startsWith("/admin/")
+    || returnPath === "/ko/admin"
+    || returnPath?.startsWith("/ko/admin/")
+    ? returnPath
+    : path("/admin/products");
 
   useEffect(() => {
-    document.title = "Đăng nhập Admin — Luméa";
-  }, []);
+    document.title = `${t.adminAuth.login.title} — Luméa`;
+  }, [t.adminAuth.login.title]);
 
-  if (auth.status === "loading") return <main className="admin-gate" aria-busy="true"><p>Đang xác minh phiên quản trị…</p></main>;
+  if (auth.status === "loading") return <main className="admin-gate" aria-busy="true"><p>{t.adminAuth.login.loading}</p></main>;
   if (auth.status === "authenticated") return <Navigate to={from} replace />;
 
   async function submit(event: FormEvent) {
@@ -27,38 +37,29 @@ export function AdminLoginPage() {
       await auth.signIn(email, password);
       navigate(from, { replace: true });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Không thể đăng nhập.");
+      setMessage(error instanceof Error && error.message === "INVALID_CREDENTIALS"
+        ? t.adminAuth.login.invalidCredentials
+        : t.adminAuth.login.genericError);
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <main className="admin-login">
-      <section className="admin-login__brand" aria-label="Luméa Flower Studio">
-        <span className="admin-kicker">PRIVATE ATELIER</span>
-        <strong>LUMÉA</strong>
-        <p>Quản lý bộ sưu tập hoa và hình ảnh studio trong một không gian riêng.</p>
-      </section>
-      <section className="admin-login__panel">
-        <div>
-          <span className="admin-kicker">ADMIN ACCESS</span>
-          <h1>Đăng nhập quản trị</h1>
-          <p>Chỉ dành cho tài khoản đã được chủ sở hữu cấp quyền.</p>
-        </div>
+    <AdminAuthLayout eyebrow={t.adminAuth.login.eyebrow} title={t.adminAuth.login.title} intro={t.adminAuth.login.intro}>
+        {routeState?.passwordReset && <p className="admin-alert admin-alert--success" role="status">{t.adminAuth.login.resetSuccess}</p>}
         {auth.status === "configuration-error" ? (
-          <p className="admin-alert admin-alert--error" role="alert">{auth.error}</p>
+          <p className="admin-alert admin-alert--error" role="alert">{t.adminAuth.login.genericError}</p>
         ) : (
           <form className="admin-form-stack" onSubmit={submit}>
-            <label>Email<input type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
-            <label>Mật khẩu<input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+            <label htmlFor="admin-login-email">{t.adminAuth.login.email}<input id="admin-login-email" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+            <label htmlFor="admin-login-password">{t.adminAuth.login.password}<input id="admin-login-password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+            <Link className="admin-auth-text-link" to={path("/admin/forgot-password")}>{t.adminAuth.login.forgot}</Link>
             {message && <p className="admin-alert admin-alert--error" role="alert">{message}</p>}
-            {auth.status === "unauthorized" && auth.error && <p className="admin-alert admin-alert--error" role="alert">{auth.error}</p>}
-            <button className="admin-button admin-button--primary" type="submit" disabled={submitting}>{submitting ? "Đang đăng nhập…" : "Đăng nhập"}</button>
+            {auth.status === "unauthorized" && <p className="admin-alert admin-alert--error" role="alert">{t.adminAuth.login.genericError}</p>}
+            <button className="admin-button admin-button--primary" type="submit" disabled={submitting}>{submitting ? t.adminAuth.login.submitting : t.adminAuth.login.submit}</button>
           </form>
         )}
-        <a className="admin-back-link" href={import.meta.env.BASE_URL}>← Trở về website</a>
-      </section>
-    </main>
+    </AdminAuthLayout>
   );
 }

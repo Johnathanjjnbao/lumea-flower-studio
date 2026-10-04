@@ -104,6 +104,20 @@ No Auth user or fake Admin is created by migration. Before Step 9B runtime testi
 
 Detailed STAFF permissions remain an owner decision. The Step 9B forward migration narrows catalog/media mutation to ADMIN-only; staff and Admin-profile management also remain ADMIN-only.
 
+### Admin password recovery
+
+Admin recovery uses the official Supabase Auth email flow. From `/admin/login` or `/ko/admin/login`, choose the forgot-password link, submit the Admin email, open the link from Supabase, and set a new password on the localized reset route. The request response is deliberately identical for known and unknown emails. Recovery tokens are consumed by the Supabase client, are never logged or copied into locale-switch links, and the client signs out globally after a successful password update before returning to Admin login.
+
+New and reset passwords require at least 15 characters in both the UI and Supabase Auth. Existing passwords are not rewritten by this policy change. Password-manager paste remains supported; no arbitrary composition rule is imposed.
+
+Production Auth URL configuration for project `nihhynwvltttadlfatdm` must remain:
+
+- Site URL: `https://johnathanjjnbao.github.io/lumea-flower-studio/`
+- Production redirects: `/lumea-flower-studio/admin/reset-password` and `/lumea-flower-studio/ko/admin/reset-password` on `https://johnathanjjnbao.github.io`
+- Local development redirects: the same two paths on `http://localhost:5173` and `http://127.0.0.1:5173`
+
+Do not add wildcard redirect hosts, user-controlled redirect parameters, a service-role key, or a password-reset shortcut. An opened recovery link still requires an active `ADMIN` profile before the reset form is shown. A real production recovery verification cannot be completed by automation alone: the owner must open the email in their own mailbox, choose a new password, confirm the new login, then sign out and verify the Admin guard.
+
 ## Storage strategy
 
 The migrations create two buckets:

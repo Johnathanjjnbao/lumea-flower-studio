@@ -22,6 +22,14 @@ function githubPagesRouteEntries(): Plugin {
         "ko/cart",
         "ko/checkout",
         "ko/order-confirmation",
+        "admin",
+        "admin/login",
+        "admin/forgot-password",
+        "admin/reset-password",
+        "ko/admin",
+        "ko/admin/login",
+        "ko/admin/forgot-password",
+        "ko/admin/reset-password",
       ];
 
       await Promise.all(routes.map(async (route) => {

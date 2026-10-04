@@ -39,6 +39,7 @@ export default function App() {
               <Route path="/ko/checkout" element={<CheckoutPage />} />
               <Route path="/ko/order-confirmation" element={<OrderConfirmationPage />} />
             <Route path="/admin/*" element={<Suspense fallback={<main className="admin-gate" aria-busy="true"><p>Đang tải khu vực quản trị…</p></main>}><AdminRoutes /></Suspense>} />
+            <Route path="/ko/admin/*" element={<Suspense fallback={<main className="admin-gate" aria-busy="true"><p>관리자 페이지를 불러오는 중…</p></main>}><AdminRoutes /></Suspense>} />
           </Routes>
           </PrototypeActionProvider>
         </CartProvider>

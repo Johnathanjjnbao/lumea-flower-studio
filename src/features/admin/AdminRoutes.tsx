@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { useI18n } from "../../i18n";
 import { AdminAuthProvider } from "./auth/AdminAuthContext";
 import { AdminGuard } from "./auth/AdminGuard";
 import { AdminShell } from "./components/AdminShell";
@@ -12,12 +13,17 @@ import { AdminBuilderFlowersPage } from "./pages/AdminBuilderFlowersPage";
 import { AdminBuilderWrappingEditorPage } from "./pages/AdminBuilderWrappingEditorPage";
 import { AdminBuilderWrappingsPage } from "./pages/AdminBuilderWrappingsPage";
 import { AdminHomepagePage } from "./pages/AdminHomepagePage";
+import { AdminForgotPasswordPage } from "./pages/AdminForgotPasswordPage";
+import { AdminResetPasswordPage } from "./pages/AdminResetPasswordPage";
 
 export default function AdminRoutes() {
+  const { path } = useI18n();
   return (
     <AdminAuthProvider>
       <Routes>
         <Route path="login" element={<AdminLoginPage />} />
+        <Route path="forgot-password" element={<AdminForgotPasswordPage />} />
+        <Route path="reset-password" element={<AdminResetPasswordPage />} />
         <Route element={<AdminGuard><AdminShell /></AdminGuard>}>
           <Route index element={<AdminDashboardPage />} />
           <Route path="homepage" element={<AdminHomepagePage />} />
@@ -33,7 +39,7 @@ export default function AdminRoutes() {
           <Route path="builder/wrappings/colors/:id" element={<AdminBuilderColorEditorPage />} />
           <Route path="builder/wrappings/:id" element={<AdminBuilderWrappingEditorPage />} />
         </Route>
-        <Route path="*" element={<Navigate to="/admin" replace />} />
+        <Route path="*" element={<Navigate to={path("/admin")} replace />} />
       </Routes>
     </AdminAuthProvider>
   );

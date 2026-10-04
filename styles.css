@@ -4705,6 +4705,8 @@ body.catalog-filter-open {
   content: "";
 }
 
+.admin-nav__signout { display: none; }
+
 .admin-identity {
   display: grid;
   justify-items: end;
@@ -4810,6 +4812,22 @@ body.catalog-filter-open {
 .admin-login__panel h1 { margin-top: 1rem; }
 .admin-login__panel > div p { margin-top: 1rem; color: var(--ink-soft); font-size: 0.78rem; }
 .admin-back-link { width: max-content; color: var(--ink-soft); font-size: 0.69rem; text-decoration: underline; text-underline-offset: 0.25rem; }
+
+.admin-auth-language { display: flex; min-height: 2.75rem; justify-content: flex-end; align-items: center; gap: 0.3rem; }
+.admin-auth-language a { display: inline-flex; min-width: 3.25rem; min-height: 2.75rem; padding-inline: 0.7rem; justify-content: center; align-items: center; border-bottom: 1px solid transparent; color: var(--ink-soft); font-size: 0.65rem; font-weight: 750; }
+.admin-auth-language a[aria-current="page"] { border-color: var(--burgundy); color: var(--burgundy); }
+.admin-auth-text-link { display: inline-flex; width: max-content; min-height: 2.75rem; align-items: center; color: var(--burgundy); font-size: 0.69rem; font-weight: 700; text-decoration: underline; text-underline-offset: 0.25rem; }
+.admin-form-stack .admin-auth-text-link { margin-top: -0.6rem; }
+.admin-form-stack label small { max-width: 32rem; color: var(--ink-soft); font-size: 0.61rem; font-weight: 500; line-height: 1.55; }
+.admin-alert a { color: inherit; text-decoration: underline; text-underline-offset: 0.2rem; }
+.admin-auth-sent,
+.admin-auth-invalid { display: grid; padding: 1.2rem; border: 1px solid var(--line); background: #fbf8f3; gap: 0.8rem; }
+.admin-auth-sent h2,
+.admin-auth-invalid h2 { font-size: 1.65rem; }
+.admin-auth-sent p,
+.admin-auth-invalid p { color: var(--ink-soft); font-size: 0.76rem; line-height: 1.65; }
+.admin-auth-sent .admin-button,
+.admin-auth-invalid .admin-button { width: max-content; margin-top: 0.35rem; }
 
 .admin-form-stack { display: grid; gap: 1.2rem; }
 .admin-form-stack label,
@@ -5039,6 +5057,7 @@ body.catalog-filter-open {
   .admin-nav { position: absolute; top: 100%; right: 0; left: 0; display: none; padding: 1rem; border-bottom: 1px solid var(--line-strong); background: #f9f5ef; align-items: stretch; flex-direction: column; gap: 0; }
   .admin-nav[data-open="true"] { display: flex; }
   .admin-nav a { padding: 0.8rem; border-bottom: 1px solid var(--line); }
+  .admin-nav__signout { display: block; width: 100%; padding: 0.8rem; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: inherit; font: inherit; font-size: 0.74rem; font-weight: 650; text-align: left; }
   .admin-nav a.active::after { display: none; }
   .admin-identity { display: none; }
   .admin-page-heading { grid-template-columns: 1fr; }
@@ -5057,6 +5076,9 @@ body.catalog-filter-open {
   .admin-login__brand strong { margin-block: 0.85rem; font-size: 3.7rem; }
   .admin-login__brand p { font-size: 1rem; }
   .admin-login__panel { padding: 2rem 1.25rem 3rem; }
+  .admin-auth-language { justify-content: flex-start; }
+  .admin-auth-sent .admin-button,
+  .admin-auth-invalid .admin-button { width: 100%; }
   .admin-page-heading--row,
   .admin-action-panel,
   .admin-editor-heading { grid-template-columns: 1fr; }

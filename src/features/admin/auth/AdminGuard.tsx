@@ -1,15 +1,17 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { useI18n } from "../../../i18n";
 import { useAdminAuth } from "./AdminAuthContext";
 
 export function AdminGuard({ children }: { children: ReactNode }) {
   const auth = useAdminAuth();
+  const { path } = useI18n();
   const location = useLocation();
   if (auth.status === "loading") {
     return <main className="admin-gate" aria-busy="true"><p>Đang xác minh phiên quản trị…</p></main>;
   }
   if (auth.status === "signed-out") {
-    return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to={path("/admin/login")} replace state={{ from: location.pathname }} />;
   }
   if (auth.status === "configuration-error" || auth.status === "unauthorized") {
     return (

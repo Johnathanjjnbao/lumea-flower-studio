@@ -1,5 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getSupabaseClient } from "../../../lib/supabase";
 import type { AdminProfile } from "../types";
 
@@ -22,8 +22,10 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState<string | null>(null);
   const [profile, setProfile] = useState<AdminProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const sessionLoadId = useRef(0);
 
   const loadSession = useCallback(async (session?: Session | null) => {
+    const loadId = ++sessionLoadId.current;
     let client;
     try {
       client = getSupabaseClient();
@@ -40,6 +42,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     setStatus("loading");
     setError(null);
     const activeSession = session === undefined ? (await client.auth.getSession()).data.session : session;
+    if (loadId !== sessionLoadId.current) return;
     if (!activeSession) {
       setEmail(null);
       setProfile(null);
@@ -53,6 +56,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       .eq("auth_user_id", activeSession.user.id)
       .eq("active", true)
       .maybeSingle();
+    if (loadId !== sessionLoadId.current) return;
     if (profileError) {
       setProfile(null);
       setStatus("unauthorized");
@@ -100,11 +104,12 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     const client = getSupabaseClient();
     if (!client) throw new Error("Supabase chưa được cấu hình.");
     const { data, error: signInError } = await client.auth.signInWithPassword({ email: nextEmail.trim(), password });
-    if (signInError) throw new Error("Email hoặc mật khẩu không đúng.");
+    if (signInError) throw new Error("INVALID_CREDENTIALS");
     await loadSession(data.session);
   }, [loadSession]);
 
   const signOut = useCallback(async () => {
+    sessionLoadId.current += 1;
     const client = getSupabaseClient();
     if (client) await client.auth.signOut();
     setEmail(null);
