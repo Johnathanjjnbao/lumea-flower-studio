@@ -2,6 +2,7 @@ import { ManagedImage } from "../components/ManagedImage";
 import { siteConfig } from "../config/siteConfig";
 import { resolveHomepageTarget } from "../features/homepage/cta";
 import type { HomepageSection } from "../features/homepage/types";
+import { buildGoogleMapsEmbedUrl, isSafeGoogleMapsUrl, normalizePhoneHref } from "../features/homepage/visitLocation";
 import { useI18n } from "../i18n";
 
 const galleryClasses = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
@@ -29,10 +30,21 @@ export function Gallery({ section }: { section: HomepageSection }) {
 export function Visit({ section }: { section: HomepageSection }) {
   const { t } = useI18n();
   const copy = section.copy;
+  const phoneHref = normalizePhoneHref(section.visit.phone);
+  const mapEmbedUrl = section.visit.mapEnabled ? buildGoogleMapsEmbedUrl(section.visit.mapQuery) : null;
+  const directionsUrl = isSafeGoogleMapsUrl(section.visit.googleMapsUrl) ? section.visit.googleMapsUrl.trim() : null;
+  const studioName = copy.secondaryHeading || copy.titleOne;
   return <section className="visit section-space" id="visit" aria-labelledby="visit-title"><div className="section-shell visit-layout">
     <div className="visit-copy"><p className="eyebrow eyebrow--light"><span aria-hidden="true">10</span>{copy.eyebrow}</p><h2 id="visit-title">{copy.titleOne}</h2><p className="visit-lead">{copy.body}</p><dl className="visit-details">
-      <div><dt>{copy.detailOneLabel}</dt><dd>{copy.detailOneValue}</dd></div><div><dt>{copy.detailTwoLabel}</dt><dd>{copy.detailTwoValue}</dd></div><div><dt>{t.home.visit.phone}</dt><dd><a href={siteConfig.phoneHref}>{siteConfig.phoneDisplay}</a></dd></div><div><dt>{t.home.visit.instagram}</dt><dd><a href="#gallery">{siteConfig.instagramHandle}</a></dd></div>
+      <div><dt>{copy.detailOneLabel}</dt><dd>{copy.detailOneValue}</dd></div><div><dt>{copy.detailTwoLabel}</dt><dd>{copy.detailTwoValue}</dd></div>
+      {phoneHref && <div><dt>{t.home.visit.phone}</dt><dd><a href={phoneHref}>{section.visit.phone}</a></dd></div>}
+      {directionsUrl && copy.primaryCtaLabel && <div><dt>{t.home.visit.mapAria}</dt><dd><a href={directionsUrl} target="_blank" rel="noreferrer">{copy.primaryCtaLabel}</a></dd></div>}
     </dl></div>
-    <div className="map-placeholder" aria-label={t.home.visit.mapAria}><span className="map-district" aria-hidden="true">{t.home.visit.district}</span><div className="map-lines" aria-hidden="true"><span className="map-road map-road--one" /><span className="map-road map-road--two" /><span className="map-road map-road--three" /><span className="map-water" /></div><div className="map-pin" aria-hidden="true"><span>{siteConfig.monogram}</span></div><p>{siteConfig.brandDisplayName} {t.brand.descriptor}<br /><small>{t.home.visit.mapNote}</small></p></div>
+    <div className={`map-placeholder${mapEmbedUrl ? " map-placeholder--live" : ""}`} aria-label={t.home.visit.mapAria}>
+      {mapEmbedUrl
+        ? <iframe src={mapEmbedUrl} title={`${t.home.visit.mapAria}: ${studioName}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+        : <><div className="map-lines" aria-hidden="true"><span className="map-road map-road--one" /><span className="map-road map-road--two" /><span className="map-road map-road--three" /><span className="map-water" /></div><div className="map-pin" aria-hidden="true"><span>L</span></div></>}
+      <p><strong>{studioName}</strong><br /><small>{copy.detailOneValue}</small></p>
+    </div>
   </div></section>;
 }

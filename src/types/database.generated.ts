@@ -693,6 +693,10 @@ export type Database = {
           secondary_cta_target: string | null
           section_key: string
           updated_at: string
+          visit_google_maps_url: string | null
+          visit_map_enabled: boolean
+          visit_map_query: string | null
+          visit_phone: string | null
         }
         Insert: {
           created_at?: string
@@ -703,6 +707,10 @@ export type Database = {
           secondary_cta_target?: string | null
           section_key: string
           updated_at?: string
+          visit_google_maps_url?: string | null
+          visit_map_enabled?: boolean
+          visit_map_query?: string | null
+          visit_phone?: string | null
         }
         Update: {
           created_at?: string
@@ -713,6 +721,10 @@ export type Database = {
           secondary_cta_target?: string | null
           section_key?: string
           updated_at?: string
+          visit_google_maps_url?: string | null
+          visit_map_enabled?: boolean
+          visit_map_query?: string | null
+          visit_phone?: string | null
         }
         Relationships: []
       }

@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseClient } from "../../../lib/supabase";
 import type { Database } from "../../../types/database.generated";
-import { emptyHomepageCopy, homepageSectionKeys, type HomepageSectionCopy, type HomepageSectionKey } from "../../homepage/types";
+import { emptyHomepageCopy, emptyHomepageVisitSettings, homepageSectionKeys, type HomepageSectionCopy, type HomepageSectionKey } from "../../homepage/types";
+import { validateVisitSettings } from "../../homepage/visitLocation";
 import type { AdminHomepageFeature, AdminHomepageMedia, AdminHomepageSection, AdminHomepageSnapshot } from "../types";
 import { discardUploadedPublicMediaAsset, updatePublicMediaCopy, uploadPublicMediaAsset } from "./adminMediaService";
 
@@ -57,7 +58,7 @@ export class SupabaseAdminHomepageRepository implements AdminHomepageRepository 
   constructor(private readonly client: SupabaseClient<Database> = requireSupabaseClient()) {}
 
   async getHomepage(): Promise<AdminHomepageSnapshot> {
-    const sectionsResult = await this.client.from("homepage_sections").select("id, section_key, enabled, display_order, primary_cta_target, secondary_cta_target").order("display_order");
+    const sectionsResult = await this.client.from("homepage_sections").select("id, section_key, enabled, display_order, primary_cta_target, secondary_cta_target, visit_phone, visit_map_enabled, visit_map_query, visit_google_maps_url").order("display_order");
     if (sectionsResult.error) fail("Không thể tải cấu hình Homepage", sectionsResult.error);
     const sectionRows = (sectionsResult.data ?? []).filter((row) => isSectionKey(row.section_key));
     const ids = sectionRows.map((row) => row.id);
@@ -99,6 +100,10 @@ export class SupabaseAdminHomepageRepository implements AdminHomepageRepository 
       });
       return {
         id: row.id, key: row.section_key as HomepageSectionKey, enabled: row.enabled, primaryCtaTarget: row.primary_cta_target, secondaryCtaTarget: row.secondary_cta_target,
+        visit: row.section_key === "visit" ? {
+          phone: row.visit_phone ?? "", mapEnabled: row.visit_map_enabled,
+          mapQuery: row.visit_map_query ?? "", googleMapsUrl: row.visit_google_maps_url ?? "",
+        } : emptyHomepageVisitSettings(),
         vi: copyFromRow((translations.data ?? []).find((item) => item.homepage_section_id === row.id && item.locale === "vi")),
         ko: copyFromRow((translations.data ?? []).find((item) => item.homepage_section_id === row.id && item.locale === "ko")),
         media: sectionMedia, features,
@@ -120,10 +125,23 @@ export class SupabaseAdminHomepageRepository implements AdminHomepageRepository 
     for (const target of [section.primaryCtaTarget, section.secondaryCtaTarget]) {
       if (target && !SAFE_CTA_TARGETS.has(target)) throw new Error("CTA chỉ được dùng destination nội bộ đã được Luméa cho phép.");
     }
+    if (section.key === "visit") {
+      if (![section.vi.detailOneValue, section.ko.detailOneValue].every((value) => value.trim().length >= 5 && value.trim().length <= 300)) {
+        throw new Error("Địa chỉ VI và KO cần từ 5 đến 300 ký tự.");
+      }
+      const errors = Object.values(validateVisitSettings(section.visit, section.vi, section.ko)).filter(Boolean);
+      if (errors.length) throw new Error(errors[0]);
+    }
     const sectionUpdate = await this.client.from("homepage_sections").update({
       enabled: section.key === "hero" ? true : section.enabled,
       primary_cta_target: section.primaryCtaTarget,
       secondary_cta_target: section.secondaryCtaTarget,
+      ...(section.key === "visit" ? {
+        visit_phone: section.visit.phone.trim() || null,
+        visit_map_enabled: section.visit.mapEnabled,
+        visit_map_query: section.visit.mapQuery.trim() || null,
+        visit_google_maps_url: section.visit.googleMapsUrl.trim() || null,
+      } : {}),
     }).eq("id", section.id);
     if (sectionUpdate.error) fail("Không thể lưu trạng thái section", sectionUpdate.error);
     const copyUpdate = await this.client.from("homepage_section_translations").upsert([

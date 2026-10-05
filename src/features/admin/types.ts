@@ -1,5 +1,5 @@
 import type { Database } from "../../types/database.generated";
-import type { HomepageSectionCopy, HomepageSectionKey } from "../homepage/types";
+import type { HomepageSectionCopy, HomepageSectionKey, HomepageVisitSettings } from "../homepage/types";
 
 export type ProductType = Database["public"]["Enums"]["product_type"];
 export type VisibilityStatus = Database["public"]["Enums"]["visibility_status"];
@@ -191,6 +191,7 @@ export interface AdminHomepageSection {
   enabled: boolean;
   primaryCtaTarget: string | null;
   secondaryCtaTarget: string | null;
+  visit: HomepageVisitSettings;
   vi: HomepageSectionCopy;
   ko: HomepageSectionCopy;
   media: AdminHomepageMedia[];

@@ -31,6 +31,13 @@ export interface HomepageSectionCopy {
   detailTwoValue: string;
 }
 
+export interface HomepageVisitSettings {
+  phone: string;
+  mapEnabled: boolean;
+  mapQuery: string;
+  googleMapsUrl: string;
+}
+
 export interface HomepageMedia {
   id: string;
   mediaAssetId: string;
@@ -59,10 +66,15 @@ export interface HomepageSection {
   enabled: boolean;
   primaryCtaTarget: string | null;
   secondaryCtaTarget: string | null;
+  visit: HomepageVisitSettings;
   copy: HomepageSectionCopy;
   media: HomepageMedia[];
   features: HomepageFeatureItem[];
   curatedProductIds: string[];
+}
+
+export function emptyHomepageVisitSettings(): HomepageVisitSettings {
+  return { phone: "", mapEnabled: false, mapQuery: "", googleMapsUrl: "" };
 }
 
 export interface HomepageContent {

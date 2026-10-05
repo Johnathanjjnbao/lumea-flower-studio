@@ -101,6 +101,18 @@ def install_auth_mocks(page, state):
         if "/admin_profiles" in request.url:
             state["profile_requests"] += 1
             route.fulfill(status=200, content_type="application/json", body=json.dumps(PROFILE))
+        elif "/homepage_sections" in request.url:
+            if request.method == "PATCH":
+                state["homepage_section"].update(request.post_data_json)
+                state["homepage_writes"] += 1
+            route.fulfill(status=200, content_type="application/json", body=json.dumps([state["homepage_section"]]))
+        elif "/homepage_section_translations" in request.url:
+            if request.method == "POST":
+                for translation in request.post_data_json:
+                    stored = next(item for item in state["homepage_translations"] if item["locale"] == translation["locale"])
+                    stored.update(translation)
+                state["homepage_writes"] += 1
+            route.fulfill(status=200, content_type="application/json", body=json.dumps(state["homepage_translations"]))
         else:
             route.fulfill(status=200, content_type="application/json", body="[]")
 
@@ -203,7 +215,50 @@ with sync_playwright() as playwright:
         "url": response.url,
         "resource_type": response.request.resource_type,
     }) if response.status >= 400 else None)
-    state = {"password_updates": 0, "updated_password_length": 0, "login_attempts": [], "auth_user_methods": [], "profile_requests": 0}
+    visit_section_id = "44444444-4444-4444-8444-444444444444"
+    state = {
+        "password_updates": 0,
+        "updated_password_length": 0,
+        "login_attempts": [],
+        "auth_user_methods": [],
+        "profile_requests": 0,
+        "homepage_writes": 0,
+        "homepage_section": {
+            "id": visit_section_id,
+            "section_key": "visit",
+            "enabled": True,
+            "display_order": 10,
+            "primary_cta_target": None,
+            "secondary_cta_target": None,
+            "visit_phone": "+84 28 3822 0000",
+            "visit_map_enabled": False,
+            "visit_map_query": None,
+            "visit_google_maps_url": None,
+        },
+        "homepage_translations": [
+            {
+                "homepage_section_id": visit_section_id,
+                "locale": locale,
+                "eyebrow": "Visit the studio",
+                "title_line_one": title,
+                "title_line_two": "",
+                "body": body,
+                "note": "",
+                "primary_cta_label": directions,
+                "secondary_cta_label": "",
+                "secondary_heading": studio,
+                "secondary_body": "",
+                "detail_one_label": address_label,
+                "detail_one_value": address,
+                "detail_two_label": hours_label,
+                "detail_two_value": hours,
+            }
+            for locale, title, body, directions, studio, address_label, address, hours_label, hours in [
+                ("vi", "Ghé Luméa", "Một góc nhỏ đầy hoa.", "Chỉ đường", "Luméa Studio", "Địa chỉ", "Địa chỉ QA hiện tại", "Mở cửa", "Mỗi ngày"),
+                ("ko", "루메아 방문", "꽃이 있는 작은 공간입니다.", "길찾기", "루메아 스튜디오", "주소", "현재 QA 주소", "영업시간", "매일"),
+            ]
+        ],
+    }
     token = install_auth_mocks(reset_page, state)
 
     reset_page.goto(f"{BASE_URL}/admin/reset-password", wait_until="networkidle")
@@ -294,6 +349,35 @@ with sync_playwright() as playwright:
     reset_page.reload(wait_until="networkidle")
     assert reset_page.locator(".admin-app").is_visible(), "Admin session did not restore after refresh"
 
+    reset_page.goto(f"{BASE_URL}/admin/homepage", wait_until="networkidle")
+    visit_editor = reset_page.locator("details.admin-home-section").filter(has_text="Ghé studio")
+    visit_editor.locator("summary").click()
+    assert visit_editor.get_by_label("Số điện thoại").input_value() == "+84 28 3822 0000"
+    visit_editor.get_by_role("checkbox", name="Hiển thị Google Maps").check()
+    visit_editor.get_by_label("Vị trí dùng cho bản đồ").fill("Luméa Studio, District 1")
+    visit_editor.get_by_label("Liên kết Google Maps").fill("javascript:alert(1)")
+    assert "HTTPS từ Google Maps" in visit_editor.locator("#visit-map-url-help").inner_text()
+    visit_editor.get_by_label("Liên kết Google Maps").fill("https://www.google.com/maps/place/Lumea")
+    visit_editor.get_by_label("Địa chỉ studio").fill("Địa chỉ QA đã chỉnh")
+    visit_editor.get_by_role("tab", name="한국어").click()
+    visit_editor.get_by_label("Địa chỉ studio").fill("수정된 QA 주소")
+    visit_editor.get_by_role("button", name="Lưu Ghé studio").click()
+    reset_page.get_by_text("Đã lưu Ghé studio.", exact=True).wait_for(state="visible", timeout=20_000)
+    assert state["homepage_writes"] == 2, "Visit save did not persist both section settings and VI/KO copy"
+    reset_page.reload(wait_until="networkidle")
+    visit_editor = reset_page.locator("details.admin-home-section").filter(has_text="Ghé studio")
+    visit_editor.locator("summary").click()
+    assert visit_editor.get_by_label("Vị trí dùng cho bản đồ").input_value() == "Luméa Studio, District 1"
+    assert visit_editor.get_by_label("Địa chỉ studio").input_value() == "Địa chỉ QA đã chỉnh"
+    assert_no_overflow(reset_page, "Visit Admin desktop")
+    reset_page.screenshot(path=ARTIFACT_DIR / "admin-homepage-visit-1440.png", full_page=True)
+    reset_page.set_viewport_size({"width": 768, "height": 1024})
+    assert_no_overflow(reset_page, "Visit Admin tablet")
+    reset_page.set_viewport_size({"width": 390, "height": 844})
+    assert_no_overflow(reset_page, "Visit Admin mobile")
+    reset_page.screenshot(path=ARTIFACT_DIR / "admin-homepage-visit-390.png", full_page=True)
+    reset_page.set_viewport_size({"width": 1440, "height": 1000})
+
     for route, heading in [
         ("/admin/homepage", "Homepage"),
         ("/admin/builder/flowers", "Hoa theo cành"),
@@ -374,5 +458,5 @@ with sync_playwright() as playwright:
     reset_context.close()
     browser.close()
 
-print("Admin auth browser QA passed: VI/KO, forgot request parity, callback validation, password update, login, session restore, Admin pages, logout, guard, and 1440/768/390.")
+print("Admin browser QA passed: auth flows plus Visit load, invalid URL feedback, VI/KO edit, map toggle, save, refresh persistence, and responsive coverage.")
 print(f"Screenshots: {ARTIFACT_DIR}")

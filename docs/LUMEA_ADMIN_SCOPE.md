@@ -168,7 +168,7 @@ This request flow remains distinct from the self-service Create Your Bouquet con
 | Create Bouquet promotion | VI/KO promotional copy, images, CTA destination, visibility. Builder rules remain in domain data. |
 | Why Luméa | Approved promises, copy, images, order, visibility. |
 | Gallery | Images, alt/caption, destination links, order, active state. |
-| Visit/Contact | Address, phone, email, hours, map details, social links, copy, visibility. |
+| Visit/Contact | VI/KO studio name, address, opening hours and directions label; phone; Google Maps query and allowlisted destination URL; map enabled state; section copy and visibility. Email and social links remain outside the current Visit editor. |
 | Global operational copy | Delivery/payment/contact instructions that are explicitly modeled and permissioned. |
 
 ### 4.2 Code-owned layout and behavior
@@ -182,6 +182,8 @@ Admin cannot edit:
 - Client-side pricing formulas as a substitute for trusted business logic.
 
 Admin may reorder or hide known homepage sections where the fixed section contract allows it. It does not create new component types.
+
+The Visit editor accepts structured location data only. It validates the phone and Google Maps fields, stores no iframe HTML, and leaves the fixed-origin embed construction, responsive layout, and safe disabled/missing-map fallback to React.
 
 ## 5. Content model rules
 

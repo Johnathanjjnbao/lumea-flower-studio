@@ -61,7 +61,18 @@ with sync_playwright() as playwright:
     }) if response.status >= 400 else None)
 
     page.goto(f"{BASE_URL}/", wait_until="networkidle")
-    page.locator("#visit").wait_for(state="attached", timeout=20_000)
+    page.wait_for_function("() => Boolean(document.querySelector('#visit .visit-details')?.textContent?.trim())", timeout=20_000)
+    visit = page.locator("#visit")
+    visit.scroll_into_view_if_needed()
+    visit.locator(".visit-details").wait_for(state="visible", timeout=10_000)
+    assert visit.locator(".visit-details").inner_text().strip(), "Visit details are empty"
+    visit_iframe = visit.locator('iframe[src^="https://www.google.com/maps?"]')
+    if visit_iframe.count():
+        assert "output=embed" in visit_iframe.get_attribute("src")
+        directions = visit.locator('a[target="_blank"]')
+        assert directions.count() == 1 and directions.get_attribute("href").startswith("https://")
+    else:
+        assert visit.locator(".map-placeholder").is_visible(), "Visit map-disabled fallback is missing"
     assert page.locator("header .wordmark").is_visible()
     assert page.locator("footer.site-footer").is_visible()
     for section_id in HOME_SECTIONS:
@@ -85,7 +96,11 @@ with sync_playwright() as playwright:
 
     page.set_viewport_size({"width": 1440, "height": 1000})
     page.goto(f"{BASE_URL}/ko/", wait_until="networkidle")
-    page.locator("#visit").wait_for(state="attached", timeout=20_000)
+    page.wait_for_function("() => Boolean(document.querySelector('#visit .visit-details')?.textContent?.trim())", timeout=20_000)
+    visit = page.locator("#visit")
+    visit.scroll_into_view_if_needed()
+    visit.locator(".visit-details").wait_for(state="visible", timeout=10_000)
+    assert visit.locator(".visit-details").inner_text().strip(), "KO Visit details are empty"
     for section_id in HOME_SECTIONS:
         section = page.locator(f"#{section_id}")
         assert section.count() == 1, f"missing KO Home section #{section_id}"

@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requirePublicSupabaseClient } from "../../../lib/supabase";
 import type { Locale } from "../../../types/content";
 import type { Database } from "../../../types/database.generated";
-import { emptyHomepageCopy, homepageSectionKeys, type HomepageFeatureItem, type HomepageMedia, type HomepageSection, type HomepageSectionKey } from "../types";
+import { emptyHomepageCopy, emptyHomepageVisitSettings, homepageSectionKeys, type HomepageFeatureItem, type HomepageMedia, type HomepageSection, type HomepageSectionKey } from "../types";
 import type { HomepageRepository } from "./homepageRepository";
 
 function fail(context: string, error: { code?: string } | null) {
@@ -19,7 +19,7 @@ export class SupabaseHomepageRepository implements HomepageRepository {
   async getHomepageSections(locale: Locale): Promise<HomepageSection[]> {
     const sectionsResult = await this.client
       .from("homepage_sections")
-      .select("id, section_key, enabled, display_order, primary_cta_target, secondary_cta_target")
+      .select("id, section_key, enabled, display_order, primary_cta_target, secondary_cta_target, visit_phone, visit_map_enabled, visit_map_query, visit_google_maps_url")
       .eq("enabled", true)
       .order("display_order");
     if (sectionsResult.error) fail("Không thể tải cấu trúc trang chủ", sectionsResult.error);
@@ -141,6 +141,10 @@ export class SupabaseHomepageRepository implements HomepageRepository {
         enabled: row.enabled,
         primaryCtaTarget: row.primary_cta_target,
         secondaryCtaTarget: row.secondary_cta_target,
+        visit: row.section_key === "visit" ? {
+          phone: row.visit_phone ?? "", mapEnabled: row.visit_map_enabled,
+          mapQuery: row.visit_map_query ?? "", googleMapsUrl: row.visit_google_maps_url ?? "",
+        } : emptyHomepageVisitSettings(),
         copy,
         media,
         features,

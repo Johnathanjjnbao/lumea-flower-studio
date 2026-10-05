@@ -18,7 +18,16 @@ const fieldsBySection: Record<HomepageSectionKey, Array<keyof HomepageSectionCop
   create_bouquet: ["eyebrow", "titleOne", "titleTwo", "body", "primaryCtaLabel", "secondaryHeading", "secondaryBody", "secondaryCtaLabel"],
   why_lumea: ["eyebrow", "titleOne", "titleTwo", "body"],
   gallery: ["eyebrow", "titleOne", "titleTwo", "primaryCtaLabel"],
-  visit: ["eyebrow", "titleOne", "body", "detailOneLabel", "detailOneValue", "detailTwoLabel", "detailTwoValue"],
+  visit: ["eyebrow", "titleOne", "body", "secondaryHeading", "detailOneLabel", "detailOneValue", "detailTwoLabel", "detailTwoValue", "primaryCtaLabel"],
+};
+
+const visitLabels: Partial<Record<keyof HomepageSectionCopy, string>> = {
+  secondaryHeading: "Tên studio hiển thị tại vị trí",
+  detailOneLabel: "Nhãn địa chỉ",
+  detailOneValue: "Địa chỉ studio",
+  detailTwoLabel: "Nhãn giờ mở cửa",
+  detailTwoValue: "Giờ mở cửa",
+  primaryCtaLabel: "Nhãn nút chỉ đường",
 };
 
 const multiline = new Set<keyof HomepageSectionCopy>(["body", "note", "secondaryBody"]);
@@ -34,7 +43,7 @@ export function HomepageCopyEditor({ section, onChange }: { section: AdminHomepa
     </div>
     <div className="admin-field-grid">
       {fieldsBySection[section.key].map((field) => <label className={multiline.has(field) ? "admin-field-span" : undefined} key={field}>
-        {labels[field]}
+        {section.key === "visit" ? visitLabels[field] ?? labels[field] : labels[field]}
         {multiline.has(field)
           ? <textarea rows={field === "body" ? 4 : 3} value={copy[field]} onChange={(event) => update(field, event.target.value)} />
           : <input value={copy[field]} onChange={(event) => update(field, event.target.value)} />}

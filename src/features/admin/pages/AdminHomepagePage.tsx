@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { HomepageCopyEditor } from "../components/HomepageCopyEditor";
+import { HomepageVisitEditor } from "../components/HomepageVisitEditor";
 import { HomepageMediaPanel } from "../components/HomepageMediaPanel";
 import { createAdminHomepageRepository } from "../data/adminHomepageRepository";
 import type { AdminHomepageFeature, AdminHomepageMedia, AdminHomepageSection, AdminHomepageSnapshot } from "../types";
@@ -14,7 +15,7 @@ const sectionLabels: Record<AdminHomepageSection["key"], { name: string; descrip
   create_bouquet: { name: "Tạo bó hoa", description: "Nội dung promo, CTA Builder, CTA hỗ trợ và ảnh." },
   why_lumea: { name: "Why Luméa", description: "Tiêu đề section và ba lời hứa dịch vụ có nội dung/ảnh riêng." },
   gallery: { name: "Gallery", description: "Tối đa 10 ảnh, alt/caption VI/KO, thứ tự và trạng thái active." },
-  visit: { name: "Ghé studio", description: "Tiêu đề, đoạn dẫn, địa chỉ hiển thị và giờ mở cửa." },
+  visit: { name: "Ghé studio", description: "Nội dung VI/KO, địa chỉ, điện thoại và Google Maps." },
 };
 
 const ctaOptions = [
@@ -89,6 +90,7 @@ export function AdminHomepagePage() {
               {section.secondaryCtaTarget !== null && <label>Destination CTA phụ<select value={section.secondaryCtaTarget} onChange={(event) => updateSection({ ...section, secondaryCtaTarget: event.target.value })}>{ctaOptions.map(([value, name]) => <option value={value} key={value}>{name}</option>)}</select></label>}
             </div>
             <HomepageCopyEditor section={section} onChange={updateSection} />
+            {section.key === "visit" && <HomepageVisitEditor section={section} onChange={updateSection} />}
             <button className="admin-button admin-button--primary" type="button" disabled={Boolean(isBusy)} onClick={() => void run(`section-${section.id}`, async () => {
               await repository.saveSection(section);
               if (section.key === "why_lumea") await repository.saveFeatures(section.features);

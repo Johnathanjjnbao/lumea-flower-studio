@@ -206,12 +206,12 @@ There is no Delivery row or delivery-address row for `PICKUP`. Pickup details se
 |---|---|---|---|---|---|
 | `media_assets` | Stable identity and metadata for Storage objects. | `id`, `bucket`, `object_key`, `access`, `mime_type`, `byte_size`, width/height, checksum, `status`, uploader, timestamps. | Referenced by product/content/taxonomy/builder placement rows. | Yes through media workflow. | Object reference may be retained by historical records where useful. |
 | `media_asset_translations` | VI/KO alt text and caption. | `media_asset_id`, `locale`, `alt_text`, optional `caption`. | N:1 MediaAsset. | Yes | Copy if required for an immutable receipt, otherwise no. |
-| `homepage_sections` | Fixed-layout section identity and publication/order controls. | `id`, unique `section_key`, `visibility`, `display_order`, optional CTA destination type/reference, timestamps. | 1:N translations/media/product slots. | Yes for content state/order; layout remains code. | No. |
+| `homepage_sections` | Fixed-layout section identity and publication/order controls. The `visit` row is also the canonical source for structured studio contact/map settings. | `id`, unique `section_key`, `visibility`, `display_order`, optional CTA destination type/reference; Visit-only `visit_phone`, `visit_map_enabled`, `visit_map_query`, `visit_google_maps_url`; timestamps. | 1:N translations/media/product slots. | Yes for content state/order and Visit settings; layout remains code. | No. |
 | `homepage_section_translations` | VI/KO eyebrow/title/body/CTA copy. | `homepage_section_id`, `locale`, typed text fields appropriate to the fixed section contract. | N:1 HomepageSection. | Yes | No. |
 | `homepage_section_media` | Ordered/role-based section imagery. | `id`, `homepage_section_id`, `media_asset_id`, `role`, `display_order`, `active`. | N:1 section and MediaAsset. | Yes | No. |
 | `homepage_product_slots` | Curated Best Seller/featured placements. | `homepage_section_id`, `product_id`, `display_order`, `active`. | N:1 section and Product. | Yes | No. |
 | `gallery_items` | Managed gallery/social proof media. | `id`, `media_asset_id`, optional destination URL, `visibility`, `display_order`, timestamps. | N:1 MediaAsset; 1:N translations if captions are used. | Yes | No. |
-| `site_profile` | Singleton business contact/location identity. | phone, email, address components, map URL/embed config, timezone, timestamps. | 1:N translations/hours/social links. | Yes | Selected facts may be copied to Order/payment instructions when operationally relevant. |
+| `site_profile` | Reserved normalization target for future global business identity; it is not the current Homepage Visit source. | phone, email, address components, map URL/embed config, timezone, timestamps. | 1:N translations/hours/social links. | Yes when implemented. | Selected facts may be copied to Order/payment instructions when operationally relevant. |
 | `site_profile_translations` | VI/KO studio/address/help copy. | `site_profile_id`, `locale`, studio name/display address/help text. | N:1 SiteProfile. | Yes | No. |
 | `business_hours` | Structured opening hours. | weekday, open/closed, open time, close time, display order. | N:1 SiteProfile. | Yes | No. |
 | `social_links` | Ordered social/contact destinations. | `id`, `platform`, `url`, `active`, `display_order`. | N:1 SiteProfile. | Yes | No. |
@@ -220,6 +220,8 @@ There is no Delivery row or delivery-address row for `PICKUP`. Pickup details se
 | `custom_requests` | Florist-led bespoke request, distinct from Builder configuration. | `id`, public-safe reference, `status` initially `PENDING`, contact fields approved later, occasion/budget/tone/preferences/avoid/message/delivery date, timestamps. | Optional private MediaAsset reference; Admin-only reads. | Staff status/notes after policy approval. | Submission is historical input. |
 
 Homepage section translation fields remain typed per fixed section contract. This avoids both extremes: one table per sentence and one unconstrained page-sized JSON blob. Layout variants, grids, animation, and component selection remain in React code.
+
+The current Visit contract keeps localized studio name, address, opening hours, and directions label in `homepage_section_translations`. Phone, map visibility, map query, and the Google Maps destination URL live on the `visit` row in `homepage_sections`. The destination must be an allowlisted HTTPS Google Maps URL. The storefront generates the iframe URL from the validated query and a fixed Google Maps origin; Admin never stores or renders raw iframe HTML.
 
 ## 5. OrderItem snapshot strategy
 

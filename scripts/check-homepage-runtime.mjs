@@ -29,6 +29,7 @@ const dictionaries = await loadDictionaries();
 
 const { data: sections, error } = await client.from("homepage_sections").select(`
   id, section_key, enabled, display_order, primary_cta_target, secondary_cta_target,
+  visit_phone, visit_map_enabled, visit_map_query, visit_google_maps_url,
   homepage_section_translations(locale, title_line_one, body),
   homepage_section_media(id, slot_key, active, sort_order, media_assets(storage_bucket, storage_path, access, status, media_asset_translations(locale, alt_text))),
   homepage_feature_items(id, item_key, active, media_assets(storage_bucket, storage_path, access, status, media_asset_translations(locale, alt_text)), homepage_feature_item_translations(locale, title)),
@@ -52,6 +53,16 @@ assert(hero.homepage_section_translations.find((copy) => copy.locale === "vi")?.
 assert(hero.homepage_section_translations.find((copy) => copy.locale === "ko")?.title_line_one === dictionaries.ko.home.hero.titleOne, "Hero KO fixture was not preserved.");
 assert(hero.homepage_section_media.filter((item) => item.active).length === 2, "Hero must expose two active media slots.");
 
+const visit = sections.find((section) => section.section_key === "visit");
+assert(visit, "Visit section is missing.");
+for (const section of sections.filter((item) => item.section_key !== "visit")) {
+  assert(!section.visit_phone && !section.visit_map_enabled && !section.visit_map_query && !section.visit_google_maps_url, `${section.section_key} leaked Visit-only configuration.`);
+}
+if (visit.visit_map_enabled) {
+  assert(typeof visit.visit_map_query === "string" && visit.visit_map_query.trim().length >= 3, "Enabled Visit map is missing a location query.");
+  assert(/^https:\/\/(?:www\.google\.com|google\.com|maps\.google\.com)\/maps(?:[/?]|$)|^https:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps)\//.test(visit.visit_google_maps_url ?? ""), "Enabled Visit map has an unsafe destination URL.");
+}
+
 const gallery = sections.find((section) => section.section_key === "gallery");
 assert(gallery?.homepage_section_media.filter((item) => item.active).length === 10, "Gallery must preserve the approved 10-image layout.");
 const why = sections.find((section) => section.section_key === "why_lumea");
@@ -69,4 +80,4 @@ for (const item of best.homepage_product_curations) {
 
 const writeProbe = await client.from("homepage_sections").update({ display_order: 999 }).eq("id", hero.id).select("id");
 assert(Boolean(writeProbe.error), "Anonymous Homepage write unexpectedly succeeded.");
-console.log("Homepage runtime check passed: 10 sections, VI/KO copy, 28 managed images, six curated Products, and anonymous write denial.");
+console.log("Homepage runtime check passed: 10 sections, VI/KO copy, safe Visit location config, 28 managed images, six curated Products, and anonymous write denial.");
