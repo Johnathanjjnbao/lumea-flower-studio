@@ -102,6 +102,7 @@ const edgeSource = await readFile(new URL("../supabase/functions/create-checkout
 const clientSource = await readFile(new URL("../src/features/checkout/repository.ts", import.meta.url), "utf8");
 const throttleSql = await readFile(new URL("../supabase/migrations/20261005150000_checkout_anti_abuse.sql", import.meta.url), "utf8");
 const operationsSql = await readFile(new URL("../supabase/migrations/20261005160000_atomic_operations_settings.sql", import.meta.url), "utf8");
+const throttleClockFixSql = await readFile(new URL("../supabase/migrations/20261006110000_fix_checkout_throttle_clock.sql", import.meta.url), "utf8");
 
 assert(edgeSource.includes("SITEVERIFY_TIMEOUT_MS"));
 assert(edgeSource.includes("readJsonBody"));
@@ -116,6 +117,11 @@ assert(throttleSql.includes("grant execute on function public.create_checkout_or
 assert(throttleSql.includes("pg_advisory_xact_lock"));
 assert(throttleSql.includes("request_count between 0 and 10"));
 assert(throttleSql.indexOf("if bucket.request_count >= 10") < throttleSql.indexOf("if request_idempotency_key = any(bucket.idempotency_keys)"));
+assert(throttleClockFixSql.includes("request_time timestamptz := clock_timestamp()"));
+assert(!/\bcurrent_time\s+timestamptz\b/i.test(throttleClockFixSql), "Throttle clock variable must not collide with the SQL CURRENT_TIME keyword.");
+assert(throttleClockFixSql.includes("pg_advisory_xact_lock"));
+assert(throttleClockFixSql.includes("revoke all on function public.consume_checkout_throttle(text, uuid) from public, anon, authenticated"));
+assert(throttleClockFixSql.includes("grant execute on function public.consume_checkout_throttle(text, uuid) to service_role"));
 assert(operationsSql.includes("deferrable initially deferred"));
 assert(operationsSql.includes("ADMIN_OPERATIONS_STALE"));
 assert(operationsSql.includes("revoke insert, update, delete on table public.delivery_settings from authenticated"));
