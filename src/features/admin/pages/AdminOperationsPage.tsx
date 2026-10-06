@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useI18n } from "../../../i18n";
 import { formatVnd } from "../../../utils/product";
-import { createAdminOperationsRepository } from "../operations/repository";
+import { AdminOperationsError, createAdminOperationsRepository } from "../operations/repository";
 import {
   emptyDeliveryArea,
   emptyDeliveryWindow,
@@ -24,7 +24,7 @@ export function AdminOperationsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try { setSnapshot(await repository.getSnapshot()); }
-    catch (error) { setNotice({ tone: "error", text: error instanceof Error ? error.message : t.adminOperations.errors.load }); }
+    catch { setNotice({ tone: "error", text: t.adminOperations.errors.load }); }
     finally { setLoading(false); }
   }, [repository, t.adminOperations.errors.load]);
 
@@ -33,7 +33,14 @@ export function AdminOperationsPage() {
   const run = async (key: string, task: () => Promise<void>) => {
     setBusy(key); setNotice(null);
     try { await task(); setNotice({ tone: "success", text: t.adminOperations.saved }); await load(); }
-    catch (error) { setNotice({ tone: "error", text: error instanceof Error ? error.message : t.adminOperations.errors.save }); }
+    catch (error) {
+      const text = error instanceof AdminOperationsError && error.code === "STALE"
+        ? t.adminOperations.errors.stale
+        : error instanceof AdminOperationsError && error.code === "INVARIANT"
+          ? t.adminOperations.errors.invariant
+          : t.adminOperations.errors.save;
+      setNotice({ tone: "error", text });
+    }
     finally { setBusy(null); }
   };
 

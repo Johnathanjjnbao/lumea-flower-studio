@@ -58,7 +58,7 @@ export class SupabaseAdminHomepageRepository implements AdminHomepageRepository 
   constructor(private readonly client: SupabaseClient<Database> = requireSupabaseClient()) {}
 
   async getHomepage(): Promise<AdminHomepageSnapshot> {
-    const sectionsResult = await this.client.from("homepage_sections").select("id, section_key, enabled, display_order, primary_cta_target, secondary_cta_target, visit_phone, visit_map_enabled, visit_map_query, visit_google_maps_url").order("display_order");
+    const sectionsResult = await this.client.from("homepage_sections").select("id, section_key, enabled, display_order, primary_cta_target, secondary_cta_target, visit_map_enabled, visit_map_query, visit_google_maps_url").order("display_order");
     if (sectionsResult.error) fail("Không thể tải cấu hình Homepage", sectionsResult.error);
     const sectionRows = (sectionsResult.data ?? []).filter((row) => isSectionKey(row.section_key));
     const ids = sectionRows.map((row) => row.id);
@@ -101,7 +101,7 @@ export class SupabaseAdminHomepageRepository implements AdminHomepageRepository 
       return {
         id: row.id, key: row.section_key as HomepageSectionKey, enabled: row.enabled, primaryCtaTarget: row.primary_cta_target, secondaryCtaTarget: row.secondary_cta_target,
         visit: row.section_key === "visit" ? {
-          phone: row.visit_phone ?? "", mapEnabled: row.visit_map_enabled,
+          mapEnabled: row.visit_map_enabled,
           mapQuery: row.visit_map_query ?? "", googleMapsUrl: row.visit_google_maps_url ?? "",
         } : emptyHomepageVisitSettings(),
         vi: copyFromRow((translations.data ?? []).find((item) => item.homepage_section_id === row.id && item.locale === "vi")),
@@ -137,7 +137,6 @@ export class SupabaseAdminHomepageRepository implements AdminHomepageRepository 
       primary_cta_target: section.primaryCtaTarget,
       secondary_cta_target: section.secondaryCtaTarget,
       ...(section.key === "visit" ? {
-        visit_phone: section.visit.phone.trim() || null,
         visit_map_enabled: section.visit.mapEnabled,
         visit_map_query: section.visit.mapQuery.trim() || null,
         visit_google_maps_url: section.visit.googleMapsUrl.trim() || null,

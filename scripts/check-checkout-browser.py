@@ -50,6 +50,35 @@ def checkout_options(route):
     )
 
 
+def turnstile_script(route):
+    route.fulfill(
+        status=200,
+        content_type="application/javascript",
+        body="""
+window.__lumeaTurnstileQa = {
+  sequence: 0,
+  widget: null,
+  issue() {
+    this.sequence += 1;
+    const token = `XXXX.DUMMY.TOKEN.${this.sequence}`;
+    setTimeout(() => this.widget?.callback(token), 0);
+  },
+  expire() { this.widget?.['expired-callback'](); },
+};
+window.turnstile = {
+  render(container, options) {
+    window.__lumeaTurnstileQa.widget = options;
+    container.dataset.qaTurnstile = 'ready';
+    window.__lumeaTurnstileQa.issue();
+    return 'qa-turnstile-widget';
+  },
+  reset() { window.__lumeaTurnstileQa.issue(); },
+  remove() { window.__lumeaTurnstileQa.widget = null; },
+};
+""",
+    )
+
+
 def wait_for_checkout(page):
     page.locator(".checkout-page").wait_for(state="visible", timeout=20_000)
     page.wait_for_function("!document.querySelector('.checkout-cart-status')", timeout=20_000)
@@ -104,6 +133,14 @@ with sync_playwright() as playwright:
     )
     page = browser.new_page(viewport={"width": 1440, "height": 1000}, device_scale_factor=1)
     if not CREATE_REAL_ORDER:
+        page.route("https://challenges.cloudflare.com/turnstile/v0/api.js*", turnstile_script)
+        page.route("**/rest/v1/site_profile*", lambda route: route.fulfill(
+            status=200, content_type="application/json", body=json.dumps([{
+                "business_name": "Luméa Flower Studio", "phone": "", "email": "",
+                "instagram_url": "", "instagram_handle": "",
+            }]),
+        ))
+        page.route("**/rest/v1/budget_ranges*", lambda route: route.fulfill(status=200, content_type="application/json", body="[]"))
         page.route("**/rest/v1/rpc/get_checkout_options", checkout_options)
     console_errors = []
     page_errors = []
@@ -181,6 +218,14 @@ with sync_playwright() as playwright:
     wait_for_checkout(page)
     page.set_viewport_size({"width": 1440, "height": 1000})
 
+    if not CREATE_REAL_ORDER:
+        # A missing/expired challenge is rejected before any checkout request, then reset for retry.
+        token_sequence = page.evaluate("window.__lumeaTurnstileQa.sequence")
+        page.evaluate("window.__lumeaTurnstileQa.expire()")
+        page.get_by_role("button", name="Ghi nhận đơn hàng").click()
+        page.get_by_text("Hoàn tất bước xác minh an toàn", exact=False).wait_for(state="visible")
+        page.wait_for_function("sequence => window.__lumeaTurnstileQa.sequence > sequence", arg=token_sequence)
+
     # Submit-time validation exposes inline errors and a focused error summary.
     page.get_by_role("button", name="Ghi nhận đơn hàng").click()
     summary = page.locator(".checkout-error-summary")
@@ -207,24 +252,27 @@ with sync_playwright() as playwright:
     if page.locator("#price-reviewed").count():
         page.locator("#price-reviewed").check()
 
-    # Simulated network failure must leave Cart and entered fields intact.
-    page.route("**/rest/v1/rpc/create_checkout_order", lambda route: route.abort("failed"))
-    page.get_by_role("button", name="Ghi nhận đơn hàng").click()
-    page.get_by_text("Chưa thể kết nối để ghi nhận đơn.", exact=False).wait_for(state="visible", timeout=20_000)
-    assert page.locator(".cart-count").inner_text() == "2"
-    assert page.locator("#buyerName").input_value().startswith("LUMEA QA")
-    page.unroute_all(behavior="wait")
-    console_errors[:] = [message for message in console_errors if "net::ERR_FAILED" not in message]
+    if not CREATE_REAL_ORDER:
+        # Simulated network failure must leave Cart and entered fields intact.
+        first_token_sequence = page.evaluate("window.__lumeaTurnstileQa.sequence")
+        page.route("**/functions/v1/create-checkout-order", lambda route: route.abort("failed"))
+        page.get_by_role("button", name="Ghi nhận đơn hàng").click()
+        page.get_by_text("Chưa thể kết nối để ghi nhận đơn.", exact=False).wait_for(state="visible", timeout=20_000)
+        assert page.locator(".cart-count").inner_text() == "2"
+        assert page.locator("#buyerName").input_value().startswith("LUMEA QA")
+        page.wait_for_function("sequence => window.__lumeaTurnstileQa.sequence > sequence", arg=first_token_sequence)
+        page.unroute("**/functions/v1/create-checkout-order")
+        console_errors[:] = [message for message in console_errors if "net::ERR_FAILED" not in message]
 
     created_order_number = None
     if CREATE_REAL_ORDER:
         rpc_requests = []
         rpc_responses = []
-        page.on("request", lambda request: rpc_requests.append(request.url) if "/rpc/create_checkout_order" in request.url else None)
+        page.on("request", lambda request: rpc_requests.append(request.url) if "/functions/v1/create-checkout-order" in request.url else None)
         page.on("response", lambda response: rpc_responses.append({
             "status": response.status,
             "body": response.text()[:1_000],
-        }) if "/rpc/create_checkout_order" in response.url else None)
+        }) if "/functions/v1/create-checkout-order" in response.url else None)
         submit_button = page.get_by_role("button", name="Ghi nhận đơn hàng")
         submit_button.evaluate("button => { button.click(); button.click(); }")
         try:

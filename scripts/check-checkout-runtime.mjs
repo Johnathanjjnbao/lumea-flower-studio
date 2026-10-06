@@ -31,8 +31,12 @@ async function expectDenied(label, operation) {
   assert(result.error.code === "42501" || /permission denied|row-level security/i.test(result.error.message), `${label} failed for the wrong reason (${result.error.code}: ${result.error.message}).`);
 }
 
+let orderClient;
+let runInternalOrderChecks = true;
+
 async function expectRpcError(label, args, expectedMessage) {
-  const result = await client.rpc("create_checkout_order", args);
+  if (!runInternalOrderChecks) return;
+  const result = await orderClient.rpc("create_checkout_order", args);
   assert(result.error, `${label} unexpectedly succeeded.`);
   assert(result.error.message.includes(expectedMessage), `${label} returned ${result.error.message}, expected ${expectedMessage}.`);
 }
@@ -58,6 +62,20 @@ const malformedArgs = (payload, subtotal = 0) => ({
   checkout_idempotency_key: randomUUID(),
   reviewed_subtotal: subtotal,
 });
+const directProbe = await client.rpc("create_checkout_order", malformedArgs(null));
+const directRpcDenied = Boolean(directProbe.error && (
+  directProbe.error.code === "42501" || /permission denied|not allowed to execute/i.test(directProbe.error.message)
+));
+const trustedOrderKey = process.env.LUMEA_SUPABASE_SECRET_KEY?.trim();
+orderClient = trustedOrderKey
+  ? createClient(env.VITE_SUPABASE_URL, trustedOrderKey, { auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false } })
+  : client;
+if (directRpcDenied) {
+  assert(directProbe.error, "Anonymous direct checkout RPC bypass should be denied.");
+  if (!trustedOrderKey) runInternalOrderChecks = false;
+} else {
+  assert(directProbe.error?.message.includes("CHECKOUT_PAYLOAD_INVALID"), `Unexpected direct RPC probe response: ${directProbe.error?.message ?? "success"}`);
+}
 await expectRpcError("Malformed payload", malformedArgs(null), "CHECKOUT_PAYLOAD_INVALID");
 await expectRpcError("Privileged status mass assignment", malformedArgs({
   locale: "vi",
@@ -239,4 +257,7 @@ await expectRpcError("Unknown Builder flower", rpcArgs({
   }],
 }), "CHECKOUT_BOUQUET_FLOWER_UNAVAILABLE");
 
-console.log(`Checkout runtime security check passed using ${fulfillment.type} (${fulfillment.name}): public config is safe; malformed/tampered totals and source identities rejected; anonymous Order/config read/write denied. No valid Order was created.`);
+const internalSummary = runInternalOrderChecks
+  ? "malformed/tampered totals and source identities rejected"
+  : "anonymous direct checkout RPC bypass denied (trusted internal money checks require LUMEA_SUPABASE_SECRET_KEY)";
+console.log(`Checkout runtime security check passed using ${fulfillment.type} (${fulfillment.name}): public config is safe; ${internalSummary}; anonymous Order/config read/write denied. No valid Order was created.`);

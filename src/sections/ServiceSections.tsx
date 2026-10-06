@@ -1,25 +1,48 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AssetImage } from "../components/AssetImage";
 import { ManagedImage } from "../components/ManagedImage";
 import { resolveHomepageTarget } from "../features/homepage/cta";
+import { isSameDayAvailable, loadCheckoutOptions } from "../features/checkout/options";
+import type { CheckoutOptions } from "../features/checkout/types";
+import { businessTimeInVietnam } from "../features/checkout/validation";
 import { mediaBySlot, type HomepageSection } from "../features/homepage/types";
 import { useI18n } from "../i18n";
 
 export function SameDay({ section }: { section: HomepageSection }) {
-  const { t, path } = useI18n();
+  const { t, path, locale } = useI18n();
   const copy = section.copy;
   const image = mediaBySlot(section, "same-day-main");
+  const [options, setOptions] = useState<CheckoutOptions | null>(null);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [businessTime, setBusinessTime] = useState(() => businessTimeInVietnam());
+  useEffect(() => {
+    let active = true;
+    setStatus("loading");
+    void loadCheckoutOptions(locale).then(
+      (value) => { if (active) { setOptions(value); setStatus("ready"); } },
+      () => { if (active) setStatus("error"); },
+    );
+    return () => { active = false; };
+  }, [locale]);
+  useEffect(() => {
+    const timer = window.setInterval(() => setBusinessTime(businessTimeInVietnam()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const available = status === "ready" && isSameDayAvailable(options, businessTime);
   return (
     <section className="same-day section-space section-shell" id="same-day" aria-labelledby="same-day-title">
       <div className="same-day-copy">
         <p className="eyebrow"><span aria-hidden="true">05</span>{copy.eyebrow}</p>
         <h2 id="same-day-title">{copy.titleOne}<br />{copy.titleTwo}</h2>
         <p>{copy.body}</p>
-        <div className="same-day-note">
+        <div className="same-day-note" data-state={available ? "available" : "unavailable"}>
           <span className="status-dot" aria-hidden="true" />
-          <span>{copy.note}</span>
+          <span>{status === "loading" ? t.home.sameDay.statusChecking : available ? copy.note : t.home.sameDay.unavailable}</span>
         </div>
-        <Link className="button button--dark" to={resolveHomepageTarget(section.primaryCtaTarget, path)}>{copy.primaryCtaLabel}</Link>
+        {available
+          ? <Link className="button button--dark" to={resolveHomepageTarget(section.primaryCtaTarget, path)}>{copy.primaryCtaLabel}</Link>
+          : <Link className="button button--dark" to={path("/#visit")}>{t.home.sameDay.contact}</Link>}
       </div>
       <figure className="same-day-image">
         {image && <ManagedImage src={image.url} alt={image.altText} loading="lazy" />}

@@ -18,6 +18,8 @@ import { AdminResetPasswordPage } from "./pages/AdminResetPasswordPage";
 import { AdminOrdersPage } from "./pages/AdminOrdersPage";
 import { AdminOrderDetailPage } from "./pages/AdminOrderDetailPage";
 import { AdminOperationsPage } from "./pages/AdminOperationsPage";
+import { AdminSiteSettingsPage } from "./pages/AdminSiteSettingsPage";
+import { AdminDiscoveryPage } from "./pages/AdminDiscoveryPage";
 
 export default function AdminRoutes() {
   const { path } = useI18n();
@@ -33,6 +35,8 @@ export default function AdminRoutes() {
           <Route path="orders" element={<AdminOrdersPage />} />
           <Route path="orders/:id" element={<AdminOrderDetailPage />} />
           <Route path="operations" element={<AdminOperationsPage />} />
+          <Route path="site-settings" element={<AdminSiteSettingsPage />} />
+          <Route path="discovery" element={<AdminDiscoveryPage />} />
           <Route path="products" element={<AdminProductsPage />} />
           <Route path="products/new" element={<AdminProductEditorPage />} />
           <Route path="products/:id" element={<AdminProductEditorPage />} />

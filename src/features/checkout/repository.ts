@@ -1,5 +1,5 @@
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { requirePublicSupabaseClient } from "../../lib/supabase";
-import type { Json } from "../../types/database.generated";
 import { getCheckoutIdempotencyKey } from "./attempt";
 import { isOrderReceipt } from "./receipt";
 import type { CheckoutOrderRequest, OrderReceipt } from "./types";
@@ -10,6 +10,11 @@ export type CheckoutOrderErrorCode =
   | "FULFILLMENT_UNAVAILABLE"
   | "IDEMPOTENCY_CONFLICT"
   | "INVALID_REQUEST"
+  | "VERIFICATION_REQUIRED"
+  | "VERIFICATION_FAILED"
+  | "VERIFICATION_EXPIRED"
+  | "VERIFICATION_UNAVAILABLE"
+  | "RATE_LIMITED"
   | "NETWORK";
 
 export class CheckoutOrderError extends Error {
@@ -59,6 +64,26 @@ function classifyError(message: string): CheckoutOrderErrorCode {
   return "NETWORK";
 }
 
+const gatewayCodes = new Set<CheckoutOrderErrorCode>([
+  "REVIEW_CHANGED",
+  "ITEM_UNAVAILABLE",
+  "FULFILLMENT_UNAVAILABLE",
+  "IDEMPOTENCY_CONFLICT",
+  "INVALID_REQUEST",
+  "VERIFICATION_REQUIRED",
+  "VERIFICATION_FAILED",
+  "VERIFICATION_EXPIRED",
+  "VERIFICATION_UNAVAILABLE",
+  "RATE_LIMITED",
+  "NETWORK",
+]);
+
+function gatewayCode(value: unknown): CheckoutOrderErrorCode {
+  return typeof value === "string" && gatewayCodes.has(value as CheckoutOrderErrorCode)
+    ? value as CheckoutOrderErrorCode
+    : "NETWORK";
+}
+
 function parseRpcRow(value: unknown): CheckoutRpcRow {
   if (!value || typeof value !== "object") throw new CheckoutOrderError("NETWORK", "CHECKOUT_RESPONSE_INVALID");
   const row = value as Partial<CheckoutRpcRow>;
@@ -78,21 +103,37 @@ function parseRpcRow(value: unknown): CheckoutRpcRow {
   return row as CheckoutRpcRow;
 }
 
-export async function createCheckoutOrder(request: CheckoutOrderRequest): Promise<OrderReceipt> {
+export async function createCheckoutOrder(request: CheckoutOrderRequest, turnstileToken: string): Promise<OrderReceipt> {
   const idempotencyKey = await getCheckoutIdempotencyKey(request);
   const client = requirePublicSupabaseClient();
-  let result: Awaited<ReturnType<typeof client.rpc<"create_checkout_order">>>;
+  let result: Awaited<ReturnType<typeof client.functions.invoke<{ data?: unknown; code?: unknown }>>>;
   try {
-    result = await client.rpc("create_checkout_order", {
-      checkout_payload: request.payload as unknown as Json,
-      checkout_idempotency_key: idempotencyKey,
-      reviewed_subtotal: request.reviewedSubtotal,
+    result = await client.functions.invoke("create-checkout-order", {
+      body: {
+        request: {
+          payload: request.payload,
+          idempotency_key: idempotencyKey,
+          reviewed_subtotal: request.reviewedSubtotal,
+        },
+        turnstile_token: turnstileToken,
+      },
     });
   } catch (error) {
     throw new CheckoutOrderError("NETWORK", error instanceof Error ? error.message : "CHECKOUT_NETWORK_ERROR");
   }
-  if (result.error) throw new CheckoutOrderError(classifyError(result.error.message), result.error.message);
-  const rows = Array.isArray(result.data) ? result.data : [];
+  if (result.error) {
+    let code: CheckoutOrderErrorCode = "NETWORK";
+    if (result.error instanceof FunctionsHttpError) {
+      try {
+        const payload = await result.error.context.clone().json() as { code?: unknown };
+        code = gatewayCode(payload.code);
+      } catch { /* A non-JSON gateway failure remains a generic network error. */ }
+    } else {
+      code = classifyError(result.error.message);
+    }
+    throw new CheckoutOrderError(code, "CHECKOUT_GATEWAY_REJECTED");
+  }
+  const rows = Array.isArray(result.data?.data) ? result.data.data : [];
   const row = parseRpcRow(rows[0]);
   const receipt: OrderReceipt = {
     version: 2,

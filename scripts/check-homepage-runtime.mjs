@@ -29,7 +29,7 @@ const dictionaries = await loadDictionaries();
 
 const { data: sections, error } = await client.from("homepage_sections").select(`
   id, section_key, enabled, display_order, primary_cta_target, secondary_cta_target,
-  visit_phone, visit_map_enabled, visit_map_query, visit_google_maps_url,
+  visit_map_enabled, visit_map_query, visit_google_maps_url,
   homepage_section_translations(locale, title_line_one, body),
   homepage_section_media(id, slot_key, active, sort_order, media_assets(storage_bucket, storage_path, access, status, media_asset_translations(locale, alt_text))),
   homepage_feature_items(id, item_key, active, media_assets(storage_bucket, storage_path, access, status, media_asset_translations(locale, alt_text)), homepage_feature_item_translations(locale, title)),
@@ -38,6 +38,13 @@ const { data: sections, error } = await client.from("homepage_sections").select(
 assert(!error, `Anonymous Homepage query failed (${error?.code ?? "unknown"}).`);
 assert(sections.length === 10, `Expected 10 enabled Homepage sections, received ${sections.length}.`);
 assert(new Set(sections.map((section) => section.section_key)).size === 10, "Homepage section keys are not unique.");
+
+const { data: siteProfiles, error: siteProfileError } = await client
+  .from("site_profile")
+  .select("business_name, phone, email, instagram_url, instagram_handle")
+  .eq("singleton", true);
+assert(!siteProfileError, `Anonymous Site Profile query failed (${siteProfileError?.code ?? "unknown"}).`);
+assert(siteProfiles.length === 1 && siteProfiles[0].business_name.trim().length >= 2, "Canonical Site Profile is missing or invalid.");
 
 for (const section of sections) {
   assert(section.homepage_section_translations.length === 2, `${section.section_key} is missing VI/KO copy.`);
@@ -56,7 +63,7 @@ assert(hero.homepage_section_media.filter((item) => item.active).length === 2, "
 const visit = sections.find((section) => section.section_key === "visit");
 assert(visit, "Visit section is missing.");
 for (const section of sections.filter((item) => item.section_key !== "visit")) {
-  assert(!section.visit_phone && !section.visit_map_enabled && !section.visit_map_query && !section.visit_google_maps_url, `${section.section_key} leaked Visit-only configuration.`);
+  assert(!section.visit_map_enabled && !section.visit_map_query && !section.visit_google_maps_url, `${section.section_key} leaked Visit-only configuration.`);
 }
 if (visit.visit_map_enabled) {
   assert(typeof visit.visit_map_query === "string" && visit.visit_map_query.trim().length >= 3, "Enabled Visit map is missing a location query.");
@@ -80,4 +87,4 @@ for (const item of best.homepage_product_curations) {
 
 const writeProbe = await client.from("homepage_sections").update({ display_order: 999 }).eq("id", hero.id).select("id");
 assert(Boolean(writeProbe.error), "Anonymous Homepage write unexpectedly succeeded.");
-console.log("Homepage runtime check passed: 10 sections, VI/KO copy, safe Visit location config, 28 managed images, six curated Products, and anonymous write denial.");
+console.log("Homepage runtime check passed: canonical Site Profile, 10 sections, VI/KO copy, safe Visit location config, 28 managed images, six curated Products, and anonymous write denial.");

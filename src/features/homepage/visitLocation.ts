@@ -1,7 +1,6 @@
 import type { HomepageSectionCopy, HomepageVisitSettings } from "./types";
 
 export interface VisitSettingsErrors {
-  phone?: string;
   mapQuery?: string;
   googleMapsUrl?: string;
   localizedCopy?: string;
@@ -38,11 +37,9 @@ export function buildGoogleMapsEmbedUrl(query: string) {
 
 export function validateVisitSettings(settings: HomepageVisitSettings, vi?: HomepageSectionCopy, ko?: HomepageSectionCopy): VisitSettingsErrors {
   const errors: VisitSettingsErrors = {};
-  const phone = settings.phone.trim();
   const mapQuery = settings.mapQuery.trim();
   const mapsUrl = settings.googleMapsUrl.trim();
 
-  if (phone && !normalizePhoneHref(phone)) errors.phone = "Nhập số điện thoại hợp lệ, từ 7 đến 15 chữ số.";
   if (mapQuery && (mapQuery.length < 3 || mapQuery.length > 300)) errors.mapQuery = "Vị trí bản đồ cần từ 3 đến 300 ký tự.";
   if (mapsUrl && !isSafeGoogleMapsUrl(mapsUrl)) errors.googleMapsUrl = "Dùng liên kết HTTPS từ Google Maps.";
   if (settings.mapEnabled) {

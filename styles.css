@@ -978,6 +978,31 @@
   accent-color: var(--burgundy);
 }
 
+.checkout-verification {
+  display: grid;
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.44);
+  gap: 0.45rem;
+}
+
+.checkout-verification > strong {
+  color: var(--charcoal);
+  font-size: 0.75rem;
+}
+
+.checkout-verification > p {
+  max-width: 42rem;
+  color: var(--ink-soft);
+  font-size: 0.65rem;
+  line-height: 1.55;
+}
+
+.checkout-verification .checkout-verification__error {
+  color: #70333f;
+}
+
 .checkout-submit {
   width: 100%;
 }

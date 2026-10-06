@@ -1,14 +1,13 @@
 import { Link } from "react-router-dom";
 import { ManagedImage } from "../components/ManagedImage";
 import { ProductCard } from "../components/ProductCard";
-import { budgetRanges, occasions } from "../data/content";
 import type { CatalogProductRecord } from "../features/catalog/data/catalogRepository";
+import type { DiscoveryBudgetRange, DiscoveryOccasion } from "../features/discovery/types";
 import { mediaBySlot, type HomepageSection } from "../features/homepage/types";
-import { budgetParamByRangeId } from "../utils/catalogDiscovery";
 import { useI18n } from "../i18n";
 
-export function Occasions({ section }: { section: HomepageSection }) {
-  const { t, path } = useI18n();
+export function Occasions({ section, occasions }: { section: HomepageSection; occasions: DiscoveryOccasion[] }) {
+  const { path } = useI18n();
   const copy = section.copy;
   return (
     <section className="occasions section-shell section-space" id="occasions" aria-labelledby="occasion-title">
@@ -21,12 +20,12 @@ export function Occasions({ section }: { section: HomepageSection }) {
       </div>
       <div className="occasion-grid">
         {occasions.map((occasion, index) => {
-          const media = mediaBySlot(section, `occasion-${occasion.id}`);
+          const media = mediaBySlot(section, `occasion-${occasion.stableCode}`);
           return (
-          <Link className={`occasion-tile occasion-tile--${occasion.id}`} to={path(`/flowers?occasion=${occasion.id}`)} key={occasion.id}>
-            {media && <ManagedImage className={occasion.tone === "quiet" ? "image-tone--quiet" : undefined} src={media.url} alt={media.altText} loading="lazy" />}
+          <Link className={`occasion-tile occasion-tile--${occasion.stableCode}`} to={path(`/flowers?occasion=${occasion.stableCode}`)} key={occasion.id}>
+            {media && <ManagedImage className={occasion.stableCode === "sympathy" ? "image-tone--quiet" : undefined} src={media.url} alt={media.altText} loading="lazy" />}
             <span className="occasion-number">{String(index + 1).padStart(2, "0")}</span>
-            <span className="occasion-name">{t.occasions[occasion.id].name}</span>
+            <span className="occasion-name">{occasion.name}</span>
           </Link>
         );})}
       </div>
@@ -60,7 +59,7 @@ export function BestSellers({ section, products }: { section: HomepageSection; p
   );
 }
 
-export function Budget({ section }: { section: HomepageSection }) {
+export function Budget({ section, budgetRanges }: { section: HomepageSection; budgetRanges: DiscoveryBudgetRange[] }) {
   const { t, path } = useI18n();
   const copy = section.copy;
   return (
@@ -73,15 +72,15 @@ export function Budget({ section }: { section: HomepageSection }) {
         </div>
         <nav className="budget-selector" aria-label={t.home.budget.aria}>
           {budgetRanges.map((range) => {
-            const media = mediaBySlot(section, `budget-${range.id}`);
+            const media = mediaBySlot(section, `budget-${range.stableCode}`);
             return (
-            <Link className={`budget-option budget-option--${range.id}`} to={path(`/flowers?budget=${budgetParamByRangeId[range.id]}`)} key={range.id}>
+            <Link className={`budget-option budget-option--${range.stableCode}`} to={path(`/flowers?budget=${range.stableCode}`)} key={range.id}>
               <figure className="budget-option__image">
                 {media && <ManagedImage src={media.url} alt={media.altText} loading="lazy" />}
               </figure>
-              <span className="budget-option__scale">{t.budgets[range.id].scale}</span>
-              <strong>{t.budgets[range.id].label}</strong>
-              <span className="budget-option__note">{t.budgets[range.id].note}</span>
+              <span className="budget-option__scale">{range.scaleLabel}</span>
+              <strong>{range.label}</strong>
+              <span className="budget-option__note">{range.description}</span>
               <span className="budget-option__arrow" aria-hidden="true">↗</span>
             </Link>
           );})}

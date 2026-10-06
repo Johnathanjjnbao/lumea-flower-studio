@@ -13,11 +13,6 @@ export function HomepageVisitEditor({ section, onChange }: { section: AdminHomep
       <span>Hiển thị Google Maps<small>Tắt để chỉ hiển thị địa chỉ và giờ mở cửa.</small></span>
     </label>
     <div className="admin-field-grid">
-      <label>
-        Số điện thoại
-        <input type="tel" value={section.visit.phone} aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? "visit-phone-error" : undefined} onChange={(event) => update({ phone: event.target.value })} />
-        {errors.phone && <small className="admin-field-error" id="visit-phone-error">{errors.phone}</small>}
-      </label>
       <label className="admin-field-span">
         Vị trí dùng cho bản đồ
         <input value={section.visit.mapQuery} aria-invalid={Boolean(errors.mapQuery)} aria-describedby="visit-map-query-help" placeholder="Tên studio hoặc địa chỉ đầy đủ" onChange={(event) => update({ mapQuery: event.target.value })} />

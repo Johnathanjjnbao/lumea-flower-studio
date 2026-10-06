@@ -413,3 +413,38 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+[functions.create-checkout-order]
+verify_jwt = false
+
+[remotes.production]
+project_id = "nihhynwvltttadlfatdm"
+
+[remotes.production.auth]
+enable_signup = false
+site_url = "https://johnathanjjnbao.github.io/lumea-flower-studio/"
+additional_redirect_urls = [
+  "https://johnathanjjnbao.github.io/lumea-flower-studio/admin/reset-password",
+  "https://johnathanjjnbao.github.io/lumea-flower-studio/ko/admin/reset-password",
+  "http://localhost:5173/lumea-flower-studio/admin/reset-password",
+  "http://localhost:5173/lumea-flower-studio/ko/admin/reset-password",
+  "http://127.0.0.1:5173/lumea-flower-studio/admin/reset-password",
+  "http://127.0.0.1:5173/lumea-flower-studio/ko/admin/reset-password",
+]
+
+[remotes.production.auth.email]
+enable_confirmations = true
+max_frequency = "1m0s"
+otp_length = 8
+
+[remotes.production.auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[remotes.production.db.pooler]
+default_pool_size = 15
+max_client_conn = 200
+
+[remotes.production.storage.analytics]
+enabled = true
+max_namespaces = 10

@@ -1,6 +1,6 @@
 # Luméa Supabase Setup
 
-This guide is the operational reference for the Supabase foundation through Step 13. Product/Media operations are documented in `docs/ADMIN_PRODUCT_MEDIA.md`; Builder data operations are documented in `docs/BUILDER_DATA_ADMIN.md`. Step 12 adds guest Checkout and secure Order creation; Step 13 adds protected Admin Order reads and guarded Order-status transitions.
+This guide is the operational reference for the Supabase foundation through Step 15. Product/Media operations are documented in `docs/ADMIN_PRODUCT_MEDIA.md`; Builder data operations are documented in `docs/BUILDER_DATA_ADMIN.md`. Step 12 adds guest Checkout and secure Order creation, Step 13 adds protected Admin Order operations, Step 14 adds delivery/payment/VietQR, and Step 15 adds canonical business settings plus the Turnstile-protected Checkout gateway.
 
 ## Project identity
 
@@ -25,11 +25,12 @@ Copy `.env.example` to `.env.local` and set:
 ```dotenv
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_TURNSTILE_SITE_KEY=1x00000000000000000000AA
 ```
 
-Only a browser-safe `sb_publishable_...` key may use the `VITE_` prefix. Do not add a secret key, legacy `service_role` key, database password, or CLI access token to frontend environment files.
+Only browser-safe values may use the `VITE_` prefix. `VITE_TURNSTILE_SITE_KEY` is a public widget key; the tracked value is Cloudflare's official always-pass test site key for local/test builds. Production must replace it through the GitHub Repository Variable of the same name. Do not add a Turnstile secret, Supabase secret key, legacy `service_role` key, database password, or CLI access token to frontend environment files.
 
-`.env.local`, `.env`, and `.env.*` are ignored by Git. `.env.example` is intentionally tracked and contains names only.
+`.env.local`, `.env`, and `.env.*` are ignored by Git. `.env.example` is intentionally tracked and contains only empty placeholders plus Cloudflare's public test site key.
 
 The live storefront, Builder, and Checkout require both public values and fail with localized retry states when Supabase access is unavailable; none silently falls back to local production data. Supplying only one value, an invalid URL, or a non-publishable key produces a clear configuration error when the Supabase client is requested.
 
@@ -83,18 +84,20 @@ The implemented foundation includes Product, Media, Bouquet Builder, and guest O
 - Orders, immutable Order-item snapshots, recipient/address/delivery records, Payment metadata, and initial Order status events.
 - A single `create_checkout_order(jsonb, uuid, bigint)` transaction boundary for guest Checkout.
 - A bounded `admin_list_orders(...)` query and `admin_transition_order_status(...)` command for active ADMIN profiles.
+- Canonical Site Profile, budget discovery ranges, delivery zones/areas/windows, and payment settings used by both Admin and Storefront.
+- A private HMAC-keyed Checkout throttle and the public `create-checkout-order` Edge Function gateway.
 
 Product price is derived from active variants; there is no duplicate mutable Product base-price column. Visibility and availability remain separate. A `PUBLISHED + UNAVAILABLE` Product may be visible while not purchasable.
 
 Publishing a Product requires Vietnamese copy, at least one active priced variant for Product-backed bouquet types, and one active public primary image. The database permits only one active primary image per Product.
 
-Cart and Builder draft persistence remain browser-local and store stable identities rather than trusted prices. Checkout sends only those identities, quantities, and customer-entered request fields. The database function reloads current Product/Builder records, validates publication/availability/compatibility, computes integer-VND item totals, and creates the complete Order aggregate atomically. Delivery fee and final total remain `null` until the owner-approved Step 14 delivery rule exists.
+Cart and Builder draft persistence remain browser-local and store stable identities rather than trusted prices. Checkout sends only those identities, quantities, and customer-entered request fields. The database function reloads current Product/Builder records, validates publication/availability/compatibility, computes integer-VND item totals, applies the current delivery/payment rules, and creates the complete Order aggregate atomically. Order items, delivery fee, final total, fulfillment data, and applicable payment settings are stored as historical snapshots.
 
-All Order tables have RLS enabled. `anon` has no direct Order-table access and may execute only the narrowly scoped guest Checkout function; the isolated public storefront client does not reuse an Admin session. Authenticated reads pass RLS only for an active `ADMIN`, and the `orders` column grant excludes checkout idempotency/request hashes. No browser role receives direct Order mutation rights.
+All Order tables have RLS enabled. `anon` has no direct Order-table access, and `public`, `anon`, and `authenticated` cannot execute the internal `create_checkout_order` function. Only the Edge Function's server-side service role may reach that function. The isolated public storefront client does not reuse an Admin session. Authenticated reads pass RLS only for an active `ADMIN`, and the `orders` column grant excludes checkout idempotency/request hashes. No browser role receives direct Order mutation rights.
 
 `admin_list_orders(...)` validates active ADMIN membership, caps each page at 50 rows, and searches only the documented order/buyer/recipient fields. `admin_transition_order_status(...)` accepts only typed status values, locks the authoritative Order row, compares `expected_status`, enforces the V1 transition matrix, updates the Order, and creates one actor-linked status event in the same transaction. Both functions use an empty `search_path`; neither is executable by `anon`. Payment and Delivery mutation remain out of scope for Step 13.
 
-The Checkout function uses an empty `search_path`, exact JSON-field allowlists, bounded quantities and text, fixed server-side initial statuses, a hashed idempotency key, and transaction-scoped serialization for concurrent retries. Its result is a minimal receipt; there is no anonymous Order lookup, update, or delete endpoint.
+The internal Checkout function uses an empty `search_path`, exact JSON-field allowlists, bounded quantities and text, fixed server-side initial statuses, a hashed idempotency key, and transaction-scoped serialization for concurrent retries. Its result is a minimal receipt; there is no anonymous Order lookup, update, or delete endpoint. The Edge Function verifies Turnstile `success`, exact hostname, and action before applying the server-side throttle and calling this unchanged money boundary.
 
 ## Auth and roles
 
@@ -198,6 +201,39 @@ npm run check:builder-runtime
 
 It imports eight flowers, three wrapping options, five colour variants, their compatibility rows, VI/KO content, and the approved existing photography. Operational details are in `docs/BUILDER_DATA_ADMIN.md`.
 
+## Checkout anti-abuse configuration
+
+The browser submits guest Checkout through `create-checkout-order`. That Edge Function verifies Cloudflare Turnstile, derives a short-lived throttle identifier from the platform-observed IP using HMAC-SHA-256, consumes the race-safe database throttle, then calls the internal order RPC with Supabase's server-provided service role. It never accepts a client-supplied IP and never logs the Turnstile token, secret, raw IP, or service-role credential.
+
+Production requires these owner-managed values:
+
+| Location | Name | Purpose |
+|---|---|---|
+| Cloudflare Turnstile widget | hostname `johnathanjjnbao.github.io` | The allowlist is a hostname, not `/lumea-flower-studio/`; do not add localhost to the production widget. |
+| GitHub Repository Variable | `VITE_TURNSTILE_SITE_KEY` | Public production widget key used at frontend build time. |
+| Supabase Edge Function Secret | `TURNSTILE_SECRET_KEY` | Production Siteverify secret; never use a `VITE_` name. |
+| Supabase Edge Function Secret | `CHECKOUT_THROTTLE_HMAC_KEY` | At least 32 characters of cryptographically random secret material. |
+
+The fixed widget and server action is `checkout_submit`. Production accepts only origin `https://johnathanjjnbao.github.io` and Siteverify hostname `johnathanjjnbao.github.io`. Localhost origins are enabled only when the Edge Function runs with `TURNSTILE_TEST_MODE=true`; local/test must use Cloudflare's official test site-key/secret pair.
+
+To configure Edge secrets without placing them in shell history, copy `supabase/.env.example` to ignored `supabase/.env.local`, replace the HMAC placeholder, and then run:
+
+```powershell
+npx supabase secrets set --env-file supabase/.env.local --project-ref nihhynwvltttadlfatdm
+```
+
+Do not commit `supabase/.env.local`, paste its contents into chat, or expose either secret in browser code. Remove `TURNSTILE_TEST_MODE` or set it to `false` in production.
+
+Use one coordinated release window because the security migration revokes the old browser RPC path. The safe order is:
+
+1. Confirm the real Cloudflare widget, GitHub variable, and both Supabase secrets.
+2. Deploy `create-checkout-order` with JWT verification disabled as declared in `supabase/config.toml`.
+3. Apply the three reviewed Step 15 migrations, including the direct-RPC revoke.
+4. Immediately deploy the matching frontend revision and monitor GitHub Pages.
+5. Run anonymous/authenticated bypass probes, a real guest Checkout smoke test, and Admin → refresh → Storefront propagation checks.
+
+Keep Checkout fail-closed during an incident. Do not restore the anonymous internal-RPC grant as a shortcut. Fix or roll forward the Edge Function/frontend, and retain the Cart/form state so customers can retry after service recovery.
+
 ## Verification
 
 Run the focused remote smoke check without printing credentials:
@@ -218,6 +254,7 @@ npm run check:builder-runtime
 npm run check:homepage-runtime
 npm run check:checkout
 npm run check:checkout-runtime
+npm run check:step15
 npm run typecheck
 npm run build
 npx supabase db lint --linked --level warning

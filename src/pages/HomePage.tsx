@@ -34,14 +34,14 @@ export function HomePage() {
     return <PageFrame pageRef={pageRef}><section className="home-data-state"><div className="section-shell"><p className="eyebrow">LUMÉA · HOME</p><h1>{t.catalog.errorTitle}</h1><p>{t.catalog.errorText}</p><button className="button button--solid" type="button" onClick={homepage.retry}>{t.catalog.retry}</button></div></section></PageFrame>;
   }
 
-  const { sections, featuredProducts } = homepage.data;
+  const { sections, featuredProducts, occasions, budgetRanges } = homepage.data;
 
   return (
     <PageFrame pageRef={pageRef}>
       {sections.hero && <Hero section={sections.hero} />}
-      {sections.occasions && <Occasions section={sections.occasions} />}
+      {sections.occasions && <Occasions section={sections.occasions} occasions={occasions} />}
       {sections.best_sellers && <BestSellers section={sections.best_sellers} products={featuredProducts} />}
-      {sections.budget && <Budget section={sections.budget} />}
+      {sections.budget && <Budget section={sections.budget} budgetRanges={budgetRanges} />}
       {sections.same_day && <SameDay section={sections.same_day} />}
       {sections.florist_choice && <FloristChoice section={sections.florist_choice} />}
       {sections.create_bouquet && <CustomBouquet section={sections.create_bouquet} />}

@@ -2,14 +2,8 @@ import type { HomeChapterId, NavigationItem } from "../types/content";
 
 export const siteConfig = {
   brandName: "LUMÉA",
-  brandDisplayName: "Luméa",
   monogram: "L",
-  phoneDisplay: "0900 000 000",
-  phoneHref: "tel:0900000000",
-  email: "hello@lumea.flowers",
-  instagramHandle: "@lumeaflowers",
   currency: "VND",
-  year: 2026,
   navigation: [
     { key: "flowers", to: "/flowers" },
     { key: "occasions", to: "/#occasions" },

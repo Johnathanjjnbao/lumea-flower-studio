@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requirePublicSupabaseClient } from "../../lib/supabase";
 import type { Locale } from "../../types/content";
 import type { CheckoutOptions } from "./types";
+import { businessTimeInVietnam } from "./validation";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -77,4 +78,12 @@ export function checkoutPreviewFee(options: CheckoutOptions | null, fulfillment:
   if (!options) return null;
   if (fulfillment === "PICKUP") return options.pickupEnabled ? 0 : null;
   return options.zones.find((zone) => zone.areas.some((area) => area.id === areaId))?.feeAmount ?? null;
+}
+
+export function isSameDayAvailable(options: CheckoutOptions | null, currentBusinessTime = businessTimeInVietnam()) {
+  if (!options?.deliveryEnabled || !options.sameDayEnabled || !options.sameDayCutoff) return false;
+  if (currentBusinessTime >= options.sameDayCutoff) return false;
+  const hasEligibleArea = options.zones.some((zone) => zone.sameDayEligible && zone.areas.length > 0);
+  const hasEligibleWindow = options.windows.some((window) => window.sameDayEligible);
+  return hasEligibleArea && hasEligibleWindow;
 }

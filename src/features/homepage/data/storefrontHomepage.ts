@@ -1,5 +1,6 @@
 import type { Locale } from "../../../types/content";
 import { loadPublishedCatalog } from "../../catalog/data/storefrontCatalog";
+import { loadDiscoveryOptions } from "../../discovery/storefrontDiscovery";
 import { homepageSectionKeys, type HomepageContent } from "../types";
 import { createSupabaseHomepageRepository } from "./supabaseHomepageRepository";
 
@@ -14,7 +15,8 @@ export function loadHomepageContent(locale: Locale, force = false) {
   const promise = Promise.all([
     repository.getHomepageSections(locale),
     loadPublishedCatalog(locale, force),
-  ]).then(([sectionList, products]) => {
+    loadDiscoveryOptions(locale, force),
+  ]).then(([sectionList, products, discovery]) => {
     const sections = Object.fromEntries(homepageSectionKeys.map((key) => [key, null])) as HomepageContent["sections"];
     sectionList.forEach((section) => { sections[section.key] = section; });
     const curatedIds = sections.best_sellers?.curatedProductIds ?? [];
@@ -22,6 +24,8 @@ export function loadHomepageContent(locale: Locale, force = false) {
     return {
       sections,
       featuredProducts: curatedIds.map((id) => productById.get(id)).filter((product): product is NonNullable<typeof product> => Boolean(product)),
+      occasions: discovery.occasions,
+      budgetRanges: discovery.budgetRanges,
     };
   });
   cache.set(locale, { expiresAt: Date.now() + CACHE_TTL_MS, promise });

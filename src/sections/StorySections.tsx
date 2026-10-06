@@ -1,8 +1,7 @@
 import { ManagedImage } from "../components/ManagedImage";
-import { siteConfig } from "../config/siteConfig";
-import { resolveHomepageTarget } from "../features/homepage/cta";
 import type { HomepageSection } from "../features/homepage/types";
 import { buildGoogleMapsEmbedUrl, isSafeGoogleMapsUrl, normalizePhoneHref } from "../features/homepage/visitLocation";
+import { useSiteProfile } from "../features/siteSettings/useSiteProfile";
 import { useI18n } from "../i18n";
 
 const galleryClasses = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
@@ -19,25 +18,26 @@ export function WhyLumea({ section }: { section: HomepageSection }) {
 }
 
 export function Gallery({ section }: { section: HomepageSection }) {
-  const { path } = useI18n();
+  const profile = useSiteProfile();
   const copy = section.copy;
   return <section className="gallery section-space section-shell" id="gallery" aria-labelledby="gallery-title">
-    <div className="section-heading section-heading--row gallery-heading"><div><p className="eyebrow"><span aria-hidden="true">09</span>{copy.eyebrow}</p><span className="botanical-hairline" aria-hidden="true" /><h2 id="gallery-title">{copy.titleOne}<br /><em>{copy.titleTwo}</em></h2></div><a className="text-link" href={resolveHomepageTarget(section.primaryCtaTarget, path)}>{copy.primaryCtaLabel} {siteConfig.instagramHandle}</a></div>
+    <div className="section-heading section-heading--row gallery-heading"><div><p className="eyebrow"><span aria-hidden="true">09</span>{copy.eyebrow}</p><span className="botanical-hairline" aria-hidden="true" /><h2 id="gallery-title">{copy.titleOne}<br /><em>{copy.titleTwo}</em></h2></div>{profile?.instagramUrl && <a className="text-link" href={profile.instagramUrl} target="_blank" rel="noreferrer">{copy.primaryCtaLabel} {profile.instagramHandle}</a>}</div>
     <div className="gallery-grid">{section.media.map((media, index) => <figure className={`gallery-item gallery-item--${galleryClasses[index] ?? "ten"}`} key={media.id}><ManagedImage src={media.url} alt={media.altText} loading="lazy" />{media.caption && <figcaption>{media.caption}</figcaption>}</figure>)}</div>
   </section>;
 }
 
 export function Visit({ section }: { section: HomepageSection }) {
   const { t } = useI18n();
+  const profile = useSiteProfile();
   const copy = section.copy;
-  const phoneHref = normalizePhoneHref(section.visit.phone);
+  const phoneHref = normalizePhoneHref(profile?.phone ?? "");
   const mapEmbedUrl = section.visit.mapEnabled ? buildGoogleMapsEmbedUrl(section.visit.mapQuery) : null;
   const directionsUrl = isSafeGoogleMapsUrl(section.visit.googleMapsUrl) ? section.visit.googleMapsUrl.trim() : null;
   const studioName = copy.secondaryHeading || copy.titleOne;
   return <section className="visit section-space" id="visit" aria-labelledby="visit-title"><div className="section-shell visit-layout">
     <div className="visit-copy"><p className="eyebrow eyebrow--light"><span aria-hidden="true">10</span>{copy.eyebrow}</p><h2 id="visit-title">{copy.titleOne}</h2><p className="visit-lead">{copy.body}</p><dl className="visit-details">
       <div><dt>{copy.detailOneLabel}</dt><dd>{copy.detailOneValue}</dd></div><div><dt>{copy.detailTwoLabel}</dt><dd>{copy.detailTwoValue}</dd></div>
-      {phoneHref && <div><dt>{t.home.visit.phone}</dt><dd><a href={phoneHref}>{section.visit.phone}</a></dd></div>}
+      {phoneHref && <div><dt>{t.home.visit.phone}</dt><dd><a href={phoneHref}>{profile?.phone}</a></dd></div>}
       {directionsUrl && copy.primaryCtaLabel && <div><dt>{t.home.visit.mapAria}</dt><dd><a href={directionsUrl} target="_blank" rel="noreferrer">{copy.primaryCtaLabel}</a></dd></div>}
     </dl></div>
     <div className={`map-placeholder${mapEmbedUrl ? " map-placeholder--live" : ""}`} aria-label={t.home.visit.mapAria}>

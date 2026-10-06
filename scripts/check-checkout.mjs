@@ -4,10 +4,11 @@ import { createServer } from "vite";
 const vite = await createServer({ appType: "custom", logLevel: "silent", server: { middlewareMode: true } });
 
 try {
-  const [{ validateCheckout, validateCheckoutField, normalizeCheckoutForm, businessDateInVietnam }, domain, receiptModule] = await Promise.all([
+  const [{ validateCheckout, validateCheckoutField, normalizeCheckoutForm, businessDateInVietnam }, domain, receiptModule, optionsModule] = await Promise.all([
     vite.ssrLoadModule("/src/features/checkout/validation.ts"),
     vite.ssrLoadModule("/src/features/checkout/domain.ts"),
     vite.ssrLoadModule("/src/features/checkout/receipt.ts"),
+    vite.ssrLoadModule("/src/features/checkout/options.ts"),
   ]);
 
   const readyLine = {
@@ -152,7 +153,24 @@ try {
   assert(qrUrl.includes("addInfo=LUMEA+LUM0123456789ABCDEF"));
   assert(!qrUrl.includes("paymentInstruction"), "QR URL must contain only the minimum payment fields");
 
-  console.log("Checkout validation, mapping, mixed Cart, stale/unavailable, subtotal, and receipt checks passed.");
+  const sameDayOptions = {
+    deliveryEnabled: true,
+    pickupEnabled: false,
+    sameDayEnabled: true,
+    sameDayCutoff: "14:00",
+    deliveryHelp: null,
+    pickup: null,
+    zones: [{ id: "zone", code: "zone", name: "Zone", help: null, feeAmount: 30_000, sameDayEligible: true, areas: [{ id: "area", code: "area", name: "Area" }] }],
+    windows: [{ id: "window", code: "window", label: "09:00–12:00", help: null, startTime: "09:00", endTime: "12:00", sameDayEligible: true }],
+    paymentMethods: { bankTransfer: true, cash: false, cashDelivery: false, cashPickup: false },
+  };
+  assert.equal(optionsModule.isSameDayAvailable(sameDayOptions, "13:59"), true, "same-day should be available only before cutoff with eligible configuration");
+  assert.equal(optionsModule.isSameDayAvailable(sameDayOptions, "14:00"), false, "same-day should close at cutoff");
+  assert.equal(optionsModule.isSameDayAvailable({ ...sameDayOptions, deliveryEnabled: false }, "10:00"), false, "disabled delivery must prevent same-day advertising");
+  assert.equal(optionsModule.isSameDayAvailable({ ...sameDayOptions, sameDayEnabled: false }, "10:00"), false, "disabled same-day must prevent advertising");
+  assert.equal(optionsModule.isSameDayAvailable({ ...sameDayOptions, windows: [] }, "10:00"), false, "missing eligible windows must fail closed");
+
+  console.log("Checkout validation, mapping, mixed Cart, stale/unavailable, subtotal, receipt, and same-day consistency checks passed.");
 } finally {
   await vite.close();
 }

@@ -8,9 +8,20 @@ import type {
   AdminPaymentSettings,
 } from "./types";
 
+export class AdminOperationsError extends Error {
+  constructor(public readonly code: "STALE" | "INVARIANT" | "FAILED", message: string) {
+    super(message);
+    this.name = "AdminOperationsError";
+  }
+}
+
 function fail(message: string, error: unknown): never {
   const detail = error && typeof error === "object" && "message" in error ? String(error.message) : "";
-  throw new Error([message, detail].filter(Boolean).join(" · "));
+  if (detail.includes("ADMIN_OPERATIONS_STALE")) throw new AdminOperationsError("STALE", message);
+  if (detail.includes("ADMIN_DELIVERY_CONFIGURATION_INCOMPLETE") || detail.includes("ADMIN_SAME_DAY_CONFIGURATION_INCOMPLETE")) {
+    throw new AdminOperationsError("INVARIANT", message);
+  }
+  throw new AdminOperationsError("FAILED", message);
 }
 
 function nullable(value: string) {
@@ -37,6 +48,7 @@ export class AdminOperationsRepository {
     const payment = paymentResult.data;
     return {
       delivery: {
+        updatedAt: delivery.updated_at,
         deliveryEnabled: delivery.delivery_enabled,
         pickupEnabled: delivery.pickup_enabled,
         sameDayEnabled: delivery.same_day_enabled,
@@ -47,7 +59,7 @@ export class AdminOperationsRepository {
         deliveryHelpVi: delivery.delivery_help_vi ?? "", deliveryHelpKo: delivery.delivery_help_ko ?? "",
       },
       zones: (zonesResult.data ?? []).map((zone: any) => ({
-        id: zone.id, stableCode: zone.stable_code, feeAmount: zone.fee_amount, active: zone.active,
+        id: zone.id, updatedAt: zone.updated_at, stableCode: zone.stable_code, feeAmount: zone.fee_amount, active: zone.active,
         sameDayEligible: zone.same_day_eligible, sortOrder: zone.sort_order,
         nameVi: zone.delivery_zone_translations.find((item: any) => item.locale === "vi")?.name ?? "",
         nameKo: zone.delivery_zone_translations.find((item: any) => item.locale === "ko")?.name ?? "",
@@ -59,12 +71,13 @@ export class AdminOperationsRepository {
         })),
       })),
       windows: (windowsResult.data ?? []).map((window: any) => ({
-        id: window.id, stableCode: window.stable_code, labelVi: window.label_vi, labelKo: window.label_ko,
+        id: window.id, updatedAt: window.updated_at, stableCode: window.stable_code, labelVi: window.label_vi, labelKo: window.label_ko,
         helpVi: window.help_vi ?? "", helpKo: window.help_ko ?? "", startTime: window.start_time.slice(0, 5),
         endTime: window.end_time.slice(0, 5), active: window.active,
         sameDayEligible: window.same_day_eligible, sortOrder: window.sort_order,
       })),
       payment: {
+        updatedAt: payment.updated_at,
         bankTransferEnabled: payment.bank_transfer_enabled, cashEnabled: payment.cash_enabled,
         cashDeliveryEnabled: payment.cash_delivery_enabled, cashPickupEnabled: payment.cash_pickup_enabled,
         bankId: payment.bank_id ?? "", bankName: payment.bank_name ?? "", accountNumber: payment.account_number ?? "",
@@ -78,35 +91,50 @@ export class AdminOperationsRepository {
   }
 
   async saveDelivery(settings: AdminDeliverySettings) {
-    const { error } = await this.client.from("delivery_settings").update({
-      delivery_enabled: settings.deliveryEnabled, pickup_enabled: settings.pickupEnabled,
-      same_day_enabled: settings.sameDayEnabled, same_day_cutoff: nullable(settings.sameDayCutoff),
-      pickup_name_vi: nullable(settings.pickupNameVi), pickup_name_ko: nullable(settings.pickupNameKo),
-      pickup_address_vi: nullable(settings.pickupAddressVi), pickup_address_ko: nullable(settings.pickupAddressKo),
-      pickup_hours_vi: nullable(settings.pickupHoursVi), pickup_hours_ko: nullable(settings.pickupHoursKo),
-      delivery_help_vi: nullable(settings.deliveryHelpVi), delivery_help_ko: nullable(settings.deliveryHelpKo),
-    }).eq("singleton", true).select("singleton").single();
+    const { error } = await this.client.rpc("admin_save_delivery_settings", {
+      expected_updated_at: settings.updatedAt,
+      next_delivery_enabled: settings.deliveryEnabled,
+      next_pickup_enabled: settings.pickupEnabled,
+      next_same_day_enabled: settings.sameDayEnabled,
+      next_same_day_cutoff: nullable(settings.sameDayCutoff),
+      next_pickup_name_vi: settings.pickupNameVi,
+      next_pickup_name_ko: settings.pickupNameKo,
+      next_pickup_address_vi: settings.pickupAddressVi,
+      next_pickup_address_ko: settings.pickupAddressKo,
+      next_pickup_hours_vi: settings.pickupHoursVi,
+      next_pickup_hours_ko: settings.pickupHoursKo,
+      next_delivery_help_vi: settings.deliveryHelpVi,
+      next_delivery_help_ko: settings.deliveryHelpKo,
+    });
     if (error) fail("Không thể lưu cấu hình giao nhận", error);
   }
 
   async savePayment(settings: AdminPaymentSettings) {
-    const { error } = await this.client.from("payment_settings").update({
-      bank_transfer_enabled: settings.bankTransferEnabled, cash_enabled: settings.cashEnabled,
-      cash_delivery_enabled: settings.cashEnabled && settings.cashDeliveryEnabled,
-      cash_pickup_enabled: settings.cashEnabled && settings.cashPickupEnabled,
-      bank_id: nullable(settings.bankId), bank_name: nullable(settings.bankName),
-      account_number: nullable(settings.accountNumber), account_holder: nullable(settings.accountHolder),
-      vietqr_template: nullable(settings.vietqrTemplate), transfer_reference_template: nullable(settings.transferReferenceTemplate),
-      payment_deadline_hours: settings.paymentDeadlineHours,
-      bank_instructions_vi: nullable(settings.bankInstructionsVi), bank_instructions_ko: nullable(settings.bankInstructionsKo),
-      cash_instructions_vi: nullable(settings.cashInstructionsVi), cash_instructions_ko: nullable(settings.cashInstructionsKo),
-    }).eq("singleton", true).select("singleton").single();
+    const { error } = await this.client.rpc("admin_save_payment_settings", {
+      expected_updated_at: settings.updatedAt,
+      next_bank_transfer_enabled: settings.bankTransferEnabled,
+      next_cash_enabled: settings.cashEnabled,
+      next_cash_delivery_enabled: settings.cashDeliveryEnabled,
+      next_cash_pickup_enabled: settings.cashPickupEnabled,
+      next_bank_id: settings.bankId,
+      next_bank_name: settings.bankName,
+      next_account_number: settings.accountNumber,
+      next_account_holder: settings.accountHolder,
+      next_vietqr_template: settings.vietqrTemplate,
+      next_transfer_reference_template: settings.transferReferenceTemplate,
+      next_payment_deadline_hours: settings.paymentDeadlineHours,
+      next_bank_instructions_vi: settings.bankInstructionsVi,
+      next_bank_instructions_ko: settings.bankInstructionsKo,
+      next_cash_instructions_vi: settings.cashInstructionsVi,
+      next_cash_instructions_ko: settings.cashInstructionsKo,
+    });
     if (error) fail("Không thể lưu cấu hình thanh toán", error);
   }
 
   async saveZone(zone: AdminDeliveryZone) {
-    const { error } = await this.client.rpc("admin_save_delivery_zone", {
+    const { error } = await this.client.rpc("admin_save_delivery_zone_v15", {
       target_zone_id: zone.id,
+      expected_updated_at: zone.updatedAt,
       zone_stable_code: zone.stableCode.trim(),
       zone_name_vi: zone.nameVi.trim(),
       zone_name_ko: zone.nameKo.trim(),
@@ -129,15 +157,21 @@ export class AdminOperationsRepository {
   }
 
   async saveWindow(window: AdminDeliveryWindow) {
-    const values = {
-      stable_code: window.stableCode.trim(), label_vi: window.labelVi.trim(), label_ko: window.labelKo.trim(),
-      help_vi: nullable(window.helpVi), help_ko: nullable(window.helpKo), start_time: window.startTime,
-      end_time: window.endTime, active: window.active, same_day_eligible: window.sameDayEligible, sort_order: window.sortOrder,
-    };
-    const result = window.id
-      ? await this.client.from("delivery_windows").update(values).eq("id", window.id).select("id").single()
-      : await this.client.from("delivery_windows").insert(values).select("id").single();
-    if (result.error) fail("Không thể lưu khung giờ", result.error);
+    const { error } = await this.client.rpc("admin_save_delivery_window", {
+      target_window_id: window.id,
+      expected_updated_at: window.updatedAt,
+      window_stable_code: window.stableCode.trim(),
+      window_label_vi: window.labelVi.trim(),
+      window_label_ko: window.labelKo.trim(),
+      window_help_vi: window.helpVi,
+      window_help_ko: window.helpKo,
+      window_start_time: window.startTime,
+      window_end_time: window.endTime,
+      window_active: window.active,
+      window_same_day_eligible: window.sameDayEligible,
+      window_sort_order: window.sortOrder,
+    });
+    if (error) fail("Không thể lưu khung giờ", error);
   }
 }
 

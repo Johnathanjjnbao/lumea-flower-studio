@@ -44,6 +44,113 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_range_translations: {
+        Row: {
+          budget_range_id: string
+          created_at: string
+          description: string | null
+          label: string
+          locale: Database["public"]["Enums"]["locale_code"]
+          scale_label: string | null
+          updated_at: string
+        }
+        Insert: {
+          budget_range_id: string
+          created_at?: string
+          description?: string | null
+          label: string
+          locale: Database["public"]["Enums"]["locale_code"]
+          scale_label?: string | null
+          updated_at?: string
+        }
+        Update: {
+          budget_range_id?: string
+          created_at?: string
+          description?: string | null
+          label?: string
+          locale?: Database["public"]["Enums"]["locale_code"]
+          scale_label?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_range_translations_budget_range_id_fkey"
+            columns: ["budget_range_id"]
+            isOneToOne: false
+            referencedRelation: "budget_ranges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_ranges: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          id: string
+          max_amount: number | null
+          min_amount: number
+          published_at: string | null
+          sort_order: number
+          stable_code: string
+          updated_at: string
+          visibility: Database["public"]["Enums"]["visibility_status"]
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          id?: string
+          max_amount?: number | null
+          min_amount?: number
+          published_at?: string | null
+          sort_order?: number
+          stable_code: string
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["visibility_status"]
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          id?: string
+          max_amount?: number | null
+          min_amount?: number
+          published_at?: string | null
+          sort_order?: number
+          stable_code?: string
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["visibility_status"]
+        }
+        Relationships: []
+      }
+      checkout_throttle_buckets: {
+        Row: {
+          attempt_count: number
+          expires_at: string
+          idempotency_keys: string[]
+          identifier_hash: string
+          request_count: number
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          attempt_count: number
+          expires_at: string
+          idempotency_keys?: string[]
+          identifier_hash: string
+          request_count: number
+          updated_at?: string
+          window_started_at: string
+        }
+        Update: {
+          attempt_count?: number
+          expires_at?: string
+          idempotency_keys?: string[]
+          identifier_hash?: string
+          request_count?: number
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
       deliveries: {
         Row: {
           created_at: string
@@ -696,7 +803,6 @@ export type Database = {
           visit_google_maps_url: string | null
           visit_map_enabled: boolean
           visit_map_query: string | null
-          visit_phone: string | null
         }
         Insert: {
           created_at?: string
@@ -710,7 +816,6 @@ export type Database = {
           visit_google_maps_url?: string | null
           visit_map_enabled?: boolean
           visit_map_query?: string | null
-          visit_phone?: string | null
         }
         Update: {
           created_at?: string
@@ -724,7 +829,6 @@ export type Database = {
           visit_google_maps_url?: string | null
           visit_map_enabled?: boolean
           visit_map_query?: string | null
-          visit_phone?: string | null
         }
         Relationships: []
       }
@@ -1744,6 +1848,36 @@ export type Database = {
         }
         Relationships: []
       }
+      site_profile: {
+        Row: {
+          business_name: string
+          email: string | null
+          instagram_handle: string | null
+          instagram_url: string | null
+          phone: string | null
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          business_name: string
+          email?: string | null
+          instagram_handle?: string | null
+          instagram_url?: string | null
+          phone?: string | null
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string
+          email?: string | null
+          instagram_handle?: string | null
+          instagram_url?: string | null
+          phone?: string | null
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tone_translations: {
         Row: {
           created_at: string
@@ -2074,6 +2208,41 @@ export type Database = {
           previous_status: Database["public"]["Enums"]["payment_status"]
         }[]
       }
+      admin_save_delivery_settings: {
+        Args: {
+          expected_updated_at: string
+          next_delivery_enabled: boolean
+          next_delivery_help_ko: string
+          next_delivery_help_vi: string
+          next_pickup_address_ko: string
+          next_pickup_address_vi: string
+          next_pickup_enabled: boolean
+          next_pickup_hours_ko: string
+          next_pickup_hours_vi: string
+          next_pickup_name_ko: string
+          next_pickup_name_vi: string
+          next_same_day_cutoff: string
+          next_same_day_enabled: boolean
+        }
+        Returns: string
+      }
+      admin_save_delivery_window: {
+        Args: {
+          expected_updated_at: string
+          target_window_id: string
+          window_active: boolean
+          window_end_time: string
+          window_help_ko: string
+          window_help_vi: string
+          window_label_ko: string
+          window_label_vi: string
+          window_same_day_eligible: boolean
+          window_sort_order: number
+          window_stable_code: string
+          window_start_time: string
+        }
+        Returns: string
+      }
       admin_save_delivery_zone: {
         Args: {
           target_zone_id: string
@@ -2087,6 +2256,44 @@ export type Database = {
           zone_same_day_eligible: boolean
           zone_sort_order: number
           zone_stable_code: string
+        }
+        Returns: string
+      }
+      admin_save_delivery_zone_v15: {
+        Args: {
+          expected_updated_at: string
+          target_zone_id: string
+          zone_active: boolean
+          zone_areas: Json
+          zone_fee_amount: number
+          zone_help_ko: string
+          zone_help_vi: string
+          zone_name_ko: string
+          zone_name_vi: string
+          zone_same_day_eligible: boolean
+          zone_sort_order: number
+          zone_stable_code: string
+        }
+        Returns: string
+      }
+      admin_save_payment_settings: {
+        Args: {
+          expected_updated_at: string
+          next_account_holder: string
+          next_account_number: string
+          next_bank_id: string
+          next_bank_instructions_ko: string
+          next_bank_instructions_vi: string
+          next_bank_name: string
+          next_bank_transfer_enabled: boolean
+          next_cash_delivery_enabled: boolean
+          next_cash_enabled: boolean
+          next_cash_instructions_ko: string
+          next_cash_instructions_vi: string
+          next_cash_pickup_enabled: boolean
+          next_payment_deadline_hours: number
+          next_transfer_reference_template: string
+          next_vietqr_template: string
         }
         Returns: string
       }
@@ -2119,6 +2326,19 @@ export type Database = {
           order_number: string
           order_status: Database["public"]["Enums"]["order_status"]
           previous_status: Database["public"]["Enums"]["order_status"]
+        }[]
+      }
+      assert_delivery_configuration: { Args: never; Returns: undefined }
+      consume_checkout_throttle: {
+        Args: {
+          request_idempotency_key: string
+          request_identifier_hash: string
+        }
+        Returns: {
+          allowed: boolean
+          attempt_count: number
+          idempotent_retry: boolean
+          retry_after_seconds: number
         }[]
       }
       create_checkout_order: {

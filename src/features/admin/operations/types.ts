@@ -1,4 +1,5 @@
 export interface AdminDeliverySettings {
+  updatedAt: string;
   deliveryEnabled: boolean;
   pickupEnabled: boolean;
   sameDayEnabled: boolean;
@@ -24,6 +25,7 @@ export interface AdminDeliveryArea {
 
 export interface AdminDeliveryZone {
   id: string | null;
+  updatedAt: string | null;
   stableCode: string;
   nameVi: string;
   nameKo: string;
@@ -38,6 +40,7 @@ export interface AdminDeliveryZone {
 
 export interface AdminDeliveryWindow {
   id: string | null;
+  updatedAt: string | null;
   stableCode: string;
   labelVi: string;
   labelKo: string;
@@ -51,6 +54,7 @@ export interface AdminDeliveryWindow {
 }
 
 export interface AdminPaymentSettings {
+  updatedAt: string;
   bankTransferEnabled: boolean;
   cashEnabled: boolean;
   cashDeliveryEnabled: boolean;
@@ -76,7 +80,7 @@ export interface AdminOperationsSnapshot {
 }
 
 export function emptyDeliveryZone(): AdminDeliveryZone {
-  return { id: null, stableCode: "", nameVi: "", nameKo: "", helpVi: "", helpKo: "", feeAmount: 0, active: false, sameDayEligible: false, sortOrder: 0, areas: [] };
+  return { id: null, updatedAt: null, stableCode: "", nameVi: "", nameKo: "", helpVi: "", helpKo: "", feeAmount: 0, active: false, sameDayEligible: false, sortOrder: 0, areas: [] };
 }
 
 export function emptyDeliveryArea(): AdminDeliveryArea {
@@ -84,5 +88,5 @@ export function emptyDeliveryArea(): AdminDeliveryArea {
 }
 
 export function emptyDeliveryWindow(): AdminDeliveryWindow {
-  return { id: null, stableCode: "", labelVi: "", labelKo: "", helpVi: "", helpKo: "", startTime: "", endTime: "", active: false, sameDayEligible: false, sortOrder: 0 };
+  return { id: null, updatedAt: null, stableCode: "", labelVi: "", labelKo: "", helpVi: "", helpKo: "", startTime: "", endTime: "", active: false, sameDayEligible: false, sortOrder: 0 };
 }

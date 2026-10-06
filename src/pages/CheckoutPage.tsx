@@ -8,6 +8,7 @@ import { checkoutSubtotal, createCheckoutPayload, inspectCheckoutLines } from ".
 import { checkoutPreviewFee, loadCheckoutOptions } from "../features/checkout/options";
 import { CheckoutOrderError, createCheckoutOrder } from "../features/checkout/repository";
 import { writeOrderReceipt } from "../features/checkout/receipt";
+import { TurnstileWidget, type TurnstileWidgetHandle } from "../features/checkout/TurnstileWidget";
 import type {
   CheckoutFieldName,
   CheckoutFormValues,
@@ -17,6 +18,7 @@ import type {
 } from "../features/checkout/types";
 import {
   checkoutDeliveryDateBounds,
+  businessTimeInVietnam,
   validateCheckout,
   validateCheckoutField,
 } from "../features/checkout/validation";
@@ -46,16 +48,6 @@ function addBusinessDays(dateText: string, days: number) {
   const date = new Date(`${dateText}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
-}
-
-function businessTimeInVietnam(date = new Date()) {
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Ho_Chi_Minh",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-  }).format(date);
 }
 
 function CheckoutField({
@@ -142,7 +134,10 @@ export function CheckoutPage() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [priceReviewRequired, setPriceReviewRequired] = useState(false);
   const [priceReviewed, setPriceReviewed] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [businessTime, setBusinessTime] = useState(() => businessTimeInVietnam());
   const errorSummaryRef = useRef<HTMLDivElement>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
   const submitLock = useRef(false);
   const dateBounds = useMemo(() => checkoutDeliveryDateBounds(), []);
   const lineStatus = inspectCheckoutLines(lines);
@@ -151,7 +146,7 @@ export function CheckoutPage() {
   const selectedWindow = options?.windows.find((window) => window.id === values.deliveryWindowId);
   const sameDayDeliveryAvailable = Boolean(options?.sameDayEnabled && selectedZone?.sameDayEligible
     && selectedWindow?.sameDayEligible && options.sameDayCutoff
-    && businessTimeInVietnam() < options.sameDayCutoff);
+    && businessTime < options.sameDayCutoff);
   const deliveryDateMin = values.fulfillmentType === "DELIVERY" && !sameDayDeliveryAvailable
     ? addBusinessDays(dateBounds.min, 1)
     : dateBounds.min;
@@ -171,6 +166,11 @@ export function CheckoutPage() {
   }, [options, values.fulfillmentType]);
 
   useDocumentMetadata(t.meta.checkoutTitle, t.meta.checkoutDescription);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setBusinessTime(businessTimeInVietnam()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const applyOptions = useCallback((next: CheckoutOptions) => {
     setOptions(next);
@@ -272,24 +272,36 @@ export function CheckoutPage() {
   });
 
   const focusErrors = () => window.requestAnimationFrame(() => errorSummaryRef.current?.focus());
+  const resetVerification = () => {
+    setTurnstileToken(null);
+    turnstileRef.current?.reset();
+  };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitLock.current) return;
+    if (!turnstileToken) {
+      setServerError(t.checkout.errors.verificationRequired);
+      resetVerification();
+      return;
+    }
     if (!options || availablePaymentMethods.length === 0) {
       setServerError(t.checkout.errors.configurationUnavailable);
+      resetVerification();
       return;
     }
     const nextErrors = validateCheckout(values);
     if (values.deliveryDate && values.deliveryDate < deliveryDateMin) nextErrors.deliveryDate = "sameDayUnavailable";
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) { focusErrors(); return; }
+    if (Object.keys(nextErrors).length > 0) { focusErrors(); resetVerification(); return; }
     if (previewFee === null) {
       setServerError(t.checkout.errors.configurationUnavailable);
+      resetVerification();
       return;
     }
     if (priceReviewRequired && !priceReviewed) {
       setServerError(t.checkout.errors.priceAcknowledgement);
+      resetVerification();
       window.requestAnimationFrame(() => document.getElementById("price-reviewed")?.focus());
       return;
     }
@@ -297,6 +309,7 @@ export function CheckoutPage() {
     submitLock.current = true;
     setSubmitting(true);
     setServerError(null);
+    let completed = false;
     try {
       const checkedLines = await reconcileCart();
       const status = inspectCheckoutLines(checkedLines);
@@ -312,10 +325,11 @@ export function CheckoutPage() {
       }
       const reviewedSubtotal = checkoutSubtotal(checkedLines);
       const payload = createCheckoutPayload(values, checkedLines, locale, previewFee);
-      const receipt = await createCheckoutOrder({ payload, reviewedSubtotal });
+      const receipt = await createCheckoutOrder({ payload, reviewedSubtotal }, turnstileToken);
       const stored = writeOrderReceipt(receipt);
       clearCheckoutAttempt();
       clearCart();
+      completed = true;
       navigate(path("/order-confirmation"), {
         replace: true,
         state: { receipt, storageWarning: !stored },
@@ -342,9 +356,15 @@ export function CheckoutPage() {
           setServerError(t.checkout.errors.itemUnavailable);
         } else if (error.code === "INVALID_REQUEST") setServerError(t.checkout.errors.invalidRequest);
         else if (error.code === "IDEMPOTENCY_CONFLICT") setServerError(t.checkout.errors.idempotency);
+        else if (error.code === "VERIFICATION_REQUIRED") setServerError(t.checkout.errors.verificationRequired);
+        else if (error.code === "VERIFICATION_FAILED") setServerError(t.checkout.errors.verificationFailed);
+        else if (error.code === "VERIFICATION_EXPIRED") setServerError(t.checkout.errors.verificationExpired);
+        else if (error.code === "VERIFICATION_UNAVAILABLE") setServerError(t.checkout.errors.verificationUnavailable);
+        else if (error.code === "RATE_LIMITED") setServerError(t.checkout.errors.rateLimited);
         else setServerError(t.checkout.errors.network);
       } else setServerError(t.checkout.errors.network);
     } finally {
+      if (!completed) resetVerification();
       submitLock.current = false;
       setSubmitting(false);
     }
@@ -473,6 +493,14 @@ export function CheckoutPage() {
             <h3>{t.checkout.priceChangedTitle}</h3><p>{t.checkout.priceChangedText}</p>
             <label htmlFor="price-reviewed"><input id="price-reviewed" type="checkbox" checked={priceReviewed} onChange={(event) => setPriceReviewed(event.target.checked)} /><span>{t.checkout.acknowledgePrice}</span></label>
           </div>}
+          <TurnstileWidget
+            ref={turnstileRef}
+            locale={locale}
+            label={t.checkout.verification.label}
+            help={t.checkout.verification.help}
+            unavailable={t.checkout.verification.unavailable}
+            onTokenChange={setTurnstileToken}
+          />
           <button className="button button--solid checkout-submit" type="submit" disabled={submitting || checking}>{submitting ? t.checkout.submitting : t.checkout.submit}</button>
           <p className="checkout-submit-note">{t.checkout.submitNote}</p>
         </CheckoutSection>

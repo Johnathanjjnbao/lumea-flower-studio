@@ -1,4 +1,5 @@
 import type { CatalogProductRecord } from "../catalog/data/catalogRepository";
+import type { DiscoveryBudgetRange, DiscoveryOccasion } from "../discovery/types";
 
 export const homepageSectionKeys = [
   "hero",
@@ -32,7 +33,6 @@ export interface HomepageSectionCopy {
 }
 
 export interface HomepageVisitSettings {
-  phone: string;
   mapEnabled: boolean;
   mapQuery: string;
   googleMapsUrl: string;
@@ -74,12 +74,14 @@ export interface HomepageSection {
 }
 
 export function emptyHomepageVisitSettings(): HomepageVisitSettings {
-  return { phone: "", mapEnabled: false, mapQuery: "", googleMapsUrl: "" };
+  return { mapEnabled: false, mapQuery: "", googleMapsUrl: "" };
 }
 
 export interface HomepageContent {
   sections: Record<HomepageSectionKey, HomepageSection | null>;
   featuredProducts: CatalogProductRecord[];
+  occasions: DiscoveryOccasion[];
+  budgetRanges: DiscoveryBudgetRange[];
 }
 
 export function emptyHomepageCopy(): HomepageSectionCopy {
