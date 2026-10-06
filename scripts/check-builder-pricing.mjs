@@ -12,10 +12,10 @@ const wrappingVariant = { id: "color-1", stableCode: "burgundy", name: "Burgundy
 
 const pricing = calculateBouquetPricing(flowers, quantities, wrappingType, wrappingVariant);
 assert.deepEqual(pricing, {
-  flowerSubtotal: 330_000,
+  flowerSubtotal: 225_000,
   wrappingPrice: 110_000,
-  totalStemCount: 8,
-  totalPrice: 440_000,
+  totalStemCount: 5,
+  totalPrice: 335_000,
 });
 assert.equal(clampFlowerQuantity(-4), 0);
 assert.equal(clampFlowerQuantity(999), 20);
@@ -23,11 +23,11 @@ assert.equal(clampFlowerQuantity(Number.NaN), 0);
 
 const result = createBouquetResult(flowers, quantities, wrappingType, wrappingVariant);
 assert.equal(result.type, "CUSTOM_BOUQUET");
-assert.equal(result.totalPrice, 440_000);
+assert.equal(result.totalPrice, 335_000);
 assert.deepEqual(result.flowers.map(({ flowerId, quantity }) => ({ flowerId, quantity })), [
   { flowerId: "flower-1", quantity: 5 },
-  { flowerId: "flower-2", quantity: 3 },
 ]);
+assert.equal(result.flowers.some(({ flowerId }) => flowerId === "flower-2"), false);
 assert.equal(result.flowers.some(({ flowerId }) => flowerId === "flower-3"), false);
 assert.equal(result.flowers[0].flowerCode, "garden-rose");
 assert.equal(result.wrapping.typeCode, "layered-wrap");

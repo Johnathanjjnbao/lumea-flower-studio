@@ -208,7 +208,7 @@ const rpcArgs = (payload, subtotal = reviewedSubtotal) => ({
 await expectRpcError("Client price injection", rpcArgs({
   ...validPayload,
   items: [{ ...validPayload.items[0], unit_price: 1, line_total: 1 }],
-}, 1), "CHECKOUT_READY_ITEM_INVALID");
+}), "CHECKOUT_READY_ITEM_INVALID");
 await expectRpcError("Invalid quantity", rpcArgs({
   ...validPayload,
   items: [{ ...validPayload.items[0], quantity: 0 }],
@@ -221,7 +221,10 @@ await expectRpcError("Unknown Variant", rpcArgs({
   ...validPayload,
   items: [{ ...validPayload.items[0], variant_id: randomUUID(), variant_code: "not-a-variant" }],
 }), "CHECKOUT_READY_ITEM_UNAVAILABLE");
-await expectRpcError("Server-authoritative ready-made subtotal", rpcArgs(validPayload, reviewedSubtotal + 1), "CHECKOUT_REVIEW_CHANGED");
+await expectRpcError("Server-authoritative ready-made subtotal", rpcArgs({
+  ...validPayload,
+  review: { delivery_fee: fulfillment.fee, total: reviewedSubtotal + fulfillment.fee + 1 },
+}, reviewedSubtotal + 1), "CHECKOUT_REVIEW_CHANGED");
 await expectRpcError("Server-authoritative delivery fee", rpcArgs({
   ...validPayload,
   review: { delivery_fee: fulfillment.fee + 1, total: reviewedSubtotal + fulfillment.fee + 1 },
@@ -246,7 +249,10 @@ const builderSubtotal = flower.price_per_stem_amount
   + wrappingVariant.price_modifier_amount
   + (compatibility.price_modifier_amount ?? 0);
 validBuilderPayload.review = { delivery_fee: fulfillment.fee, total: builderSubtotal + fulfillment.fee };
-await expectRpcError("Server-authoritative Builder subtotal", rpcArgs(validBuilderPayload, builderSubtotal + 1), "CHECKOUT_REVIEW_CHANGED");
+await expectRpcError("Server-authoritative Builder subtotal", rpcArgs({
+  ...validBuilderPayload,
+  review: { delivery_fee: fulfillment.fee, total: builderSubtotal + fulfillment.fee + 1 },
+}, builderSubtotal + 1), "CHECKOUT_REVIEW_CHANGED");
 await expectRpcError("Unknown Builder flower", rpcArgs({
   ...validPayload,
   items: [{

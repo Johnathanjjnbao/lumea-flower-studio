@@ -38,16 +38,19 @@ export function HomepageCopyEditor({ section, onChange }: { section: AdminHomepa
   const update = (field: keyof HomepageSectionCopy, value: string) => onChange({ ...section, [locale]: { ...copy, [field]: value } });
   return <>
     <div className="admin-tabs" role="tablist" aria-label="Ngôn ngữ nội dung Homepage">
-      <button type="button" role="tab" aria-selected={locale === "vi"} onClick={() => setLocale("vi")}>Tiếng Việt</button>
-      <button type="button" role="tab" aria-selected={locale === "ko"} onClick={() => setLocale("ko")}>한국어</button>
+      <button id={`homepage-${section.key}-tab-vi`} type="button" role="tab" aria-selected={locale === "vi"} onClick={() => setLocale("vi")}>Tiếng Việt</button>
+      <button id={`homepage-${section.key}-tab-ko`} type="button" role="tab" aria-selected={locale === "ko"} onClick={() => setLocale("ko")}>한국어</button>
     </div>
-    <div className="admin-field-grid">
-      {fieldsBySection[section.key].map((field) => <label className={multiline.has(field) ? "admin-field-span" : undefined} key={field}>
-        {section.key === "visit" ? visitLabels[field] ?? labels[field] : labels[field]}
-        {multiline.has(field)
-          ? <textarea rows={field === "body" ? 4 : 3} value={copy[field]} onChange={(event) => update(field, event.target.value)} />
-          : <input value={copy[field]} onChange={(event) => update(field, event.target.value)} />}
-      </label>)}
+    <div id={`homepage-${section.key}-panel-${locale}`} className="admin-field-grid" role="tabpanel" aria-labelledby={`homepage-${section.key}-tab-${locale}`}>
+      {fieldsBySection[section.key].map((field) => {
+        const fieldId = `homepage-${section.key}-${locale}-${field}`;
+        return <label htmlFor={fieldId} className={multiline.has(field) ? "admin-field-span" : undefined} key={field}>
+          {section.key === "visit" ? visitLabels[field] ?? labels[field] : labels[field]}
+          {multiline.has(field)
+            ? <textarea id={fieldId} rows={field === "body" ? 4 : 3} value={copy[field]} onChange={(event) => update(field, event.target.value)} />
+            : <input id={fieldId} value={copy[field]} onChange={(event) => update(field, event.target.value)} />}
+        </label>;
+      })}
     </div>
   </>;
 }

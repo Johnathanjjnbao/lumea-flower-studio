@@ -4,6 +4,7 @@ import { HomepageVisitEditor } from "../components/HomepageVisitEditor";
 import { HomepageMediaPanel } from "../components/HomepageMediaPanel";
 import { createAdminHomepageRepository } from "../data/adminHomepageRepository";
 import type { AdminHomepageFeature, AdminHomepageMedia, AdminHomepageSection, AdminHomepageSnapshot } from "../types";
+import { validateVisitSettings } from "../../homepage/visitLocation";
 
 const sectionLabels: Record<AdminHomepageSection["key"], { name: string; description: string }> = {
   hero: { name: "Hero", description: "Lời hứa thương hiệu, hai CTA và hai ảnh mở đầu." },
@@ -24,6 +25,29 @@ const ctaOptions = [
 ] as const;
 
 const visibilityEditableSections = new Set<AdminHomepageSection["key"]>(["same_day", "florist_choice", "create_bouquet", "why_lumea", "gallery"]);
+
+function focusVisitError(section: AdminHomepageSection, errors: ReturnType<typeof validateVisitSettings>) {
+  const focus = (id: string) => {
+    const target = document.getElementById(id);
+    target?.focus();
+    target?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+  };
+  if (errors.mapQuery) return focus("visit-map-query");
+  if (errors.googleMapsUrl) return focus("visit-map-url");
+  if (!errors.localizedCopy) return;
+  const locale = !section.vi.primaryCtaLabel.trim() ? "vi" : "ko";
+  document.getElementById(`homepage-visit-tab-${locale}`)?.click();
+  window.requestAnimationFrame(() => focus(`homepage-visit-${locale}-primaryCtaLabel`));
+}
+
+function focusVisitAddress(locale: "vi" | "ko") {
+  document.getElementById(`homepage-visit-tab-${locale}`)?.click();
+  window.requestAnimationFrame(() => {
+    const target = document.getElementById(`homepage-visit-${locale}-detailOneValue`);
+    target?.focus();
+    target?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+  });
+}
 
 export function AdminHomepagePage() {
   const repository = useMemo(() => createAdminHomepageRepository(), []);
@@ -54,6 +78,33 @@ export function AdminHomepagePage() {
     try { await task(); setSuccess(message); await load(); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Thao tác không hoàn tất."); }
     finally { setBusy(null); }
+  };
+
+  const saveSection = (section: AdminHomepageSection, label: string) => {
+    if (section.key === "visit") {
+      const addressLocale = (["vi", "ko"] as const).find((locale) => {
+        const address = section[locale].detailOneValue.trim();
+        return address.length < 5 || address.length > 300;
+      });
+      if (addressLocale) {
+        setSuccess(null);
+        setError("Địa chỉ VI và KO cần từ 5 đến 300 ký tự.");
+        window.requestAnimationFrame(() => focusVisitAddress(addressLocale));
+        return;
+      }
+      const errors = validateVisitSettings(section.visit, section.vi, section.ko);
+      const firstError = errors.mapQuery ?? errors.googleMapsUrl ?? errors.localizedCopy;
+      if (firstError) {
+        setSuccess(null);
+        setError(firstError);
+        window.requestAnimationFrame(() => focusVisitError(section, errors));
+        return;
+      }
+    }
+    void run(`section-${section.id}`, async () => {
+      await repository.saveSection(section);
+      if (section.key === "why_lumea") await repository.saveFeatures(section.features);
+    }, `Đã lưu ${label}.`);
   };
 
   const moveGallery = async (section: AdminHomepageSection, mediaId: string, direction: -1 | 1) => {
@@ -91,10 +142,7 @@ export function AdminHomepagePage() {
             </div>
             <HomepageCopyEditor section={section} onChange={updateSection} />
             {section.key === "visit" && <HomepageVisitEditor section={section} onChange={updateSection} />}
-            <button className="admin-button admin-button--primary" type="button" disabled={Boolean(isBusy)} onClick={() => void run(`section-${section.id}`, async () => {
-              await repository.saveSection(section);
-              if (section.key === "why_lumea") await repository.saveFeatures(section.features);
-            }, `Đã lưu ${label.name}.`)}>{isBusy ? "Đang lưu…" : `Lưu ${label.name}`}</button>
+            <button className="admin-button admin-button--primary" type="button" disabled={Boolean(isBusy)} onClick={() => saveSection(section, label.name)}>{isBusy ? "Đang lưu…" : `Lưu ${label.name}`}</button>
 
             {section.key === "best_sellers" && <BestSellerCuration section={section} products={snapshot.products} busy={Boolean(isBusy)} onChange={updateSection} onSave={() => run(`curation-${section.id}`, () => repository.replaceCuration(section.id, section.curatedProductIds), "Đã lưu tuyển chọn Best Sellers.")} />}
             {section.key === "why_lumea" && <WhyFeatureEditor section={section} onChange={updateSection} onUpload={(feature, file) => run(`feature-${feature.id}`, () => repository.uploadFeatureImage(section, feature, file, feature.viAlt, feature.koAlt), "Đã thay ảnh Why Luméa.")} />}

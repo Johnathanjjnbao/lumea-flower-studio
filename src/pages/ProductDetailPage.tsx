@@ -56,7 +56,8 @@ function ProductDetailContent({ product }: { product: CatalogProductRecord }) {
   const [added, setAdded] = useState(false);
   const { t, path } = useI18n();
   const { addItem } = useCart();
-  const unavailable = product.availability === "UNAVAILABLE" || !product.variants.some((variant) => variant.id === variantId);
+  const unavailable = product.availability !== "AVAILABLE" || !product.variants.some((variant) => variant.id === variantId);
+  const unavailableLabel = product.availability === "SEASONAL" ? t.product.detail.seasonalUnavailable : t.product.detail.unavailable;
   const selectedPrice = getProductPrice(product, variantId);
 
   useImagePipeline(pageRef, { observe: "images", prioritySelector: ".product-gallery__main", preloadMargin: "500px 0px" });
@@ -88,10 +89,10 @@ function ProductDetailContent({ product }: { product: CatalogProductRecord }) {
         </div></fieldset>}
         {product.composition.length > 0 && <div className="product-composition"><p>{t.product.detail.composition}</p><ul>{product.composition.map((flower) => <li key={flower}>{flower}</li>)}</ul><small>{t.product.detail.seasonalNote}</small></div>}
         <div className="product-purchase">
-          {product.sameDayEligible && <p className="same-day-eligibility"><span className="status-dot" aria-hidden="true" />{t.product.detail.sameDay}</p>}
+          {product.availability === "AVAILABLE" && product.sameDayEligible && <p className="same-day-eligibility"><span className="status-dot" aria-hidden="true" />{t.product.detail.sameDay}</p>}
           <div className="product-purchase__row">
             <label className="product-quantity"><span>{t.product.detail.quantity}</span><input type="number" inputMode="numeric" min={1} max={MAX_CART_ITEM_QUANTITY} value={quantity} onChange={(event) => { setQuantity(clampCartQuantity(Number(event.target.value))); setAdded(false); }} /></label>
-            <button className="button button--solid product-purchase__button" type="button" disabled={unavailable || added} onClick={addToCart}>{unavailable ? t.product.detail.unavailable : added ? t.product.detail.added : t.product.detail.add}</button>
+            <button className="button button--solid product-purchase__button" type="button" disabled={unavailable || added} onClick={addToCart}>{unavailable ? unavailableLabel : added ? t.product.detail.added : t.product.detail.add}</button>
           </div>
           {added && <p className="product-add-status" role="status">{t.product.detail.addedText} <Link to={path("/cart")}>{t.product.detail.viewCart}</Link></p>}
           <p className="product-delivery-note">{t.product.detail.delivery}</p>

@@ -35,6 +35,7 @@ const builderCatalog = { flowers, wrappingTypes, wrappingVariants };
 
 const ready = createReadyMadeCartItem(product, "variant-1", "pink", 1);
 assert.ok(ready, "available product should create a cart item");
+assert.equal(createReadyMadeCartItem({ ...product, availability: "SEASONAL" }, "variant-1", "pink", 1), null, "seasonal products must stay visible but not enter Cart");
 let lines = mergeCartItem([], ready);
 assert.equal(lines.length, 1);
 lines = mergeCartItem(lines, ready);
@@ -53,6 +54,8 @@ assert.equal(lines.length, 2, "different variants must remain distinct");
 const result = createBouquetResult(flowers, { "flower-1": 3, "flower-2": 2 }, wrappingTypes[0], wrappingVariants[0]);
 const custom = createCustomBouquetCartItem(result, builderCatalog);
 assert.ok(custom, "valid completed bouquet should create a cart item");
+const seasonalBuilder = { ...builderCatalog, flowers: builderCatalog.flowers.map((flower) => flower.id === "flower-1" ? { ...flower, availability: "SEASONAL" } : flower) };
+assert.equal(createCustomBouquetCartItem(result, seasonalBuilder), null, "seasonal stems must not enter Cart");
 lines = mergeCartItem(lines, custom);
 assert.equal(lines.length, 3, "ready-made and custom bouquets should coexist");
 
@@ -94,9 +97,11 @@ const unavailableProduct = { ...product, availability: "UNAVAILABLE" };
 const unavailable = reconcileCartItems([ready], [unavailableProduct], builderCatalog)[0];
 assert.equal(unavailable.validation.state, "unavailable");
 assert.equal(getCartSubtotal([unavailable]), 0, "unavailable lines must not contribute to subtotal");
+assert.equal(reconcileCartItems([ready], [{ ...product, availability: "SEASONAL" }], builderCatalog)[0].validation.state, "unavailable");
 
 const unavailableBuilder = { ...builderCatalog, flowers: builderCatalog.flowers.map((flower) => flower.id === "flower-1" ? { ...flower, availability: "UNAVAILABLE" } : flower) };
 assert.equal(reconcileCartItems([custom], [product], unavailableBuilder)[0].validation.state, "unavailable");
+assert.equal(reconcileCartItems([custom], [product], seasonalBuilder)[0].validation.state, "unavailable");
 const repricedBuilder = { ...builderCatalog, flowers: builderCatalog.flowers.map((flower) => flower.id === "flower-1" ? { ...flower, pricePerStem: flower.pricePerStem + 10_000 } : flower) };
 const repricedCustom = reconcileCartItems([custom], [product], repricedBuilder)[0];
 assert.equal(repricedCustom.validation.state, "changed");

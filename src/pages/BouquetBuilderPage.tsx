@@ -114,7 +114,7 @@ function BouquetBuilderExperience({ catalog }: { catalog: BouquetBuilderCatalog 
                 {catalog.flowers.map((flower) => {
                   const copy = flower;
                   const quantity = builder.quantities[flower.id];
-                  const unavailable = flower.availability === "UNAVAILABLE";
+                  const unavailable = flower.availability !== "AVAILABLE";
                   const atMaximum = quantity >= MAX_STEMS_PER_FLOWER;
                   return (
                     <article className="stem-card" data-selected={quantity > 0} data-unavailable={unavailable} key={flower.id}>

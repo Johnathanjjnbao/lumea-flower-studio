@@ -29,7 +29,7 @@ export function createReadyMadeCartItem(
   toneCode: string | null,
   quantity: number,
 ): ReadyMadeCartItem | null {
-  if (product.availability === "UNAVAILABLE") return null;
+  if (product.availability !== "AVAILABLE") return null;
   const variant = product.variants.find((option) => option.id === variantId);
   const tone = toneCode ? product.tones.find((option) => option.stableCode === toneCode) : null;
   if (!variant || (product.tones.length > 0 && !tone)) return null;
@@ -63,7 +63,7 @@ export function createCustomBouquetCartItem(
 ): CustomBouquetCartItem | null {
   const selectedFlowers = result.flowers.map((selection) => {
     const flower = catalog.flowers.find((option) => option.id === selection.flowerId || option.stableCode === selection.flowerCode);
-    return flower && flower.availability !== "UNAVAILABLE" && selection.quantity > 0
+    return flower && flower.availability === "AVAILABLE" && selection.quantity > 0
       ? { flower, quantity: selection.quantity }
       : null;
   });

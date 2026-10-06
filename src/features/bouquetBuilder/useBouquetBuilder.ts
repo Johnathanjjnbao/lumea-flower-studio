@@ -26,7 +26,7 @@ export function useBouquetBuilder(catalog: BouquetBuilderCatalog) {
   useEffect(() => {
     setQuantities((current) => Object.fromEntries(catalog.flowers.map((flower) => [
       flower.id,
-      flower.availability === "UNAVAILABLE" ? 0 : clampFlowerQuantity(current[flower.id] ?? 0),
+      flower.availability === "AVAILABLE" ? clampFlowerQuantity(current[flower.id] ?? 0) : 0,
     ])));
     if (!catalog.wrappingTypes.some((option) => option.id === wrappingTypeId)) setWrappingTypeId(defaults.wrappingTypeId);
     if (!compatibleVariants.some((option) => option.id === wrappingVariantId)) setWrappingVariantId(compatibleVariants[0]?.id ?? defaults.wrappingVariantId);
@@ -40,7 +40,7 @@ export function useBouquetBuilder(catalog: BouquetBuilderCatalog) {
 
   const setQuantity = (flowerId: FlowerStemId, nextQuantity: number) => {
     const flower = catalog.flowers.find((option) => option.id === flowerId);
-    if (!flower || flower.availability === "UNAVAILABLE") return;
+    if (!flower || flower.availability !== "AVAILABLE") return;
     setCompletedResult(null);
     setQuantities((current) => ({ ...current, [flowerId]: clampFlowerQuantity(nextQuantity) }));
   };

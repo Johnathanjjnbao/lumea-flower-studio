@@ -8,7 +8,7 @@ export function clampFlowerQuantity(value: number) {
 }
 
 function getSelectableQuantity(flower: FlowerStem, quantities: FlowerQuantities) {
-  return flower.availability === "UNAVAILABLE" ? 0 : clampFlowerQuantity(quantities[flower.id]);
+  return flower.availability === "AVAILABLE" ? clampFlowerQuantity(quantities[flower.id]) : 0;
 }
 
 export function calculateBouquetPricing(
