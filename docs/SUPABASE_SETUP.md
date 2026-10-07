@@ -1,6 +1,6 @@
 # Luméa Supabase Setup
 
-This guide is the operational reference for the Supabase foundation through Step 15. Product/Media operations are documented in `docs/ADMIN_PRODUCT_MEDIA.md`; Builder data operations are documented in `docs/BUILDER_DATA_ADMIN.md`. Step 12 adds guest Checkout and secure Order creation, Step 13 adds protected Admin Order operations, Step 14 adds delivery/payment/VietQR, and Step 15 adds canonical business settings plus the Turnstile-protected Checkout gateway.
+This guide is the technical operational reference for the Supabase foundation through Step 16. Product/Media operations are documented in `docs/ADMIN_PRODUCT_MEDIA.md`; Builder data operations are documented in `docs/BUILDER_DATA_ADMIN.md`. Step 12 adds guest Checkout and secure Order creation, Step 13 adds protected Admin Order operations, Step 14 adds delivery/payment/VietQR, Step 15 adds canonical business settings plus the Turnstile-protected Checkout gateway, and Step 16 adds CI security gates and handoff. The owner-facing procedures are in `docs/OWNER_RUNBOOK.md`; the release summary is in `docs/V1_HANDOFF.md`.
 
 ## Project identity
 
@@ -235,6 +235,8 @@ Use one coordinated release window because the security migration revokes the ol
 Keep Checkout fail-closed during an incident. Do not restore the anonymous internal-RPC grant as a shortcut. Fix or roll forward the Edge Function/frontend, and retain the Cart/form state so customers can retry after service recovery.
 
 ## Verification
+
+GitHub Actions runs the PR-safe application checks, browser route smoke, secret scan, dependency audit, and local Supabase SQL security suite before a `main` deployment can proceed. Production credentials are not required by pull-request jobs. Release-only runtime and production checks remain deliberate operator actions because they use a linked project, a real Admin session, or a human Turnstile/recovery step.
 
 Run the focused remote smoke check without printing credentials:
 

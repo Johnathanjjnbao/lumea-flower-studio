@@ -334,9 +334,13 @@ Implement ADMIN-only bounded Order list/detail reads, exact ready-made/custom sn
 
 Implement Admin-managed delivery zones/areas/fees/windows and fulfillment/payment settings; trusted checkout pricing; immutable Order/Payment snapshots; per-Order VietQR; explicit manual payment verification; and Delivery status operations. Production settings start disabled and are activated only after the owner enters real business values through Admin.
 
-### Step 15 — Security and final QA
+### Step 15 — Site settings and launch hardening
 
-Audit RLS, authorization, private media, validation, abuse controls, PII logging, backups/recovery, accessibility, end-to-end flows, and production readiness.
+Complete Admin-managed Site Profile and discovery data, validate Visit/Google Maps, place public Checkout behind the Turnstile-verifying Edge Function, add a race-safe HMAC throttle, and revoke direct browser access to the internal order RPC.
+
+### Step 16 — Final QA, security, and handoff
+
+Gate deployment on application and SQL security checks, run the full regression and production smoke suites, review Auth/RLS/RPC/secrets/dependencies, document recovery and owner operations, and separate engineering readiness from owner-confirmed business-launch readiness.
 
 Do not begin a later step while an earlier exit gate is unresolved.
 

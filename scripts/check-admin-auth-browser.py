@@ -101,6 +101,13 @@ def install_auth_mocks(page, state):
         if "/admin_profiles" in request.url:
             state["profile_requests"] += 1
             route.fulfill(status=200, content_type="application/json", body=json.dumps(PROFILE))
+        elif "/site_profile" in request.url:
+            if request.method == "POST":
+                state["site_profile"].update(request.post_data_json)
+                state["site_profile_writes"] += 1
+                route.fulfill(status=201, content_type="application/json", body="[]")
+            else:
+                route.fulfill(status=200, content_type="application/json", body=json.dumps(state["site_profile"]))
         elif "/homepage_sections" in request.url:
             if request.method == "PATCH":
                 state["homepage_section"].update(request.post_data_json)
@@ -222,6 +229,15 @@ with sync_playwright() as playwright:
         "login_attempts": [],
         "auth_user_methods": [],
         "profile_requests": 0,
+        "site_profile_writes": 0,
+        "site_profile": {
+            "singleton": True,
+            "business_name": "Luméa Flower Studio",
+            "phone": "+84 28 3822 0000",
+            "email": "hello@example.test",
+            "instagram_url": "https://www.instagram.com/lumeaflowers/",
+            "instagram_handle": "@lumeaflowers",
+        },
         "homepage_writes": 0,
         "homepage_section": {
             "id": visit_section_id,
@@ -230,7 +246,6 @@ with sync_playwright() as playwright:
             "display_order": 10,
             "primary_cta_target": None,
             "secondary_cta_target": None,
-            "visit_phone": "+84 28 3822 0000",
             "visit_map_enabled": False,
             "visit_map_query": None,
             "visit_google_maps_url": None,
@@ -349,10 +364,18 @@ with sync_playwright() as playwright:
     reset_page.reload(wait_until="networkidle")
     assert reset_page.locator(".admin-app").is_visible(), "Admin session did not restore after refresh"
 
+    reset_page.goto(f"{BASE_URL}/admin/site-settings", wait_until="networkidle")
+    reset_page.get_by_role("heading", name="Thông tin studio", exact=True).wait_for(state="visible")
+    assert reset_page.get_by_label("Tên studio").input_value() == "Luméa Flower Studio"
+    assert reset_page.get_by_label("Số điện thoại").input_value() == "+84 28 3822 0000"
+    reset_page.get_by_label("Liên kết Instagram").fill("javascript:alert(1)")
+    reset_page.get_by_role("button", name="Lưu thông tin studio").click()
+    assert reset_page.get_by_role("alert").is_visible()
+    assert state["site_profile_writes"] == 0, "invalid Site Profile reached Supabase"
+
     reset_page.goto(f"{BASE_URL}/admin/homepage", wait_until="networkidle")
     visit_editor = reset_page.locator("details.admin-home-section").filter(has_text="Ghé studio")
     visit_editor.locator("summary").click()
-    assert visit_editor.get_by_label("Số điện thoại").input_value() == "+84 28 3822 0000"
     visit_editor.get_by_role("checkbox", name="Hiển thị Google Maps").check()
     visit_editor.get_by_label("Vị trí dùng cho bản đồ").fill("Luméa Studio, District 1")
     visit_editor.get_by_label("Liên kết Google Maps").fill("javascript:alert(1)")
@@ -458,5 +481,5 @@ with sync_playwright() as playwright:
     reset_context.close()
     browser.close()
 
-print("Admin browser QA passed: auth flows plus Visit load, invalid URL feedback, VI/KO edit, map toggle, save, refresh persistence, and responsive coverage.")
+print("Admin browser QA passed: auth flows, Site Profile validation, Visit load, invalid URL feedback, VI/KO edit, map toggle, save, refresh persistence, and responsive coverage.")
 print(f"Screenshots: {ARTIFACT_DIR}")

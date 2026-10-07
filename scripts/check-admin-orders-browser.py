@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from tempfile import gettempdir
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError, sync_playwright
 
 
 BASE_URL = os.environ.get("LUMEA_BASE_URL", "http://127.0.0.1:4173/lumea-flower-studio")
@@ -68,7 +68,12 @@ def install_mocks(page, state):
         "id": ORDER_ID, "order_number": "LUM-26935E75CB064623", "locale": "vi", "status": "PENDING", "fulfillment_type": "DELIVERY",
         "buyer_name": "Nguyễn An", "buyer_phone": "0909 111 222", "buyer_email": "an@example.test", "buyer_is_recipient": False,
         "is_surprise": True, "card_message": "Chúc mừng sinh nhật", "currency": "VND", "subtotal_amount": 120045000,
-        "delivery_fee_amount": None, "total_amount": None, "idempotency_key_hash": "a" * 32, "request_fingerprint": "b" * 32,
+        "delivery_fee_amount": None, "total_amount": None, "requested_fulfillment_date": "2026-10-08",
+        "delivery_zone_code_snapshot": "qa-central", "delivery_zone_name_snapshot": "QA nội thành",
+        "delivery_area_code_snapshot": "qa-area", "delivery_area_name_snapshot": "Khu vực QA",
+        "delivery_window_code_snapshot": None, "delivery_window_label_snapshot": None,
+        "pickup_name_snapshot": None, "pickup_address_snapshot": None, "pickup_hours_snapshot": None,
+        "idempotency_key_hash": "a" * 32, "request_fingerprint": "b" * 32,
         "placed_at": "2026-10-04T05:22:00Z", "created_at": "2026-10-04T05:22:00Z", "updated_at": "2026-10-04T05:22:00Z",
     }
     ready = {
@@ -130,7 +135,7 @@ def install_mocks(page, state):
             "/order_recipients": {"id": "r1", "order_id": ORDER_ID, "name": "Trần Bình", "phone": "0909 333 444", "created_at": "2026-10-04T05:22:00Z"},
             "/order_addresses": {"id": "a1", "order_id": ORDER_ID, "address_text": "12 Nguyễn Huệ, Quận 1, TP.HCM", "created_at": "2026-10-04T05:22:00Z"},
             "/deliveries": {"id": "d1", "order_id": ORDER_ID, "status": "PENDING", "requested_date": "2026-10-08", "requested_window": None, "delivery_notes": "Gọi trước", "created_at": "2026-10-04T05:22:00Z", "updated_at": "2026-10-04T05:22:00Z"},
-            "/payments": {"id": "p1", "order_id": ORDER_ID, "method": "BANK_TRANSFER", "status": "UNPAID", "amount": None, "currency": "VND", "created_at": "2026-10-04T05:22:00Z", "updated_at": "2026-10-04T05:22:00Z"},
+            "/payments": {"id": "p1", "order_id": ORDER_ID, "method": "BANK_TRANSFER", "status": "UNPAID", "amount": None, "currency": "VND", "payment_reference": None, "bank_id_snapshot": None, "bank_name_snapshot": None, "account_number_snapshot": None, "account_holder_snapshot": None, "vietqr_template_snapshot": None, "instruction_snapshot": None, "payment_deadline_at": None, "paid_at": None, "created_at": "2026-10-04T05:22:00Z", "updated_at": "2026-10-04T05:22:00Z"},
             "/order_status_events": state["events"],
         }
         for marker, body in table_data.items():
@@ -228,7 +233,13 @@ with sync_playwright() as playwright:
     assert state["list_payloads"][-1]["page_offset"] == 0
 
     page.get_by_role("link", name="Mở đơn LUM-26935E75CB064623").first.click()
-    page.get_by_role("heading", name="LUM-26935E75CB064623").wait_for(state="visible")
+    try:
+        page.get_by_role("heading", name="LUM-26935E75CB064623").wait_for(state="visible")
+    except PlaywrightTimeoutError as error:
+        raise AssertionError(
+            f"Order detail did not load. page={page.locator('body').inner_text()}; "
+            f"page_errors={page_errors}; console_errors={console_errors}"
+        ) from error
     assert page.get_by_text("Pink Garden", exact=True).is_visible()
     assert page.get_by_text("Bó hoa của bạn", exact=True).is_visible()
     assert page.get_by_text("120.045.000đ").is_visible()

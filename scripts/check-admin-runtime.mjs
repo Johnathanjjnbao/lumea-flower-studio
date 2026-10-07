@@ -34,26 +34,25 @@ if (error) throw new Error(`Anonymous read failed unexpectedly (${error.code}).`
 if (expectedState === "private") {
   if (data) throw new Error("Hidden/archived Product is still anonymously readable.");
   console.log("Admin runtime public visibility: PASS (Product is private)");
-  process.exit(0);
+} else {
+  if (!data) throw new Error("Published Product is not anonymously readable.");
+  const locales = new Set(data.product_translations.map((translation) => translation.locale));
+  if (!locales.has("vi") || !locales.has("ko")) throw new Error("Published Product is missing VI/KO translations.");
+  const activeVariant = data.product_variants.find((variant) => variant.active && variant.price_amount === 789000);
+  if (!activeVariant) throw new Error("Expected active 789000 VND variant is missing.");
+  const variantLocales = new Set(activeVariant.product_variant_translations.map((translation) => translation.locale));
+  if (!variantLocales.has("vi") || !variantLocales.has("ko")) throw new Error("Variant is missing VI/KO labels.");
+  if (data.product_occasions.length !== 2 || data.product_tones.filter((relation) => relation.active).length !== 2) {
+    throw new Error("Expected two occasions and two tones.");
+  }
+  const primary = data.product_images.find((image) => image.active && image.role === "PRIMARY");
+  if (!primary?.media_assets || primary.media_assets.storage_bucket !== "public-media" || primary.media_assets.status !== "ACTIVE") {
+    throw new Error("Active public primary media is missing.");
+  }
+  const mediaLocales = new Set(primary.media_assets.media_asset_translations.map((translation) => translation.locale));
+  if (!mediaLocales.has("vi") || !mediaLocales.has("ko")) throw new Error("Primary media is missing VI/KO alt text.");
+  if (data.visibility !== "PUBLISHED" || data.availability !== "AVAILABLE" || !data.same_day_eligible) {
+    throw new Error("Published Product lifecycle/availability values are incorrect.");
+  }
+  console.log("Admin runtime public visibility: PASS (published Product graph is complete)");
 }
-
-if (!data) throw new Error("Published Product is not anonymously readable.");
-const locales = new Set(data.product_translations.map((translation) => translation.locale));
-if (!locales.has("vi") || !locales.has("ko")) throw new Error("Published Product is missing VI/KO translations.");
-const activeVariant = data.product_variants.find((variant) => variant.active && variant.price_amount === 789000);
-if (!activeVariant) throw new Error("Expected active 789000 VND variant is missing.");
-const variantLocales = new Set(activeVariant.product_variant_translations.map((translation) => translation.locale));
-if (!variantLocales.has("vi") || !variantLocales.has("ko")) throw new Error("Variant is missing VI/KO labels.");
-if (data.product_occasions.length !== 2 || data.product_tones.filter((relation) => relation.active).length !== 2) {
-  throw new Error("Expected two occasions and two tones.");
-}
-const primary = data.product_images.find((image) => image.active && image.role === "PRIMARY");
-if (!primary?.media_assets || primary.media_assets.storage_bucket !== "public-media" || primary.media_assets.status !== "ACTIVE") {
-  throw new Error("Active public primary media is missing.");
-}
-const mediaLocales = new Set(primary.media_assets.media_asset_translations.map((translation) => translation.locale));
-if (!mediaLocales.has("vi") || !mediaLocales.has("ko")) throw new Error("Primary media is missing VI/KO alt text.");
-if (data.visibility !== "PUBLISHED" || data.availability !== "AVAILABLE" || !data.same_day_eligible) {
-  throw new Error("Published Product lifecycle/availability values are incorrect.");
-}
-console.log("Admin runtime public visibility: PASS (published Product graph is complete)");

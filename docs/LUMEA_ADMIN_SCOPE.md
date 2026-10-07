@@ -39,6 +39,8 @@ No business-content change should require editing source code or redeploying the
 
 The database/trusted API enforces permissions. Hiding buttons is not authorization. The exact STAFF permissions are an owner decision before Admin implementation.
 
+**V1 release posture:** every Admin route and mutation is `ADMIN`-only. `STAFF` is a reserved database enum value, not an enabled operational role. The later permission ideas in the table above are design options only; SQL regression tests verify that an active `STAFF` profile is neither an Admin nor a catalog manager and cannot list Orders or insert Products.
+
 ## 3. Admin modules
 
 ### 3.1 Products
@@ -256,6 +258,7 @@ Customer selects ready-made/Builder item → Cart revalidates → Checkout recor
 - Limit private Order/custom-request/media access to operational need.
 - Role changes and payment-setting changes are ADMIN-only and auditable.
 - Data export, correction, deletion, retention, backup, and incident procedures are required before accepting production customer data.
+- Until the owner approves a retention policy, collect only what the Order requires, avoid routine exports, restrict access to the owner Admin, cancel QA Orders through the normal history-preserving flow, and review retained Order/recipient/address data periodically against operational and applicable legal/accounting needs. This is an operational recommendation, not a legal-compliance claim.
 
 ## 11. Owner decisions required before dependent implementation
 

@@ -11,9 +11,13 @@ begin
   if has_function_privilege('anon', 'public.create_checkout_order_v12_internal(jsonb, uuid, bigint)', 'execute') then
     raise exception 'anon unexpectedly has legacy checkout execute';
   end if;
-  if not has_function_privilege('anon', 'public.get_checkout_options(public.locale_code)', 'execute')
-    or not has_function_privilege('anon', 'public.create_checkout_order(jsonb, uuid, bigint)', 'execute') then
-    raise exception 'anon is missing the safe checkout boundary';
+  if not has_function_privilege('anon', 'public.get_checkout_options(public.locale_code)', 'execute') then
+    raise exception 'anon is missing the public checkout-options boundary';
+  end if;
+  if has_function_privilege('anon', 'public.create_checkout_order(jsonb, uuid, bigint)', 'execute')
+    or has_function_privilege('authenticated', 'public.create_checkout_order(jsonb, uuid, bigint)', 'execute')
+    or not has_function_privilege('service_role', 'public.create_checkout_order(jsonb, uuid, bigint)', 'execute') then
+    raise exception 'internal checkout RPC grants do not match the Edge Function-only boundary';
   end if;
   if has_function_privilege('anon', 'public.admin_mark_payment_paid(uuid, public.payment_status, text)', 'execute')
     or has_function_privilege('anon', 'public.admin_transition_delivery_status(uuid, public.delivery_status, public.delivery_status, text)', 'execute') then
