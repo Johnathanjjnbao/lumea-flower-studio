@@ -2,6 +2,7 @@
 -- catalog or Orders capability through a helper function or direct RLS path.
 -- The outer transaction always rolls back.
 begin;
+select plan(1);
 
 insert into auth.users (
   instance_id, id, aud, role, email, email_confirmed_at,
@@ -46,4 +47,6 @@ begin
 end;
 $$;
 
+select pass('V1 STAFF remains denied Admin, catalog mutation, and Orders access');
+select * from finish();
 rollback;

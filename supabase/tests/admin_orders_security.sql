@@ -1,5 +1,6 @@
 -- STEP 13 controlled database checks. The outer transaction always rolls back.
 begin;
+select plan(1);
 
 do $$
 begin
@@ -110,4 +111,6 @@ begin
 end;
 $$;
 
+select pass('Admin Orders grants, authorization, atomic history, stale writes, and transitions are controlled');
+select * from finish();
 rollback;

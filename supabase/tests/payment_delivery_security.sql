@@ -1,5 +1,6 @@
 -- STEP 14 controlled database checks. The outer transaction always rolls back.
 begin;
+select plan(1);
 
 do $$
 begin
@@ -87,7 +88,7 @@ begin
      from public.product_tones product_tone join public.tones tone on tone.id = product_tone.tone_id
      where product_tone.product_id = product.id and product_tone.active
        and tone.visibility = 'PUBLISHED' and tone.archived_at is null
-     order by product_tone.sort_order, product_tone.id limit 1)
+     order by product_tone.sort_order, product_tone.tone_id limit 1)
   into qa_product_id, qa_product_code, qa_variant_id, qa_variant_code, qa_subtotal, qa_tone_code
   from public.products product
   join public.product_variants variant on variant.product_id = product.id and variant.active
@@ -204,4 +205,6 @@ begin
 end;
 $$;
 
+select pass('Payment, delivery, money, idempotency, and Admin lifecycle checks are controlled');
+select * from finish();
 rollback;
