@@ -1,5 +1,11 @@
 # Luméa Flower Studio V1 Handoff
 
+## Release status
+
+V1 engineering is complete and released as `v1.0.0`. The production site is [johnathanjjnbao.github.io/lumea-flower-studio](https://johnathanjjnbao.github.io/lumea-flower-studio/). Business launch remains **OWNER CONFIGURATION REVIEW REQUIRED** until the owner confirms the final logistics, public business information and operating policies listed below.
+
+For an external overview, start with [FINAL_PROJECT_SUMMARY.md](./FINAL_PROJECT_SUMMARY.md). For a short evaluation path, use [REVIEWER_GUIDE.md](./REVIEWER_GUIDE.md). This document remains the technical handoff; day-to-day operating instructions remain in [OWNER_RUNBOOK.md](./OWNER_RUNBOOK.md).
+
 ## Scope and release boundary
 
 Luméa V1 is a bilingual, mobile-first flower-ordering storefront with a Supabase-backed Admin. It includes Homepage, Catalog, Product Detail, Builder, Cart, guest Checkout, Turnstile protection, Order confirmation, Admin authentication/recovery, Product/Homepage/Discovery/Builder/Operations/Order management, delivery zones/areas/windows, pickup, same-day settings, payment settings, Site Profile, Visit/Google Maps, VI/KO, responsive layouts, GitHub Pages hosting, and a Supabase database/Storage/Edge Function backend.
