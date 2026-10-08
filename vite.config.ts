@@ -26,11 +26,17 @@ function githubPagesRouteEntries(): Plugin {
         "admin/login",
         "admin/forgot-password",
         "admin/reset-password",
+        "admin/products",
+        "admin/categories",
+        "admin/navigation",
         "admin/orders",
         "ko/admin",
         "ko/admin/login",
         "ko/admin/forgot-password",
         "ko/admin/reset-password",
+        "ko/admin/products",
+        "ko/admin/categories",
+        "ko/admin/navigation",
         "ko/admin/orders",
       ];
 

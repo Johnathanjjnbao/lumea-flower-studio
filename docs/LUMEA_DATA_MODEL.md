@@ -1,6 +1,6 @@
 # Luméa Supabase-Ready Data Model
 
-**Status:** Product/Builder, guest Checkout/Order, Admin Orders, and the Step 14 Payment/Delivery change set are implemented. Production delivery/payment methods remain disabled until the owner saves real business configuration in Admin.
+**Status:** V1 commerce is closed at `v1.0.0`. V2.1 Commerce Foundation adds stable SKU identity, first-class Category data, managed Navigation, and SKU Order snapshots. The V2.1 migrations are implemented on `v2-commercial-readiness` and remain pending deployment.
 
 **Database target:** PostgreSQL through Supabase
 
@@ -90,7 +90,7 @@ erDiagram
 |---|---|---|---|---|---|
 | `products` | Commercial product identity and publication state. | `id`, `stable_code`, `slug`, `type`, `category_id`, `visibility`, `availability`, `same_day_eligible`, `featured`, `bestseller`, `display_order`, timestamps. | N:1 Category; 1:N variants/images/translations/composition; M:N occasions/tones. | Yes | OrderItem stores product identity/name snapshot. |
 | `product_translations` | VI/KO product copy. | `product_id`, `locale`, `name`, `short_description`, `description`, optional `seo_title`, `seo_description`. Unique `(product_id, locale)`. | N:1 Product. | Yes | Product name/copy needed for Order history is copied selectively. |
-| `product_variants` | Ready-made size/offer and its explicit price. | `id`, `product_id`, `stable_code` (`standard`, `large`, `premium` initially), `price_amount`, `visibility`, `display_order`, timestamps. | N:1 Product; referenced by CartItem/OrderItem. | Yes | Variant code/name/price copied to OrderItem. |
+| `product_variants` | Orderable ready-made size/offer and its explicit price. | `id`, `product_id`, immutable globally unique `sku`, `stable_code`, `price_amount`, `active`, `sort_order`, timestamps. | N:1 Product; referenced by CartItem/OrderItem. | Yes | SKU, variant code/name, and price copied to OrderItem. |
 | `product_variant_translations` | Localized variant label/description when business-managed. | `product_variant_id`, `locale`, `name`, `description`. | N:1 ProductVariant. | Yes | Name snapshot copied to OrderItem. |
 | `product_images` | Ordered Product media placement. | `id`, `product_id`, `media_asset_id`, `role` (`PRIMARY`/`GALLERY`), `display_order`, `active`. | N:1 Product; N:1 MediaAsset. | Yes | Optional image key snapshot for receipts/Admin history; not required for price integrity. |
 | `product_composition_items` | Ordered structured composition display. | `id`, `product_id`, optional `flower_stem_id`, `stable_key`, `display_order`, `active`. | N:1 Product; optional N:1 FlowerStem. | Yes | Localized label may be copied into Order item snapshot when operationally useful. |
@@ -110,6 +110,8 @@ Rules:
 
 - `products.slug` is globally unique and canonical for VI/KO in MVP.
 - A published Product references a published Category; Category labels do not act as identity.
+- Category is the one canonical Product classification, not an Occasion, featured group, or Navigation membership. If curated Collections become a confirmed requirement, model them separately as M:N rather than changing this canonical N:1 relation.
+- Every orderable ProductVariant has one globally unique uppercase SKU. SKU and stable codes are immutable after creation; localized Product/variant names may change without changing commerce identity.
 - `READY_MADE_BOUQUET` must have at least one published variant before Product publication.
 - `FLORIST_CHOICE` also uses explicit priced variants/budget choices plus tone and occasion selections, but never individual FlowerStem selection. It uses the `READY_MADE` Cart/Order discriminator because it is a Product-backed item, not a Builder configuration.
 - The Product domain exposes a base/starting price derived from its lowest or configured default published variant; it does not duplicate variant price in a second mutable Product column.
@@ -164,7 +166,7 @@ Cart ownership rules:
 | Table / entity | Purpose | Important fields | Relationships | Admin editable? | Snapshot required? |
 |---|---|---|---|---|---|
 | `orders` | Commercial aggregate and totals. | `id`, unique `order_number`, optional `customer_id`, `locale`, `status`, `fulfillment_type`, buyer name/phone/email snapshots, `is_surprise`, `currency`, `subtotal_amount`, `delivery_fee_amount`, `discount_amount` default 0, `total_amount`, `idempotency_key_hash`, `placed_at`, timestamps. | 1:N items/payments/status events; 1:1 recipient; optional 1:1 address/delivery. | Status/operational notes through validated commands. | Yes: all buyer/totals/fulfillment fields are Order-time facts. |
-| `order_items` | Immutable ready-made or custom line. | `id`, `order_id`, `item_type`, nullable Product/Variant/Configuration IDs, `quantity`, `unit_price_snapshot`, `line_total`, product and variant code/name snapshots, tone snapshot, `card_message`, optional bounded `configuration_summary_snapshot`. | N:1 Order; optional source references. | No content edits after placement. | Yes. |
+| `order_items` | Immutable ready-made or custom line. | `id`, `order_id`, `item_type`, nullable Product/Variant/Configuration IDs, `quantity`, `unit_price_snapshot`, `line_total`, Product/variant code/name snapshots, nullable `sku_snapshot`, tone snapshot, `card_message`, optional bounded `configuration_summary_snapshot`. | N:1 Order; optional source references. | No content edits after placement. | Yes. Historical V1 ready-made rows keep `sku_snapshot = NULL` because V1 did not capture SKU; new V2 ready-made rows require it before commit. |
 | `order_recipients` | Order-specific recipient snapshot. | `id`, `order_id`, `name`, `phone`, `delivery_notes`. | 1:1 Order. | Limited correction with audit event. | Yes. |
 | `order_addresses` | Delivery address snapshot, not a reusable customer address. | `id`, `order_id`, `address_text`, optional `ward`, `district`, `city`, nullable source `delivery_zone_id`, `zone_name_snapshot`, `notes`. | 1:1 delivery Order; optional N:1 DeliveryZone. | Limited correction with audit event. | Yes. |
 | `order_status_events` | Audit trail for valid Order transitions. | `id`, `order_id`, `from_status`, `to_status`, optional `actor_admin_id`, reason/note, `created_at`. | N:1 Order/AdminProfile. | Created only through transition command. | Event is immutable. |
@@ -210,6 +212,8 @@ There is no Delivery row or delivery-address row for `PICKUP`. Pickup details se
 | `homepage_section_translations` | VI/KO eyebrow/title/body/CTA copy. | `homepage_section_id`, `locale`, typed text fields appropriate to the fixed section contract. | N:1 HomepageSection. | Yes | No. |
 | `homepage_section_media` | Ordered/role-based section imagery. | `id`, `homepage_section_id`, `media_asset_id`, `role`, `display_order`, `active`. | N:1 section and MediaAsset. | Yes | No. |
 | `homepage_product_slots` | Curated Best Seller/featured placements. | `homepage_section_id`, `product_id`, `display_order`, `active`. | N:1 section and Product. | Yes | No. |
+| `navigation_items` | Ordered storefront primary menu. | `id`, immutable `stable_code`, bounded `destination_type`, optional `category_id` or HTTPS `external_url`, `active`, `sort_order`, timestamps. | Optional N:1 Category; 1:N translations. | ADMIN only | No. |
+| `navigation_item_translations` | VI/KO menu labels. | `navigation_item_id`, `locale`, `label`. Unique `(navigation_item_id, locale)`. | N:1 NavigationItem. | ADMIN only | No. |
 | `gallery_items` | Managed gallery/social proof media. | `id`, `media_asset_id`, optional destination URL, `visibility`, `display_order`, timestamps. | N:1 MediaAsset; 1:N translations if captions are used. | Yes | No. |
 | `site_profile` | Reserved normalization target for future global business identity; it is not the current Homepage Visit source. | phone, email, address components, map URL/embed config, timezone, timestamps. | 1:N translations/hours/social links. | Yes when implemented. | Selected facts may be copied to Order/payment instructions when operationally relevant. |
 | `site_profile_translations` | VI/KO studio/address/help copy. | `site_profile_id`, `locale`, studio name/display address/help text. | N:1 SiteProfile. | Yes | No. |

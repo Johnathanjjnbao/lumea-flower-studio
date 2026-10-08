@@ -21,12 +21,14 @@ export function checkoutSubtotal(lines: readonly CartLine[]) {
 
 export function mapCartLineToCheckoutItem(line: CartLine): CheckoutPayloadItem {
   if (line.type === "READY_MADE_PRODUCT") {
+    if (!line.sku) throw new Error("CHECKOUT_SKU_MISSING");
     return {
       type: line.type,
       product_id: line.productId,
       product_code: line.productCode,
       variant_id: line.variantId,
       variant_code: line.variantCode,
+      sku: line.sku,
       tone_code: line.toneCode,
       quantity: line.quantity,
     };

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Locale } from "../../types/content";
-import type { CatalogProductRecord } from "./data/catalogRepository";
+import type { CatalogCategoryRecord, CatalogProductRecord } from "./data/catalogRepository";
 import {
   invalidateCatalogCache,
+  loadPublishedCategories,
   loadPublishedCatalog,
   loadPublishedProduct,
 } from "./data/storefrontCatalog";
@@ -43,6 +44,11 @@ function useCatalogRequest<T>(request: () => Promise<T>, requestKey: string) {
 export function usePublishedCatalog(locale: Locale) {
   const request = useCallback(() => loadPublishedCatalog(locale), [locale]);
   return useCatalogRequest<CatalogProductRecord[]>(request, locale);
+}
+
+export function usePublishedCategories(locale: Locale) {
+  const request = useCallback(() => loadPublishedCategories(locale), [locale]);
+  return useCatalogRequest<CatalogCategoryRecord[]>(request, `categories:${locale}`);
 }
 
 export function usePublishedProduct(slug: string, locale: Locale) {

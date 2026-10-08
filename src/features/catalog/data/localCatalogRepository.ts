@@ -27,6 +27,7 @@ function mapLocalProducts(locale: Locale): CatalogProductRecord[] {
     const variants = product.sizes.map((size, variantIndex) => ({
       id: `${product.id}:${size.id}`,
       stableCode: size.id,
+      sku: `LUM-${product.id}-${size.id}`.toUpperCase(),
       name: dictionary.product.sizes[size.id].label,
       description: dictionary.product.sizes[size.id].description,
       priceAmount: product.basePrice + size.priceDelta,
@@ -50,6 +51,14 @@ function mapLocalProducts(locale: Locale): CatalogProductRecord[] {
       seoTitle: null,
       seoDescription: null,
       startingPriceAmount: Math.min(...variants.map((variant) => variant.priceAmount)),
+      category: {
+        id: "local-bouquets",
+        stableCode: "bouquets",
+        slug: "bouquets",
+        name: locale === "ko" ? "꽃다발" : "Hoa bó",
+        description: null,
+        sortOrder: 10,
+      },
       variants,
       images: product.images.map((image, imageIndex) => ({
         id: `${product.id}:image:${imageIndex}`,
@@ -76,6 +85,17 @@ function mapLocalProducts(locale: Locale): CatalogProductRecord[] {
 }
 
 export class LocalCatalogRepository implements CatalogRepository {
+  async listPublishedCategories(locale: Locale) {
+    return [{
+      id: "local-bouquets",
+      stableCode: "bouquets",
+      slug: "bouquets",
+      name: locale === "ko" ? "꽃다발" : "Hoa bó",
+      description: null,
+      sortOrder: 10,
+    }];
+  }
+
   async listPublishedProducts(locale: Locale, filters?: CatalogProductFilters) {
     return mapLocalProducts(locale).filter((product) => matchesFilters(product, filters));
   }

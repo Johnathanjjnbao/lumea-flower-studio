@@ -120,7 +120,8 @@ Trusted operations own:
 
 | Concern | Authoritative source | Consumer notes |
 |---|---|---|
-| Product, variant, taxonomy, Builder options | Postgres | Storefront receives only published/active fields. |
+| Product, variant/SKU, Category, taxonomy, Builder options | Postgres | Storefront receives only published/active fields. |
+| Primary Navigation labels, order, state, and typed destinations | Postgres | React maps bounded destination types to routes; only HTTPS external URLs are accepted. |
 | Product and homepage images | Storage + `media_assets` | Public delivery may use cached URLs derived from bucket/key. |
 | Custom-request reference images | Private Storage + `media_assets` | Signed access for authorized staff only. |
 | Interface labels and layout | Versioned React/i18n code | Stable chrome is not business content. |
@@ -135,7 +136,7 @@ Trusted operations own:
 
 ### Catalog
 
-Owns ready-made, Florist's Choice, and configurable Product identities plus ProductVariant, ProductImage, Category, Occasion, Tone, composition, visibility, availability, and merchandising relations. Visibility and availability are deliberately separate.
+Owns ready-made, Florist's Choice, and configurable Product identities plus ProductVariant, immutable SKU, ProductImage, Category, Occasion, Tone, composition, visibility, availability, and merchandising relations. Product belongs to exactly one canonical Category because Category expresses product classification, not campaign placement. Occasion remains an independent M:N discovery taxonomy; featured/bestseller remain flags; a future curated Collection would be a separate M:N aggregate. Product metadata, its Category, translations, Variants/SKUs, Occasions, and Tones are persisted through one ADMIN-only transactional command. Visibility and availability are deliberately separate.
 
 ### Bouquet Builder
 
@@ -143,11 +144,11 @@ Owns FlowerStem, WrappingOption, WrappingVariant, compatibility, BouquetConfigur
 
 ### Cart and Checkout
 
-Owns one Cart and CartItem model for both `READY_MADE` and `CUSTOM_BOUQUET`. Checkout collects buyer, recipient, fulfillment, delivery, card message, and payment choices without requiring an account.
+Owns one Cart and CartItem model for both `READY_MADE` and `CUSTOM_BOUQUET`. Ready-made lines carry Product ID/code, Variant ID/code, and authoritative SKU; legacy V1 carts without SKU are read and upgraded during catalog reconciliation. Checkout collects buyer, recipient, fulfillment, delivery, card message, and payment choices without requiring an account.
 
 ### Order
 
-Owns immutable commercial history: Order, OrderItem, item/configuration snapshots, totals, buyer snapshot, recipient/address snapshot, and status events.
+Owns immutable commercial history: Order, OrderItem, item/configuration snapshots, totals, buyer snapshot, recipient/address snapshot, and status events. Historical V1 Order items do not fabricate an SKU from current catalog data; their SKU snapshot remains `NULL` and Admin displays an em dash. New V2 ready-made rows must contain the SKU snapshot before commit.
 
 ### Payment
 

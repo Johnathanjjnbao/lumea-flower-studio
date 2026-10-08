@@ -18,6 +18,7 @@ export interface ReadyMadeCartItem extends CartItemBase {
   productSlug: string;
   variantId: string;
   variantCode: string;
+  sku: string | null;
   toneCode: string | null;
   display: {
     productName: string;

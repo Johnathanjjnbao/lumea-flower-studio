@@ -18,8 +18,9 @@ const PRODUCT_SELECT = `
   featured,
   bestseller,
   sort_order,
+  categories(id, stable_code, slug, sort_order, category_translations(locale, name, description)),
   product_translations(locale, name, short_description, description, composition, seo_title, seo_description),
-  product_variants(id, stable_code, price_amount, active, sort_order, product_variant_translations(locale, name, description)),
+  product_variants(id, stable_code, sku, price_amount, active, sort_order, product_variant_translations(locale, name, description)),
   product_images(id, role, active, sort_order, media_assets(id, storage_bucket, storage_path, access, status, media_asset_translations(locale, alt_text, caption))),
   product_occasions(sort_order, occasions(stable_code, visibility, archived_at, sort_order, occasion_translations(locale, name, description))),
   product_tones(active, sort_order, tones(stable_code, swatch_value, visibility, archived_at, tone_translations(locale, name, description)))
@@ -36,6 +37,7 @@ function pickTranslation<T extends TranslationRow>(translations: T[], locale: Lo
 function matchesFilters(product: CatalogProductRecord, filters?: CatalogProductFilters) {
   if (!filters) return true;
   if (filters.availability && product.availability !== filters.availability) return false;
+  if (filters.categoryCode && product.category.stableCode !== filters.categoryCode) return false;
   if (filters.sameDayEligible !== undefined && product.sameDayEligible !== filters.sameDayEligible) return false;
   if (filters.occasionCode && !product.occasionCodes.includes(filters.occasionCode)) return false;
   return true;
@@ -65,7 +67,10 @@ function mapProduct(
   locale: Locale,
 ): CatalogProductRecord | null {
   const translation = pickTranslation(product.product_translations, locale);
-  if (!translation) return null;
+  const categoryTranslation = product.categories
+    ? pickTranslation(product.categories.category_translations, locale)
+    : null;
+  if (!translation || !product.categories || !categoryTranslation) return null;
 
   const variants = product.product_variants
     .filter((variant) => variant.active)
@@ -75,6 +80,7 @@ function mapProduct(
       return {
         id: variant.id,
         stableCode: variant.stable_code,
+        sku: variant.sku,
         name: variantTranslation.name,
         description: variantTranslation.description,
         priceAmount: variant.price_amount,
@@ -165,6 +171,14 @@ function mapProduct(
     seoTitle: translation.seo_title,
     seoDescription: translation.seo_description,
     startingPriceAmount: Math.min(...variants.map((variant) => variant.priceAmount)),
+    category: {
+      id: product.categories.id,
+      stableCode: product.categories.stable_code,
+      slug: product.categories.slug,
+      name: categoryTranslation.name,
+      description: categoryTranslation.description,
+      sortOrder: product.categories.sort_order,
+    },
     variants,
     images,
     occasionCodes: occasions.map((occasion) => occasion.stableCode),
@@ -178,6 +192,27 @@ export class SupabaseCatalogRepository implements CatalogRepository {
 
   private get client() {
     return this.providedClient ?? requirePublicSupabaseClient();
+  }
+
+  async listPublishedCategories(locale: Locale) {
+    const { data, error } = await this.client
+      .from("categories")
+      .select("id, stable_code, slug, sort_order, category_translations(locale, name, description)")
+      .eq("visibility", "PUBLISHED")
+      .is("archived_at", null)
+      .order("sort_order", { ascending: true });
+    if (error) throw new Error(`Unable to load catalog categories (${error.code}).`);
+    return (data ?? []).map((category) => {
+      const translation = pickTranslation(category.category_translations, locale);
+      return translation ? {
+        id: category.id,
+        stableCode: category.stable_code,
+        slug: category.slug,
+        name: translation.name,
+        description: translation.description,
+        sortOrder: category.sort_order,
+      } : null;
+    }).filter((category): category is NonNullable<typeof category> => Boolean(category));
   }
 
   async listPublishedProducts(locale: Locale, filters?: CatalogProductFilters) {

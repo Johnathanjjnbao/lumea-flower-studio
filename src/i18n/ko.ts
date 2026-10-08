@@ -83,6 +83,8 @@ export const ko = {
     homepage: "Homepage",
     siteSettings: "스튜디오 정보",
     products: "상품",
+    categories: "카테고리",
+    navigation: "내비게이션",
     builderFlowers: "꽃 관리",
     wrappings: "포장지",
     viewSite: "웹사이트 보기 ↗",

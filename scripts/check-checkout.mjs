@@ -22,6 +22,7 @@ try {
     productSlug: "pink-garden",
     variantId: "22222222-2222-4222-8222-222222222222",
     variantCode: "standard",
+    sku: "LUM-PINK-GARDEN-STANDARD",
     toneCode: "pink",
     display: { productName: "Pink Garden", variantName: "Standard", toneName: "Pink", imageUrl: null, imageAlt: "Pink Garden" },
     validation: { state: "valid" },
@@ -78,6 +79,7 @@ try {
     product_code: readyLine.productCode,
     variant_id: readyLine.variantId,
     variant_code: readyLine.variantCode,
+    sku: readyLine.sku,
     tone_code: readyLine.toneCode,
     quantity: 2,
   });
@@ -93,6 +95,7 @@ try {
   assert.equal(domain.inspectCheckoutLines([unavailable]).hasUnavailableItems, true);
   assert.equal(domain.checkoutSubtotal([unavailable]), 0, "unavailable items must never contribute to reviewed subtotal");
   assert.throws(() => domain.createCheckoutPayload(baseForm, [unavailable], "vi", 30_000), /CHECKOUT_CART_INVALID/);
+  assert.throws(() => domain.createCheckoutPayload(baseForm, [{ ...readyLine, sku: null }], "vi", 30_000), /CHECKOUT_SKU_MISSING/);
 
   assert.equal(receiptModule.isOrderReceipt({ version: 1 }), false, "malformed receipt must fail safely");
   assert.equal(receiptModule.isOrderReceipt({

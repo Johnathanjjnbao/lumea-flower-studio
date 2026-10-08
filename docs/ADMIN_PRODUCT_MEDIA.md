@@ -45,7 +45,7 @@ Homepage copy, media, Gallery, and Best Sellers operations are documented in `do
 9. Edit and save VI/KO alt text, choose one primary image, and reorder gallery items.
 10. Publish only when readiness checks pass. Hide removes the Product from public RLS reads; Archive is non-destructive.
 
-There is no autosave. Success messages appear only after Supabase confirms the mutation. If a multi-step draft save stops partway, the UI reports an error; the partial record remains a safe draft and can be retried. An edited published Product is first moved to `HIDDEN` and restored to `PUBLISHED` only after all related writes pass, so failures are closed rather than exposing a partially updated Product. Publish is always the final mutation after related content has saved.
+There is no autosave. Success messages appear only after Supabase confirms the mutation. Product metadata, canonical Category, VI/KO copy, Variants/SKUs, Occasions, and Tones are committed by one ADMIN-only database transaction; any failed child write rolls back the complete save. An edited published Product is moved to `HIDDEN` and restored to `PUBLISHED` inside that same transaction, so a failed mutation never exposes or preserves a partial Product update. Publish remains an explicit lifecycle mutation after the atomic metadata save. Media upload is a separate compensating workflow because object Storage cannot join the Postgres transaction.
 
 Removing an image deactivates the Product relation but deliberately keeps the Storage object and metadata until a later owner-approved cleanup policy exists.
 

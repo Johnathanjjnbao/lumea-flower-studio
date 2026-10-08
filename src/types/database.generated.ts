@@ -121,6 +121,77 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          id: string
+          published_at: string | null
+          slug: string
+          sort_order: number
+          stable_code: string
+          updated_at: string
+          visibility: Database["public"]["Enums"]["visibility_status"]
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          id?: string
+          published_at?: string | null
+          slug: string
+          sort_order?: number
+          stable_code: string
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["visibility_status"]
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          id?: string
+          published_at?: string | null
+          slug?: string
+          sort_order?: number
+          stable_code?: string
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["visibility_status"]
+        }
+        Relationships: []
+      }
+      category_translations: {
+        Row: {
+          category_id: string
+          created_at: string
+          description: string | null
+          locale: Database["public"]["Enums"]["locale_code"]
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          description?: string | null
+          locale: Database["public"]["Enums"]["locale_code"]
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          locale?: Database["public"]["Enums"]["locale_code"]
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_translations_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkout_throttle_buckets: {
         Row: {
           attempt_count: number
@@ -926,6 +997,82 @@ export type Database = {
           },
         ]
       }
+      navigation_item_translations: {
+        Row: {
+          created_at: string
+          label: string
+          locale: Database["public"]["Enums"]["locale_code"]
+          navigation_item_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          label: string
+          locale: Database["public"]["Enums"]["locale_code"]
+          navigation_item_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          label?: string
+          locale?: Database["public"]["Enums"]["locale_code"]
+          navigation_item_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "navigation_item_translations_navigation_item_id_fkey"
+            columns: ["navigation_item_id"]
+            isOneToOne: false
+            referencedRelation: "navigation_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      navigation_items: {
+        Row: {
+          active: boolean
+          category_id: string | null
+          created_at: string
+          destination_type: Database["public"]["Enums"]["navigation_destination_type"]
+          external_url: string | null
+          id: string
+          sort_order: number
+          stable_code: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category_id?: string | null
+          created_at?: string
+          destination_type: Database["public"]["Enums"]["navigation_destination_type"]
+          external_url?: string | null
+          id?: string
+          sort_order?: number
+          stable_code: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category_id?: string | null
+          created_at?: string
+          destination_type?: Database["public"]["Enums"]["navigation_destination_type"]
+          external_url?: string | null
+          id?: string
+          sort_order?: number
+          stable_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "navigation_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       occasion_translations: {
         Row: {
           created_at: string
@@ -1069,6 +1216,7 @@ export type Database = {
           product_name_snapshot: string
           product_slug_snapshot: string | null
           quantity: number
+          sku_snapshot: string | null
           source_product_id: string | null
           source_tone_id: string | null
           source_variant_id: string | null
@@ -1092,6 +1240,7 @@ export type Database = {
           product_name_snapshot: string
           product_slug_snapshot?: string | null
           quantity: number
+          sku_snapshot?: string | null
           source_product_id?: string | null
           source_tone_id?: string | null
           source_variant_id?: string | null
@@ -1115,6 +1264,7 @@ export type Database = {
           product_name_snapshot?: string
           product_slug_snapshot?: string | null
           quantity?: number
+          sku_snapshot?: string | null
           source_product_id?: string | null
           source_tone_id?: string | null
           source_variant_id?: string | null
@@ -1255,6 +1405,7 @@ export type Database = {
           buyer_name: string
           buyer_phone: string
           card_message: string | null
+          commerce_request_fingerprint: string | null
           created_at: string
           currency: string
           delivery_area_code_snapshot: string | null
@@ -1289,6 +1440,7 @@ export type Database = {
           buyer_name: string
           buyer_phone: string
           card_message?: string | null
+          commerce_request_fingerprint?: string | null
           created_at?: string
           currency?: string
           delivery_area_code_snapshot?: string | null
@@ -1323,6 +1475,7 @@ export type Database = {
           buyer_name?: string
           buyer_phone?: string
           card_message?: string | null
+          commerce_request_fingerprint?: string | null
           created_at?: string
           currency?: string
           delivery_area_code_snapshot?: string | null
@@ -1764,6 +1917,7 @@ export type Database = {
           price_amount: number
           product_id: string
           sort_order: number
+          sku: string
           stable_code: string
           updated_at: string
         }
@@ -1774,6 +1928,7 @@ export type Database = {
           price_amount: number
           product_id: string
           sort_order?: number
+          sku: string
           stable_code: string
           updated_at?: string
         }
@@ -1784,6 +1939,7 @@ export type Database = {
           price_amount?: number
           product_id?: string
           sort_order?: number
+          sku?: string
           stable_code?: string
           updated_at?: string
         }
@@ -1802,6 +1958,7 @@ export type Database = {
           archived_at: string | null
           availability: Database["public"]["Enums"]["availability_status"]
           bestseller: boolean
+          category_id: string
           created_at: string
           featured: boolean
           id: string
@@ -1818,6 +1975,7 @@ export type Database = {
           archived_at?: string | null
           availability?: Database["public"]["Enums"]["availability_status"]
           bestseller?: boolean
+          category_id: string
           created_at?: string
           featured?: boolean
           id?: string
@@ -1834,6 +1992,7 @@ export type Database = {
           archived_at?: string | null
           availability?: Database["public"]["Enums"]["availability_status"]
           bestseller?: boolean
+          category_id?: string
           created_at?: string
           featured?: boolean
           id?: string
@@ -1846,7 +2005,15 @@ export type Database = {
           updated_at?: string
           visibility?: Database["public"]["Enums"]["visibility_status"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_profile: {
         Row: {
@@ -2166,6 +2333,54 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_save_product_atomic: {
+        Args: { product_payload: Json }
+        Returns: string
+      }
+      admin_archive_category: {
+        Args: { target_id: string }
+        Returns: undefined
+      }
+      admin_delete_navigation_item: {
+        Args: { target_id: string }
+        Returns: undefined
+      }
+      admin_reorder_categories: {
+        Args: { target_ids: string[] }
+        Returns: undefined
+      }
+      admin_reorder_navigation: {
+        Args: { target_ids: string[] }
+        Returns: undefined
+      }
+      admin_save_category: {
+        Args: {
+          target_active: boolean
+          target_description_ko?: string
+          target_description_vi?: string
+          target_id: string | null
+          target_name_ko: string
+          target_name_vi: string
+          target_slug: string
+          target_sort_order: number
+          target_stable_code: string
+        }
+        Returns: string
+      }
+      admin_save_navigation_item: {
+        Args: {
+          target_active: boolean
+          target_category_id: string | null
+          target_destination_type: Database["public"]["Enums"]["navigation_destination_type"]
+          target_external_url: string | null
+          target_id: string | null
+          target_label_ko: string
+          target_label_vi: string
+          target_sort_order: number
+          target_stable_code: string
+        }
+        Returns: string
+      }
       admin_list_orders: {
         Args: {
           delivery_date_from?: string
@@ -2442,6 +2657,16 @@ export type Database = {
       locale_code: "vi" | "ko"
       media_access: "PUBLIC" | "PRIVATE"
       media_status: "ACTIVE" | "ARCHIVED"
+      navigation_destination_type:
+        | "HOME"
+        | "CATALOG"
+        | "CATEGORY"
+        | "BUILDER"
+        | "OCCASIONS"
+        | "SAME_DAY"
+        | "ABOUT"
+        | "VISIT"
+        | "EXTERNAL"
       order_item_type: "READY_MADE_PRODUCT" | "CUSTOM_BOUQUET"
       order_status:
         | "PENDING"
@@ -2604,6 +2829,17 @@ export const Constants = {
       locale_code: ["vi", "ko"],
       media_access: ["PUBLIC", "PRIVATE"],
       media_status: ["ACTIVE", "ARCHIVED"],
+      navigation_destination_type: [
+        "HOME",
+        "CATALOG",
+        "CATEGORY",
+        "BUILDER",
+        "OCCASIONS",
+        "SAME_DAY",
+        "ABOUT",
+        "VISIT",
+        "EXTERNAL",
+      ],
       order_item_type: ["READY_MADE_PRODUCT", "CUSTOM_BOUQUET"],
       order_status: [
         "PENDING",

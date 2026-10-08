@@ -20,6 +20,8 @@ import { AdminOrderDetailPage } from "./pages/AdminOrderDetailPage";
 import { AdminOperationsPage } from "./pages/AdminOperationsPage";
 import { AdminSiteSettingsPage } from "./pages/AdminSiteSettingsPage";
 import { AdminDiscoveryPage } from "./pages/AdminDiscoveryPage";
+import { AdminCategoriesPage } from "./categories/AdminCategoriesPage";
+import { AdminNavigationPage } from "./navigation/AdminNavigationPage";
 
 export default function AdminRoutes() {
   const { path } = useI18n();
@@ -40,6 +42,8 @@ export default function AdminRoutes() {
           <Route path="products" element={<AdminProductsPage />} />
           <Route path="products/new" element={<AdminProductEditorPage />} />
           <Route path="products/:id" element={<AdminProductEditorPage />} />
+          <Route path="categories" element={<AdminCategoriesPage />} />
+          <Route path="navigation" element={<AdminNavigationPage />} />
           <Route path="builder/flowers" element={<AdminBuilderFlowersPage />} />
           <Route path="builder/flowers/new" element={<AdminBuilderFlowerEditorPage />} />
           <Route path="builder/flowers/:id" element={<AdminBuilderFlowerEditorPage />} />

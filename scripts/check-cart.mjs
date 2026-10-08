@@ -14,12 +14,13 @@ import { createBouquetResult } from "../src/features/bouquetBuilder/pricing.ts";
 
 const product = {
   id: "product-1", stableCode: "pink-garden", slug: "pink-garden", productType: "READY_MADE_BOUQUET",
+  category: { id: "category-1", stableCode: "bouquets", slug: "bouquets", name: "Hoa bó", description: null, sortOrder: 0 },
   availability: "AVAILABLE", sameDayEligible: true, featured: true, bestseller: true, sortOrder: 0,
   name: "Pink Garden", shortDescription: null, description: null, composition: [], seoTitle: null, seoDescription: null,
   startingPriceAmount: 550_000,
   variants: [
-    { id: "variant-1", stableCode: "standard", name: "Standard", description: null, priceAmount: 550_000, sortOrder: 0 },
-    { id: "variant-2", stableCode: "large", name: "Large", description: null, priceAmount: 750_000, sortOrder: 1 },
+    { id: "variant-1", stableCode: "standard", sku: "LUM-PINK-GARDEN-STANDARD", name: "Standard", description: null, priceAmount: 550_000, sortOrder: 0 },
+    { id: "variant-2", stableCode: "large", sku: "LUM-PINK-GARDEN-LARGE", name: "Large", description: null, priceAmount: 750_000, sortOrder: 1 },
   ],
   images: [{ id: "image-1", url: "https://example.test/pink.jpg", altText: "Pink bouquet", caption: null, role: "PRIMARY", sortOrder: 0 }],
   occasionCodes: [], occasions: [], tones: [{ stableCode: "pink", name: "Pink", swatchValue: "#D9A4AC", sortOrder: 0 }],
@@ -77,6 +78,14 @@ const storage = { getItem: (key) => memory.get(key) ?? null, setItem: (key, valu
 writeCart(lines.map(({ validation: _validation, ...item }) => item), storage);
 assert.equal(readCart(storage).length, 3, "persisted cart should restore");
 assert.ok(memory.has(CART_STORAGE_KEY));
+const legacyReady = { ...ready };
+delete legacyReady.sku;
+const restoredLegacyReady = restoreCart(JSON.stringify({ version: 1, items: [legacyReady] }))[0];
+assert.equal(restoredLegacyReady?.type, "READY_MADE_PRODUCT");
+assert.equal(restoredLegacyReady?.sku, null, "V1 carts without SKU must remain readable");
+const upgradedLegacyReady = reconcileCartItems([restoredLegacyReady], [product], builderCatalog)[0];
+assert.equal(upgradedLegacyReady?.type, "READY_MADE_PRODUCT");
+assert.equal(upgradedLegacyReady?.sku, "LUM-PINK-GARDEN-STANDARD", "catalog reconciliation must upgrade legacy carts with the authoritative SKU");
 assert.deepEqual(restoreCart("not-json"), []);
 assert.deepEqual(restoreCart(JSON.stringify({ version: 999, items: [] })), []);
 assert.deepEqual(restoreCart(JSON.stringify({ version: 1, items: [{ type: "READY_MADE_PRODUCT", quantity: "hacked" }] })), []);

@@ -51,7 +51,7 @@ export function AdminProductsPage() {
       ) : (
         <div className="admin-product-table-wrap"><table className="admin-product-table"><thead><tr><th>Sản phẩm</th><th>Trạng thái</th><th>Giá</th><th>Cập nhật</th><th><span className="sr-only">Thao tác</span></th></tr></thead><tbody>{products.map((product) => (
           <tr key={product.id}>
-            <td><div className="admin-product-cell">{product.thumbnailUrl ? <img src={product.thumbnailUrl} alt="" /> : <span className="admin-product-placeholder" aria-hidden="true">L</span>}<div><strong>{product.name}</strong><small>/{product.slug}</small><small>{product.productType.replaceAll("_", " ")} {product.sameDayEligible ? "· Same-day" : ""}</small></div></div></td>
+            <td><div className="admin-product-cell">{product.thumbnailUrl ? <img src={product.thumbnailUrl} alt="" /> : <span className="admin-product-placeholder" aria-hidden="true">L</span>}<div><strong>{product.name}</strong><small>/{product.slug}</small><small>{product.categoryName} · {product.productType.replaceAll("_", " ")} {product.sameDayEligible ? "· Same-day" : ""}</small></div></div></td>
             <td><span className={`admin-status admin-status--${product.visibility.toLowerCase()}`}>{product.visibility}</span><small className="admin-table-secondary">{product.availability}</small></td>
             <td className="admin-price">{priceSummary(product)}</td>
             <td><time dateTime={product.updatedAt}>{new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short" }).format(new Date(product.updatedAt))}</time></td>

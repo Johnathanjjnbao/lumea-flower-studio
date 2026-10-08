@@ -11,6 +11,8 @@
     "check:cart": "node --experimental-strip-types scripts/check-cart.mjs",
     "check:checkout": "node scripts/check-checkout.mjs",
     "check:checkout-runtime": "node scripts/check-checkout-runtime.mjs",
+    "check:v2-commerce": "node scripts/check-v2-commerce.mjs",
+    "check:v2-commerce-browser": "python scripts/check-v2-commerce-browser.py",
     "check:step15": "node --experimental-strip-types scripts/check-step15.mjs",
     "check:ci": "node scripts/check-ci.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",

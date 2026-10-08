@@ -7,6 +7,7 @@ export type CatalogAvailabilityId = "available" | "seasonal";
 
 export interface CatalogDiscoveryState {
   query: string;
+  category: string | null;
   occasion: string | null;
   budget: string | null;
   sameDay: boolean;
@@ -30,13 +31,15 @@ export function getRepresentedOccasions(productList: CatalogProductRecord[]) {
   return [...represented.values()].sort((left, right) => left.sortOrder - right.sortOrder);
 }
 
-export function readCatalogDiscoveryState(searchParams: URLSearchParams, validOccasionIds: Set<string>, validBudgetIds: Set<string>): CatalogDiscoveryState {
+export function readCatalogDiscoveryState(searchParams: URLSearchParams, validOccasionIds: Set<string>, validBudgetIds: Set<string>, validCategoryIds: Set<string> = new Set()): CatalogDiscoveryState {
   const occasion = searchParams.get("occasion");
+  const category = searchParams.get("category");
   const budget = searchParams.get("budget");
   const availability = searchParams.get("availability") as CatalogAvailabilityId | null;
 
   return {
     query: searchParams.get("q") ?? "",
+    category: category && validCategoryIds.has(category) ? category : null,
     occasion: occasion && validOccasionIds.has(occasion) ? occasion : null,
     budget: budget && validBudgetIds.has(budget) ? budget : null,
     sameDay: searchParams.get("sameDay") === "true",
@@ -74,6 +77,7 @@ export function filterCatalogProducts(
         product.slug,
         product.shortDescription ?? "",
         product.description ?? "",
+        product.category.name,
         ...product.composition,
         ...product.occasions.map((occasion) => occasion.name),
       ].join(" "), locale);
@@ -81,6 +85,7 @@ export function filterCatalogProducts(
     }
 
     if (state.occasion && !product.occasionCodes.includes(state.occasion)) return false;
+    if (state.category && product.category.slug !== state.category && product.category.stableCode !== state.category) return false;
     const budget = budgetRanges.find((range) => range.stableCode === state.budget);
     if (state.budget && (!budget || !matchesBudget(product.startingPriceAmount, budget))) return false;
     if (state.sameDay && !product.sameDayEligible) return false;

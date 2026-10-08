@@ -10,6 +10,7 @@ const checks = [
   "check:admin-orders",
   "check:homepage-visit",
   "check:step15",
+  "check:v2-commerce",
   "typecheck",
 ];
 

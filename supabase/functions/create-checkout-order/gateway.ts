@@ -137,7 +137,7 @@ export function evaluateSiteverify(result: SiteverifyResponse, expectedHostname:
 export function classifyOrderError(message: string): PublicErrorCode {
   if (message.includes("CHECKOUT_REVIEW_CHANGED") || message.includes("CHECKOUT_DELIVERY_REVIEW_CHANGED")) return "REVIEW_CHANGED";
   if (message.includes("UNAVAILABLE")) {
-    if (message.includes("ITEM") || message.includes("FLOWER") || message.includes("WRAPPING")) return "ITEM_UNAVAILABLE";
+    if (message.includes("ITEM") || message.includes("SKU") || message.includes("FLOWER") || message.includes("WRAPPING")) return "ITEM_UNAVAILABLE";
     return "FULFILLMENT_UNAVAILABLE";
   }
   if (message.includes("CHECKOUT_IDEMPOTENCY_REUSED")) return "IDEMPOTENCY_CONFLICT";

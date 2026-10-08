@@ -81,7 +81,7 @@ def install_mocks(page, state):
         "unit_price_snapshot": 120000000, "line_total": 120000000, "source_product_id": "66666666-6666-4666-8666-666666666666",
         "source_variant_id": "77777777-7777-4777-8777-777777777777", "source_tone_id": None, "source_wrapping_option_id": None,
         "source_wrapping_variant_id": None, "product_code_snapshot": "pink-garden", "product_slug_snapshot": "pink-garden",
-        "product_name_snapshot": "Pink Garden", "variant_code_snapshot": "standard", "variant_name_snapshot": "Standard",
+        "product_name_snapshot": "Pink Garden", "variant_code_snapshot": "standard", "variant_name_snapshot": "Standard", "sku_snapshot": None,
         "tone_code_snapshot": "pink", "tone_name_snapshot": "Hồng", "primary_media_path_snapshot": None,
         "configuration_summary_snapshot": None, "created_at": "2026-10-04T05:22:01Z",
     }
@@ -90,7 +90,7 @@ def install_mocks(page, state):
         "unit_price_snapshot": 45000, "line_total": 45000, "source_product_id": None, "source_variant_id": None, "source_tone_id": None,
         "source_wrapping_option_id": "99999999-9999-4999-8999-999999999999", "source_wrapping_variant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
         "product_code_snapshot": None, "product_slug_snapshot": None, "product_name_snapshot": "Bó hoa của bạn", "variant_code_snapshot": None,
-        "variant_name_snapshot": None, "tone_code_snapshot": None, "tone_name_snapshot": None, "primary_media_path_snapshot": None,
+        "variant_name_snapshot": None, "sku_snapshot": None, "tone_code_snapshot": None, "tone_name_snapshot": None, "primary_media_path_snapshot": None,
         "configuration_summary_snapshot": {"flowers": [{"flower_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", "flower_code": "garden-rose", "name": "Hồng garden", "quantity": 1, "unit_price": 45000, "line_total": 45000}], "total_stems": 1, "wrapping": {"type_id": "99999999-9999-4999-8999-999999999999", "type_code": "classic-paper", "type_name": "Giấy cổ điển", "variant_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "variant_code": "ivory", "variant_name": "Ivory", "swatch": "#EEE8DE", "price": 0}},
         "created_at": "2026-10-04T05:22:02Z",
     }
@@ -241,6 +241,7 @@ with sync_playwright() as playwright:
             f"page_errors={page_errors}; console_errors={console_errors}"
         ) from error
     assert page.get_by_text("Pink Garden", exact=True).is_visible()
+    assert page.locator(".admin-order-item", has_text="Pink Garden").get_by_text("—", exact=True).is_visible()
     assert page.get_by_text("Bó hoa của bạn", exact=True).is_visible()
     assert page.get_by_text("120.045.000đ").is_visible()
     assert page.get_by_text("Chưa xác định").is_visible()

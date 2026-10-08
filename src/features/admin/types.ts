@@ -24,6 +24,7 @@ export interface LocalizedProductContent {
 export interface AdminProductVariant {
   id?: string;
   stableCode: string;
+  sku: string;
   priceAmount: number | null;
   active: boolean;
   sortOrder: number;
@@ -48,6 +49,7 @@ export interface AdminProductDraft {
   stableCode?: string;
   slug: string;
   productType: ProductType;
+  categoryId: string;
   visibility: VisibilityStatus;
   availability: AvailabilityStatus;
   sameDayEligible: boolean;
@@ -65,6 +67,7 @@ export interface AdminProductListItem {
   id: string;
   slug: string;
   productType: ProductType;
+  categoryName: string;
   visibility: VisibilityStatus;
   availability: AvailabilityStatus;
   sameDayEligible: boolean;
@@ -84,6 +87,7 @@ export interface TaxonomyOption {
 }
 
 export interface AdminTaxonomy {
+  categories: TaxonomyOption[];
   occasions: TaxonomyOption[];
   tones: TaxonomyOption[];
 }
@@ -252,6 +256,7 @@ export function emptyAdminProduct(): AdminProductDraft {
   return {
     slug: "",
     productType: "READY_MADE_BOUQUET",
+    categoryId: "",
     visibility: "DRAFT",
     availability: "AVAILABLE",
     sameDayEligible: false,
