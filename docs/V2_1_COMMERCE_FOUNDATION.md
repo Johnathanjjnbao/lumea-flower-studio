@@ -65,4 +65,6 @@ npm run check:secrets-history
 supabase test db
 ```
 
-Database runtime and browser verification must be run only after the four V2.1 migrations and the updated Edge Function are deployed to an authorized non-production environment.
+Database runtime and browser verification must be run only after the canonical V2.1 migrations and the updated Edge Function are deployed to an authorized non-production environment.
+
+The canonical chain, including the follow-up PostgreSQL lint migration, passed acceptance on the dedicated non-production project `puzuubnxarmviwgpjclj` on 2026-10-08. The reusable staging gates are `npm run check:v2-staging-runtime` and `npm run check:v2-staging-browser`; both require an explicitly supplied staging environment and the browser gate requires a temporary staging-only ADMIN identity. This acceptance does not authorize or imply a production migration.

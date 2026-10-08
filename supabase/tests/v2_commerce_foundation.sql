@@ -1,5 +1,6 @@
 -- V2.1 Commerce Foundation regression. The outer transaction always rolls back.
 begin;
+set local search_path = public, extensions;
 select plan(1);
 
 do $$

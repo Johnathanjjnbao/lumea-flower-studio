@@ -1,6 +1,8 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   PRODUCTION_HOSTNAME,
+  TURNSTILE_ACTION,
+  TURNSTILE_TEST_ACTION,
   allowedOrigin,
   classifyOrderError,
   evaluateSiteverify,
@@ -36,7 +38,14 @@ function jsonResponse(origin: string, status: number, body: Record<string, unkno
   });
 }
 
-async function verifyTurnstile(token: string, remoteIp: string, secret: string, expectedHostname: string) {
+async function verifyTurnstile(
+  token: string,
+  remoteIp: string,
+  secret: string,
+  expectedHostname: string,
+  expectedAction: string,
+  allowOfficialTestingKey: boolean,
+) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), SITEVERIFY_TIMEOUT_MS);
   try {
@@ -52,7 +61,7 @@ async function verifyTurnstile(token: string, remoteIp: string, secret: string, 
     });
     if (!response.ok) return { ok: false as const, code: "VERIFICATION_UNAVAILABLE" as const };
     const result = await response.json() as SiteverifyResponse;
-    return evaluateSiteverify(result, expectedHostname);
+    return evaluateSiteverify(result, expectedHostname, expectedAction, allowOfficialTestingKey);
   } catch {
     return { ok: false as const, code: "VERIFICATION_UNAVAILABLE" as const };
   } finally {
@@ -91,6 +100,8 @@ Deno.serve(async (request) => {
     ip,
     turnstileSecret,
     isTestMode() ? new URL(origin).hostname : PRODUCTION_HOSTNAME,
+    isTestMode() ? TURNSTILE_TEST_ACTION : TURNSTILE_ACTION,
+    isTestMode(),
   );
   if (!verification.ok) return jsonResponse(origin, 403, { code: verification.code });
 

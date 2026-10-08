@@ -1,5 +1,6 @@
 -- STEP 14 controlled database checks. The outer transaction always rolls back.
 begin;
+set local search_path = public, extensions;
 select plan(1);
 
 do $$
@@ -37,6 +38,7 @@ declare
   qa_product_code text;
   qa_variant_id uuid;
   qa_variant_code text;
+  qa_sku text;
   qa_tone_code text;
   qa_subtotal bigint;
   qa_payload jsonb;
@@ -83,13 +85,13 @@ begin
   insert into public.delivery_windows (id, stable_code, start_time, end_time, label_vi, label_ko, active, same_day_eligible, sort_order)
   values (qa_window_id, 'step14-qa-window', '09:00', '18:00', 'Khung giờ QA', 'QA 시간', true, true, 9999);
 
-  select product.id, product.stable_code, variant.id, variant.stable_code, variant.price_amount,
+  select product.id, product.stable_code, variant.id, variant.stable_code, variant.sku, variant.price_amount,
     (select tone.stable_code
      from public.product_tones product_tone join public.tones tone on tone.id = product_tone.tone_id
      where product_tone.product_id = product.id and product_tone.active
        and tone.visibility = 'PUBLISHED' and tone.archived_at is null
      order by product_tone.sort_order, product_tone.tone_id limit 1)
-  into qa_product_id, qa_product_code, qa_variant_id, qa_variant_code, qa_subtotal, qa_tone_code
+  into qa_product_id, qa_product_code, qa_variant_id, qa_variant_code, qa_sku, qa_subtotal, qa_tone_code
   from public.products product
   join public.product_variants variant on variant.product_id = product.id and variant.active
   where product.product_type in ('READY_MADE_BOUQUET', 'FLORIST_CHOICE')
@@ -112,7 +114,8 @@ begin
     'card_message', null, 'payment_method', 'BANK_TRANSFER',
     'items', jsonb_build_array(jsonb_build_object(
       'type', 'READY_MADE_PRODUCT', 'product_id', qa_product_id, 'product_code', qa_product_code,
-      'variant_id', qa_variant_id, 'variant_code', qa_variant_code, 'tone_code', qa_tone_code, 'quantity', 1
+      'variant_id', qa_variant_id, 'variant_code', qa_variant_code, 'sku', qa_sku,
+      'tone_code', qa_tone_code, 'quantity', 1
     ))
   );
 

@@ -1,6 +1,6 @@
 # Luméa Supabase-Ready Data Model
 
-**Status:** V1 commerce is closed at `v1.0.0`. V2.1 Commerce Foundation adds stable SKU identity, first-class Category data, managed Navigation, and SKU Order snapshots. The V2.1 migrations are implemented on `v2-commercial-readiness` and remain pending deployment.
+**Status:** V1 commerce is closed at `v1.0.0`. V2.1 Commerce Foundation adds stable SKU identity, first-class Category data, managed Navigation, and SKU Order snapshots. The V2.1 migration chain has passed non-production staging acceptance on `v2-commercial-readiness`; production deployment remains pending owner approval.
 
 **Database target:** PostgreSQL through Supabase
 

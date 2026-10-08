@@ -1,4 +1,5 @@
 export const TURNSTILE_ACTION = "checkout_submit";
+export const TURNSTILE_TEST_ACTION = "test";
 export const PRODUCTION_HOSTNAME = "johnathanjjnbao.github.io";
 export const PRODUCTION_ORIGIN = "https://johnathanjjnbao.github.io";
 export const MAX_REQUEST_BYTES = 64 * 1024;
@@ -36,6 +37,7 @@ export interface SiteverifyResponse {
   hostname?: string;
   action?: string;
   "error-codes"?: string[];
+  metadata?: { result_with_testing_key?: boolean };
 }
 
 function isUuid(value: unknown): value is string {
@@ -44,7 +46,9 @@ function isUuid(value: unknown): value is string {
 }
 
 export function allowedOrigin(origin: string | null, testMode: boolean) {
-  return origin === PRODUCTION_ORIGIN || (testMode && origin !== null && LOCAL_ORIGINS.has(origin));
+  return testMode
+    ? origin !== null && LOCAL_ORIGINS.has(origin)
+    : origin === PRODUCTION_ORIGIN;
 }
 
 export function parseGatewayRequest(value: unknown): CheckoutGatewayRequest | null {
@@ -123,12 +127,20 @@ export async function hmacIdentifier(ip: string, secret: string) {
   return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-export function evaluateSiteverify(result: SiteverifyResponse, expectedHostname: string) {
+export function evaluateSiteverify(
+  result: SiteverifyResponse,
+  expectedHostname: string,
+  expectedAction = TURNSTILE_ACTION,
+  allowOfficialTestingKey = false,
+) {
   if (!result.success) {
     const expired = result["error-codes"]?.includes("timeout-or-duplicate") ?? false;
     return { ok: false as const, code: expired ? "VERIFICATION_EXPIRED" as const : "VERIFICATION_FAILED" as const };
   }
-  if (result.hostname !== expectedHostname || result.action !== TURNSTILE_ACTION) {
+  if (allowOfficialTestingKey && result.metadata?.result_with_testing_key === true) {
+    return { ok: true as const };
+  }
+  if (result.hostname !== expectedHostname || result.action !== expectedAction) {
     return { ok: false as const, code: "VERIFICATION_FAILED" as const };
   }
   return { ok: true as const };
