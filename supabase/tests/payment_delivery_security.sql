@@ -137,6 +137,29 @@ begin
     raise exception 'idempotent retry did not return the original snapshot';
   end if;
 
+  -- Simulate a V1 Order that predates SKU snapshots. A post-V2 idempotent retry
+  -- may return it, but must not manufacture historical SKU data.
+  update public.order_items
+  set sku_snapshot = null
+  where order_id = first_receipt.order_id and item_type = 'READY_MADE_PRODUCT';
+  update public.orders
+  set commerce_request_fingerprint = null
+  where id = first_receipt.order_id;
+  select * into duplicate_receipt from public.create_checkout_order(qa_payload, qa_key, qa_subtotal);
+  if not duplicate_receipt.was_duplicate
+    or exists (
+      select 1 from public.order_items
+      where order_id = first_receipt.order_id
+        and item_type = 'READY_MADE_PRODUCT'
+        and sku_snapshot is not null
+    ) then
+    raise exception 'legacy idempotent retry fabricated an SKU snapshot';
+  end if;
+  -- Restore the fixture before the deferred new-row constraint is checked.
+  update public.order_items
+  set sku_snapshot = qa_sku
+  where order_id = first_receipt.order_id and item_type = 'READY_MADE_PRODUCT';
+
   begin
     perform * from public.create_checkout_order(
       jsonb_set(jsonb_set(qa_payload, '{review,delivery_fee}', '0'::jsonb), '{review,total}', to_jsonb(qa_subtotal)),

@@ -1,6 +1,6 @@
 # Luméa V2.1 — Commerce Foundation
 
-**Status:** Implemented locally on `v2-commercial-readiness`; production migration and deployment are not part of this checkpoint.
+**Status:** Production promotion is in progress from `v2-commercial-readiness`; no production PASS is claimed until every deployment and production acceptance gate completes.
 
 ## Purpose
 
@@ -38,6 +38,8 @@ Header menu labels, order, state, and targets are loaded from Postgres. Current 
 2. `20261008090100_v2_commerce_admin.sql`: ADMIN-only Category and Navigation commands.
 3. `20261008090200_v2_commerce_checkout.sql`: Order SKU snapshots and the SKU-aware checkout wrapper.
 4. `20261008090300_v2_commerce_atomic_product.sql`: ADMIN-only transactional Product/Category/Variant/SKU/taxonomy save.
+5. `20261008090400_v2_commerce_atomic_product_lint.sql`: explicit enum typing required by PostgreSQL lint while preserving the atomic Product command.
+6. `20261008090500_v2_commerce_checkout_legacy_guard.sql`: prevents a post-V2 idempotent retry from fabricating an SKU snapshot on a legacy V1 Order.
 
 The migrations preserve V1 tables and Orders, do not modify the `v1.0.0` tag, and seed all current Products into the `bouquets` Category.
 
@@ -67,4 +69,4 @@ supabase test db
 
 Database runtime and browser verification must be run only after the canonical V2.1 migrations and the updated Edge Function are deployed to an authorized non-production environment.
 
-The canonical chain, including the follow-up PostgreSQL lint migration, passed acceptance on the dedicated non-production project `puzuubnxarmviwgpjclj` on 2026-10-08. The reusable staging gates are `npm run check:v2-staging-runtime` and `npm run check:v2-staging-browser`; both require an explicitly supplied staging environment and the browser gate requires a temporary staging-only ADMIN identity. This acceptance does not authorize or imply a production migration.
+The chain through `20261008090400` passed acceptance on the dedicated non-production project `puzuubnxarmviwgpjclj` on 2026-10-08. Final production review then found the legacy idempotent-retry history gap and added `20261008090500` plus a rollback-safe regression. The complete canonical chain must pass GitHub's local Supabase/pgTAP gate before production promotion. The reusable staging gates are `npm run check:v2-staging-runtime` and `npm run check:v2-staging-browser`; both require an explicitly supplied staging environment and the browser gate requires a temporary staging-only ADMIN identity. Staging remains separate and is not a production target.

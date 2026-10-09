@@ -3,11 +3,12 @@ import { readFile } from "node:fs/promises";
 import { createServer } from "vite";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
-const [foundationSql, adminSql, checkoutSql, atomicProductSql, adminCatalogRepository, adminOrderDetail, viteConfig] = await Promise.all([
+const [foundationSql, adminSql, checkoutSql, atomicProductSql, legacyGuardSql, adminCatalogRepository, adminOrderDetail, viteConfig] = await Promise.all([
   read("supabase/migrations/20261008090000_v2_commerce_foundation.sql"),
   read("supabase/migrations/20261008090100_v2_commerce_admin.sql"),
   read("supabase/migrations/20261008090200_v2_commerce_checkout.sql"),
   read("supabase/migrations/20261008090300_v2_commerce_atomic_product.sql"),
+  read("supabase/migrations/20261008090500_v2_commerce_checkout_legacy_guard.sql"),
   read("src/features/admin/data/adminCatalogRepository.ts"),
   read("src/features/admin/pages/AdminOrderDetailPage.tsx"),
   read("vite.config.ts"),
@@ -58,6 +59,9 @@ assert.match(checkoutSql, /existing_contract_fingerprint <> full_contract_finger
 assert.match(checkoutSql, /revoke all on function public\.create_checkout_order\(jsonb, uuid, bigint\)[\s\S]*from public, anon, authenticated/);
 assert.match(checkoutSql, /grant execute on function public\.create_checkout_order\(jsonb, uuid, bigint\)[\s\S]*to service_role/);
 assert(checkoutSql.indexOf("select exists (") < checkoutSql.indexOf("select variant.id into resolved_variant_id"), "idempotent retries must be resolved before current catalog availability");
+assert.match(legacyGuardSql, /order_item\.sku_snapshot is null[\s\S]*and not created\.was_duplicate/);
+assert.match(legacyGuardSql, /source_order\.commerce_request_fingerprint is null[\s\S]*and not created\.was_duplicate/);
+assert.match(legacyGuardSql, /preserves legacy NULL snapshots/);
 
 assert.match(atomicProductSql, /create or replace function public\.admin_save_product_atomic\(product_payload jsonb\)/);
 assert.match(atomicProductSql, /security definer[\s\S]*set search_path = ''/);
