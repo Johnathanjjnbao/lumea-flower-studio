@@ -1,6 +1,6 @@
 # Luméa V2.1 — Commerce Foundation
 
-**Status:** Production promotion is in progress from `v2-commercial-readiness`; no production PASS is claimed until every deployment and production acceptance gate completes.
+**Status:** Released to production on 2026-10-09 as `v2.1.0`. All V2.1 deployment and production acceptance gates passed. This release does not claim that the business is commercially ready.
 
 ## Purpose
 
@@ -69,4 +69,21 @@ supabase test db
 
 Database runtime and browser verification must be run only after the canonical V2.1 migrations and the updated Edge Function are deployed to an authorized non-production environment.
 
-The chain through `20261008090400` passed acceptance on the dedicated non-production project `puzuubnxarmviwgpjclj` on 2026-10-08. Final production review then found the legacy idempotent-retry history gap and added `20261008090500` plus a rollback-safe regression. The complete canonical chain must pass GitHub's local Supabase/pgTAP gate before production promotion. The reusable staging gates are `npm run check:v2-staging-runtime` and `npm run check:v2-staging-browser`; both require an explicitly supplied staging environment and the browser gate requires a temporary staging-only ADMIN identity. Staging remains separate and is not a production target.
+The chain through `20261008090400` passed acceptance on the dedicated non-production project `puzuubnxarmviwgpjclj` on 2026-10-08. Final production review then found the legacy idempotent-retry history gap and added `20261008090500` plus a rollback-safe regression. The reusable staging gates are `npm run check:v2-staging-runtime` and `npm run check:v2-staging-browser`; both require an explicitly supplied staging environment and the browser gate requires a temporary staging-only ADMIN identity. Staging remains separate and was not used as the production target.
+
+## Production acceptance — 2026-10-09
+
+- Target: Supabase project `nihhynwvltttadlfatdm` (`lumea-flower-studio`). Migration history was aligned at 30/30 after applying only the six canonical V2.1 migrations `20261008090000` through `20261008090500`; no seed or role-reset command was run. Database lint reported no errors.
+- Backfill: 12 Products were preserved and assigned to the seeded `bouquets` Category (10 published, 2 archived, 0 without Category). All 32 Variants have a unique valid SKU. The 4 pre-existing Orders and 5 Order items were preserved; the single historical ready-made item remains without an SKU snapshot by design.
+- Category and Navigation: the production Admin shows the seeded VI/KO Category and six active VI/KO primary Navigation records. Product-to-Category remains the documented canonical N:1 relationship.
+- Atomic Product mutation: `admin_save_product_atomic` is ADMIN-only, uses an empty fixed `search_path`, and commits Product, Category, copy, Variants/SKUs, Occasions, and Tones as one transaction.
+- Checkout security: direct checkout RPC execution is unavailable to `public`, `anon`, and `authenticated`; only `service_role` can execute it. New ready-made Order items require an SKU snapshot, while the legacy retry guard prevents an old Order from acquiring present-day SKU data.
+- Edge Function: production `create-checkout-order` is ACTIVE at version 2. Strict Cloudflare Turnstile verification, allowed-origin/action checks, throttling, concurrency handling, and idempotency checks passed; no Turnstile test-mode secret is present.
+- CI and deploy: GitHub Actions run `37897066793` passed quality, production-backed browser smoke, database security/pgTAP, and GitHub Pages deployment from `main`.
+- Live browser QA: public and Admin flows passed in VI and KO at 390 px, 768 px, and 1440 px. Categories, Navigation, Product editor, SKU display, Cart, Checkout, confirmation, and legacy Order rendering were reviewed.
+- Controlled Order: production Order `LUM-950B42E4A2F9430C` was created with synthetic QA data through real Turnstile for Quiet Calla Standard. It captured SKU `LUM-QUIET-CALLA-STANDARD`, subtotal 480,000 VND, delivery fee 0 VND, and total 480,000 VND. Admin displayed the same values and the Order was then cancelled through the normal Admin transition, leaving two auditable status events.
+- Recovery: production reported no selectable backup and PITR disabled at acceptance time. The migration transaction protected the failed first attempt from partial state; further recovery relies on a tested forward-fix unless the owner enables a stronger backup/PITR policy.
+- Known hosting limitation: direct GitHub Pages requests to dynamic Product Detail paths return HTTP 404, although the existing `404.html` SPA fallback renders the Product correctly. This is known hosting architecture debt, not a V2.1 regression.
+- Business-data limitation: production catalog content was preserved without silently changing owner-managed values. The owner should review commercial prices and operating policies before accepting real orders.
+
+V2.1 establishes the Commerce Foundation only. Commercial operations, business policy approval, privacy/retention, production backup/PITR, and order-monitoring ownership remain separate readiness decisions.
