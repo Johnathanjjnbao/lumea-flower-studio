@@ -158,7 +158,15 @@ state = {
 }
 
 with sync_playwright() as playwright:
-    browser = playwright.chromium.launch(headless=True, executable_path=os.environ.get("LUMEA_BROWSER_EXECUTABLE", r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"))
+    browser_executable = os.environ.get("LUMEA_BROWSER_EXECUTABLE")
+    if not browser_executable and os.name == "nt":
+        edge_executable = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+        if os.path.exists(edge_executable):
+            browser_executable = edge_executable
+    launch_options = {"headless": True}
+    if browser_executable:
+        launch_options["executable_path"] = browser_executable
+    browser = playwright.chromium.launch(**launch_options)
     page = browser.new_page(viewport={"width": 1440, "height": 1000})
     errors = []
     page.on("pageerror", lambda error: errors.append(str(error)))
