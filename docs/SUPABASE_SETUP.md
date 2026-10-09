@@ -214,7 +214,7 @@ Production requires these owner-managed values:
 | Supabase Edge Function Secret | `TURNSTILE_SECRET_KEY` | Production Siteverify secret; never use a `VITE_` name. |
 | Supabase Edge Function Secret | `CHECKOUT_THROTTLE_HMAC_KEY` | At least 32 characters of cryptographically random secret material. |
 
-The fixed widget and server action is `checkout_submit`. Production accepts only origin `https://johnathanjjnbao.github.io` and Siteverify hostname `johnathanjjnbao.github.io`. Localhost origins are enabled only when the Edge Function runs with `TURNSTILE_TEST_MODE=true`; local/test must use Cloudflare's official test site-key/secret pair.
+The fixed production widget and server action is `checkout_submit`. Production accepts only origin `https://johnathanjjnbao.github.io` and Siteverify hostname `johnathanjjnbao.github.io`. Localhost origins are enabled only when the Edge Function runs with `TURNSTILE_TEST_MODE=true`; in that mode the production origin is rejected (fail closed) and local/test must use Cloudflare's official test site-key/secret pair. Siteverify responses from the official testing key are accepted only when Cloudflare includes its testing-key metadata marker; production mode never accepts that marker as a substitute for hostname/action validation.
 
 To configure Edge secrets without placing them in shell history, copy `supabase/.env.example` to ignored `supabase/.env.local`, replace the HMAC placeholder, and then run:
 

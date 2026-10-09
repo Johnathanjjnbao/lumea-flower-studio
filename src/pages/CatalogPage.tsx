@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageFrame } from "../components/PageFrame";
 import { ProductCard } from "../components/ProductCard";
-import { usePublishedCatalog } from "../features/catalog/useCatalogData";
+import { usePublishedCatalog, usePublishedCategories } from "../features/catalog/useCatalogData";
 import { useDiscoveryOptions } from "../features/discovery/useDiscoveryOptions";
 import { useDocumentMetadata } from "../hooks/useDocumentMetadata";
 import { useImagePipeline } from "../hooks/useImagePipeline";
@@ -14,7 +14,7 @@ import {
   readCatalogDiscoveryState,
 } from "../utils/catalogDiscovery";
 
-type FilterParam = "q" | "occasion" | "budget" | "sameDay" | "availability";
+type FilterParam = "q" | "category" | "occasion" | "budget" | "sameDay" | "availability";
 
 export function CatalogPage() {
   const { locale, t } = useI18n();
@@ -24,14 +24,17 @@ export function CatalogPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const catalogState = usePublishedCatalog(locale);
+  const categoryState = usePublishedCategories(locale);
   const discoveryOptions = useDiscoveryOptions(locale);
   const productList = catalogState.status === "success" ? catalogState.data : [];
   const representedOccasions = useMemo(() => getRepresentedOccasions(productList), [productList]);
   const managedOccasions = discoveryOptions.status === "success" ? discoveryOptions.data.occasions : representedOccasions;
   const budgetRanges = discoveryOptions.status === "success" ? discoveryOptions.data.budgetRanges : [];
+  const categories = categoryState.status === "success" ? categoryState.data : [];
   const validOccasionIds = useMemo(() => new Set(managedOccasions.map((occasion) => occasion.stableCode)), [managedOccasions]);
   const validBudgetIds = useMemo(() => new Set(budgetRanges.map((range) => range.stableCode)), [budgetRanges]);
-  const discoveryState = readCatalogDiscoveryState(searchParams, validOccasionIds, validBudgetIds);
+  const validCategoryIds = useMemo(() => new Set(categories.flatMap((category) => [category.stableCode, category.slug])), [categories]);
+  const discoveryState = readCatalogDiscoveryState(searchParams, validOccasionIds, validBudgetIds, validCategoryIds);
   const visibleProducts = filterCatalogProducts(productList, discoveryState, locale, budgetRanges);
   const searchParamKey = searchParams.toString();
 
@@ -80,6 +83,10 @@ export function CatalogPage() {
 
   const activeFilters = [
     discoveryState.query.trim() ? { key: "q" as const, label: formatMessage(t.catalog.searchChip, { query: discoveryState.query.trim() }) } : null,
+    discoveryState.category ? {
+      key: "category" as const,
+      label: categories.find((category) => category.slug === discoveryState.category || category.stableCode === discoveryState.category)?.name ?? discoveryState.category,
+    } : null,
     discoveryState.occasion ? {
       key: "occasion" as const,
       label: managedOccasions.find((occasion) => occasion.stableCode === discoveryState.occasion)?.name ?? discoveryState.occasion,
@@ -157,6 +164,18 @@ export function CatalogPage() {
                 <div><span>{t.catalog.refine}</span><strong>{t.catalog.filter}</strong></div>
                 <button ref={closeButtonRef} type="button" onClick={() => closeFilters(true)} aria-label={t.catalog.closeFilter}>×</button>
               </div>
+
+              <fieldset className="catalog-filter-group">
+                <legend>{locale === "ko" ? "카테고리" : "Danh mục"}</legend>
+                <div className="catalog-filter-options">
+                  {categories.map((category) => (
+                    <label key={category.id} data-selected={discoveryState.category === category.slug || discoveryState.category === category.stableCode}>
+                      <input type="radio" name="category" value={category.slug} checked={discoveryState.category === category.slug || discoveryState.category === category.stableCode} onChange={() => updateFilter("category", category.slug)} />
+                      <span>{category.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
 
               <fieldset className="catalog-filter-group">
                 <legend>{t.catalog.occasion}</legend>

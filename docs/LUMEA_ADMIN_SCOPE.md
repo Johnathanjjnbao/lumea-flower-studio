@@ -51,12 +51,15 @@ Admin can:
 - Edit canonical slug/stable code subject to uniqueness and redirect policy.
 - Enter VI and KO name, description, composition, and SEO copy.
 - Create, price, reorder, publish, hide, and archive variants.
+- Assign one primary Category and set the immutable SKU for each new orderable variant.
 - Manage visibility separately from availability.
 - Set same-day eligibility, featured, bestseller, and display order.
 - Assign occasions and tones.
 - Upload/reuse/reorder primary and gallery media.
 - Preview publication readiness and resolve missing required content.
 - Publish, hide/unhide, and archive without destroying historical Orders.
+
+Saving Product metadata is a single server-side transaction covering the Product row, canonical Category assignment, VI/KO translations, Variants/SKUs, Occasions, and Tones. The command verifies an active ADMIN, validates a bounded payload, uses a fixed `search_path`, and rolls back every change when any child mutation fails. Media uploads and lifecycle transitions remain explicit follow-up operations because external Storage cannot participate in the Postgres transaction.
 
 Publication validation must reject missing Vietnamese required copy, missing purchasable ready-made variants, invalid prices, missing primary media, or invalid taxonomy relationships.
 
@@ -92,6 +95,12 @@ Admin can manage:
 - Occasion stable identity, VI/KO copy, imagery, visibility, and order.
 - Tone stable identity, VI/KO labels, swatch, visibility, and order.
 - Product relationships to occasions and tones.
+
+V2.1 adds complete Category operations: create, read, edit localized VI/KO copy, activate/deactivate, reorder, and archive when unused. A Category referenced by a Product cannot be hard-deleted or archived. Deactivation warns that its Products and Category navigation become unavailable publicly.
+
+### 3.4.1 Navigation
+
+ADMIN can create, edit, enable/disable, reorder, and delete primary menu items. Each item has VI/KO labels and a bounded destination type. `CATEGORY` targets a real published Category; internal routes are derived in React; external destinations must use HTTPS. STAFF and ordinary authenticated users receive no mutation permission.
 - Budget range bounds, labels, imagery, visibility, and order.
 
 Changing an editable label does not change URLs or relationships. Slug changes require a redirect policy before they are enabled.
@@ -104,6 +113,7 @@ Admin Order Detail must show:
 
 - Internal UUID only where operationally useful and the human-readable Order number prominently.
 - Buyer contact separately from recipient contact.
+- SKU snapshot for V2 ready-made items; legacy V1 items without a captured SKU display `SKU: —` without reconstructing history from the current Variant.
 - Surprise-delivery flag and approved handling notes.
 - Delivery/pickup details, date, window, zone, address, fee, and notes.
 - Independent Order, Payment, and Delivery statuses and their event history.

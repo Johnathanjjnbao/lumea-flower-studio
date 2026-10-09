@@ -40,6 +40,7 @@ export function ProductDetailsForm({ product, taxonomy, onChange, disabled }: Pr
         <div className="admin-field-grid">
           <label>Slug<input required value={product.slug} placeholder="rose-nocturne" onChange={(event) => update("slug", event.target.value.toLowerCase().trim())} /><small>Chữ thường, số và dấu gạch nối.</small></label>
           <label>Loại sản phẩm<select value={product.productType} onChange={(event) => update("productType", event.target.value as AdminProductDraft["productType"])}><option value="READY_MADE_BOUQUET">Bó hoa mẫu</option><option value="FLORIST_CHOICE">Florist's Choice</option><option value="CUSTOM_BOUQUET">Custom Bouquet</option></select></label>
+          <label>Category<select required value={product.categoryId} onChange={(event) => update("categoryId", event.target.value)}><option value="">Chọn Category</option>{taxonomy.categories.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.secondaryName}</option>)}</select><small>Category chính dùng cho Catalog và Navigation.</small></label>
           <label>Tình trạng<select value={product.availability} onChange={(event) => update("availability", event.target.value as AdminProductDraft["availability"])}><option value="AVAILABLE">Có sẵn</option><option value="SEASONAL">Theo mùa</option><option value="UNAVAILABLE">Tạm hết</option></select></label>
           <label>Thứ tự hiển thị<input type="number" min={0} step={1} value={product.sortOrder} onChange={(event) => update("sortOrder", Number(event.target.value))} /></label>
           <label className="admin-check admin-field-span"><input type="checkbox" checked={product.sameDayEligible} onChange={(event) => update("sameDayEligible", event.target.checked)} /><span><strong>Có thể giao trong ngày</strong><small>Vẫn phụ thuộc cutoff và khu vực ở bước sau.</small></span></label>
@@ -66,6 +67,7 @@ export function ProductDetailsForm({ product, taxonomy, onChange, disabled }: Pr
               <div className="admin-variant__heading"><strong>Biến thể {index + 1}</strong><button type="button" onClick={() => update("variants", product.variants.filter((_, itemIndex) => itemIndex !== index))}>Bỏ biến thể</button></div>
               <div className="admin-field-grid admin-field-grid--three">
                 <label>Mã ổn định<input value={variant.stableCode} placeholder="standard" onChange={(event) => update("variants", product.variants.map((item, itemIndex) => itemIndex === index ? { ...item, stableCode: event.target.value.toLowerCase() } : item))} /></label>
+                <label>SKU<input value={variant.sku} disabled={Boolean(variant.id)} placeholder="LUM-ROSE-STANDARD" onChange={(event) => update("variants", product.variants.map((item, itemIndex) => itemIndex === index ? { ...item, sku: event.target.value.toUpperCase().trim() } : item))} /><small>{variant.id ? "SKU đã tạo không thể đổi." : "Mã bán hàng duy nhất, không phụ thuộc tên hiển thị."}</small></label>
                 <label>Giá VND<input type="number" min={0} step={1000} value={variant.priceAmount ?? ""} onChange={(event) => update("variants", product.variants.map((item, itemIndex) => itemIndex === index ? { ...item, priceAmount: event.target.value === "" ? null : Number(event.target.value) } : item))} /></label>
                 <label>Thứ tự<input type="number" min={0} step={1} value={variant.sortOrder} onChange={(event) => update("variants", product.variants.map((item, itemIndex) => itemIndex === index ? { ...item, sortOrder: Number(event.target.value) } : item))} /></label>
                 <label>Tên VI<input value={variant.viName} onChange={(event) => update("variants", product.variants.map((item, itemIndex) => itemIndex === index ? { ...item, viName: event.target.value } : item))} /></label>
@@ -75,7 +77,7 @@ export function ProductDetailsForm({ product, taxonomy, onChange, disabled }: Pr
             </div>
           ))}
         </div>
-        <button className="admin-button admin-button--secondary" type="button" onClick={() => update("variants", [...product.variants, { stableCode: "", priceAmount: null, active: true, sortOrder: product.variants.length, viName: "", koName: "" }])}>+ Thêm biến thể</button>
+        <button className="admin-button admin-button--secondary" type="button" onClick={() => update("variants", [...product.variants, { stableCode: "", sku: "", priceAmount: null, active: true, sortOrder: product.variants.length, viName: "", koName: "" }])}>+ Thêm biến thể</button>
       </section>
 
       <section className="admin-editor-section">

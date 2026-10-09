@@ -53,6 +53,7 @@ export interface CheckoutReadyMadePayloadItem {
   product_code: string;
   variant_id: string;
   variant_code: string;
+  sku: string;
   tone_code: string | null;
   quantity: number;
 }

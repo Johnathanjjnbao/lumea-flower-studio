@@ -42,6 +42,7 @@ export function createReadyMadeCartItem(
     productSlug: product.slug,
     variantId: variant.id,
     variantCode: variant.stableCode,
+    sku: variant.sku,
     toneCode: tone?.stableCode ?? null,
     quantity: clampCartQuantity(quantity),
     unitPriceSnapshot: variant.priceAmount,

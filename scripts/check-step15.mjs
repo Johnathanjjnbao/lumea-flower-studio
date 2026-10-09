@@ -6,6 +6,7 @@ import {
   PRODUCTION_HOSTNAME,
   PRODUCTION_ORIGIN,
   TURNSTILE_ACTION,
+  TURNSTILE_TEST_ACTION,
   MAX_REQUEST_BYTES,
   allowedOrigin,
   classifyOrderError,
@@ -25,10 +26,12 @@ const validRequest = {
 };
 
 assert.equal(TURNSTILE_ACTION, "checkout_submit");
+assert.equal(TURNSTILE_TEST_ACTION, "test");
 assert.equal(PRODUCTION_HOSTNAME, "johnathanjjnbao.github.io");
 assert(allowedOrigin(PRODUCTION_ORIGIN, false));
 assert(!allowedOrigin("http://localhost:5173", false), "Production must not allow localhost CORS.");
 assert(allowedOrigin("http://localhost:5173", true));
+assert(!allowedOrigin(PRODUCTION_ORIGIN, true), "Turnstile test mode must fail closed for the production origin.");
 assert(!allowedOrigin("https://attacker.example", true));
 
 assert.deepEqual(parseGatewayRequest(validRequest), validRequest);
@@ -51,6 +54,10 @@ assert.equal(evaluateSiteverify({ success: false, "error-codes": ["invalid-input
 assert.equal(evaluateSiteverify({ success: false, "error-codes": ["timeout-or-duplicate"] }, PRODUCTION_HOSTNAME).code, "VERIFICATION_EXPIRED");
 assert.equal(evaluateSiteverify({ success: true, hostname: "attacker.example", action: TURNSTILE_ACTION }, PRODUCTION_HOSTNAME).code, "VERIFICATION_FAILED");
 assert.equal(evaluateSiteverify({ success: true, hostname: PRODUCTION_HOSTNAME, action: "wrong_action" }, PRODUCTION_HOSTNAME).code, "VERIFICATION_FAILED");
+assert.deepEqual(evaluateSiteverify({ success: true, hostname: "localhost", action: TURNSTILE_TEST_ACTION }, "localhost", TURNSTILE_TEST_ACTION), { ok: true });
+assert.equal(evaluateSiteverify({ success: true, hostname: "localhost", action: TURNSTILE_ACTION }, "localhost", TURNSTILE_TEST_ACTION).code, "VERIFICATION_FAILED");
+assert.deepEqual(evaluateSiteverify({ success: true, metadata: { result_with_testing_key: true } }, "localhost", TURNSTILE_TEST_ACTION, true), { ok: true });
+assert.equal(evaluateSiteverify({ success: true, metadata: { result_with_testing_key: true } }, PRODUCTION_HOSTNAME).code, "VERIFICATION_FAILED");
 
 assert.equal(serverObservedIp(new Headers({ "x-forwarded-for": "203.0.113.10" }), false), null, "Production must ignore client-spoofable forwarding headers.");
 assert.equal(serverObservedIp(new Headers({ "cf-connecting-ip": "203.0.113.20", "x-forwarded-for": "203.0.113.10" }), false), "203.0.113.20");

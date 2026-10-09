@@ -156,7 +156,7 @@ if (!fulfillment) {
 
 const catalog = await client.from("products").select(`
   id, stable_code, availability,
-  product_variants(id, stable_code, price_amount, active),
+  product_variants(id, stable_code, sku, price_amount, active),
   product_tones(active, tones(stable_code))
 `).eq("visibility", "PUBLISHED").eq("availability", "AVAILABLE").is("archived_at", null).limit(20);
 assert(!catalog.error, `Could not load the public catalog (${catalog.error?.code ?? "unknown"}).`);
@@ -195,6 +195,7 @@ const validPayload = {
     product_code: product.stable_code,
     variant_id: variant.id,
     variant_code: variant.stable_code,
+    sku: variant.sku,
     tone_code: toneCode,
     quantity: 1,
   }],

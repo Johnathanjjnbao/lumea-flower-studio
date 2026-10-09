@@ -38,7 +38,7 @@ export function ProductCard({ product, headingLevel = 3, showAvailability = fals
       </Link>
       <div className="product-meta">
         <div className="product-copy">
-          <p className="product-category">{t.product.typeLabels[product.productType]}</p>
+          <p className="product-category">{product.category.name}</p>
           <ProductHeading><Link to={path(`/flowers/${product.slug}`)}>{product.name}</Link></ProductHeading>
           {product.shortDescription && <p className="product-description">{product.shortDescription}</p>}
         </div>

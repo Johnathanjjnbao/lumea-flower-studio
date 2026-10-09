@@ -1,6 +1,7 @@
 import type { AdminProductDraft, AdminProductVariant } from "./types";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const SKU_PATTERN = /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
 
 export interface ValidationIssue {
   field: string;
@@ -11,6 +12,9 @@ function variantIssues(variant: AdminProductVariant, index: number): ValidationI
   const issues: ValidationIssue[] = [];
   if (!SLUG_PATTERN.test(variant.stableCode)) {
     issues.push({ field: `variant-${index}-code`, message: "Mã biến thể chỉ dùng chữ thường, số và dấu gạch nối." });
+  }
+  if (!SKU_PATTERN.test(variant.sku) || variant.sku.length > 96) {
+    issues.push({ field: `variant-${index}-sku`, message: "SKU chỉ dùng chữ in hoa, số và dấu gạch nối, tối đa 96 ký tự." });
   }
   if (variant.priceAmount === null || !Number.isInteger(variant.priceAmount) || variant.priceAmount < 0) {
     issues.push({ field: `variant-${index}-price`, message: "Giá phải là số nguyên VND từ 0 trở lên." });
@@ -26,6 +30,7 @@ export function validateProductDraft(product: AdminProductDraft): ValidationIssu
   if (!SLUG_PATTERN.test(product.slug)) {
     issues.push({ field: "slug", message: "Slug chỉ dùng chữ thường, số và dấu gạch nối." });
   }
+  if (!product.categoryId) issues.push({ field: "category", message: "Hãy chọn Category cho sản phẩm." });
   if (!Number.isInteger(product.sortOrder) || product.sortOrder < 0) {
     issues.push({ field: "sortOrder", message: "Thứ tự hiển thị phải là số nguyên từ 0 trở lên." });
   }

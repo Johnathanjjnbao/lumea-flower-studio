@@ -13,7 +13,7 @@ export function AdminProductEditorPage() {
   const navigate = useNavigate();
   const repository = useMemo(() => createAdminCatalogRepository(), []);
   const [product, setProduct] = useState<AdminProductDraft>(() => emptyAdminProduct());
-  const [taxonomy, setTaxonomy] = useState<AdminTaxonomy>({ occasions: [], tones: [] });
+  const [taxonomy, setTaxonomy] = useState<AdminTaxonomy>({ categories: [], occasions: [], tones: [] });
   const [loading, setLoading] = useState(Boolean(id));
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);

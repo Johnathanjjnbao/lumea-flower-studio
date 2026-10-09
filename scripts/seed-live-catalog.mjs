@@ -132,7 +132,7 @@ async function downloadImage(sourceUrl, destinationBase) {
 
 function buildSeedSql(records) {
   const productValues = records.map(({ product, productId }, index) => `(
-    ${sql(productId)}, ${sql(product.id)}, ${sql(product.slug)}, 'READY_MADE_BOUQUET', 'DRAFT',
+    ${sql(productId)}, ${sql(product.id)}, ${sql(product.slug)}, (select id from public.categories where stable_code = 'bouquets'), 'READY_MADE_BOUQUET', 'DRAFT',
     ${sql(product.availability)}, ${sql(product.sameDayEligible)}, ${sql(product.featured ?? false)},
     ${sql(product.tag === "bestseller")}, ${index * 10}
   )`).join(",\n");
@@ -144,7 +144,7 @@ function buildSeedSql(records) {
 
   const variantValues = records.flatMap(({ product, dictionaries }) => product.sizes.map((variant, index) => {
     const variantId = deterministicUuid(`variant:${product.id}:${variant.id}`);
-    return `(${sql(variantId)}, ${sql(product.id)}, ${sql(variant.id)}, ${product.basePrice + variant.priceDelta}, ${index * 10})`;
+    return `(${sql(variantId)}, ${sql(product.id)}, ${sql(variant.id)}, ${sql(`LUM-${product.id}-${variant.id}`.toUpperCase())}, ${product.basePrice + variant.priceDelta}, ${index * 10})`;
   })).join(",\n");
 
   const variantTranslationValues = records.flatMap(({ product, dictionaries }) => product.sizes.flatMap((variant) => ["vi", "ko"].map((locale) => {
@@ -179,7 +179,7 @@ function buildSeedSql(records) {
   return `begin;
 
 insert into public.products (
-  id, stable_code, slug, product_type, visibility, availability,
+  id, stable_code, slug, category_id, product_type, visibility, availability,
   same_day_eligible, featured, bestseller, sort_order
 ) values
 ${productValues}
@@ -195,11 +195,11 @@ ${translationValues}
 join public.products product on product.stable_code = source.stable_code
 on conflict (product_id, locale) do nothing;
 
-insert into public.product_variants (id, product_id, stable_code, price_amount, active, sort_order)
-select source.id::uuid, product.id, source.variant_code, source.price_amount, true, source.sort_order
+insert into public.product_variants (id, product_id, stable_code, sku, price_amount, active, sort_order)
+select source.id::uuid, product.id, source.variant_code, source.sku, source.price_amount, true, source.sort_order
 from (values
 ${variantValues}
-) as source(id, product_code, variant_code, price_amount, sort_order)
+) as source(id, product_code, variant_code, sku, price_amount, sort_order)
 join public.products product on product.stable_code = source.product_code
 on conflict (product_id, stable_code) do nothing;
 

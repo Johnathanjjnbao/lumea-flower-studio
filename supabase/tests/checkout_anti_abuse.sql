@@ -1,4 +1,5 @@
 begin;
+set local search_path = public, extensions;
 select plan(22);
 
 select ok(not has_function_privilege('anon', 'public.create_checkout_order(jsonb,uuid,bigint)', 'EXECUTE'), 'anon cannot execute internal checkout RPC');

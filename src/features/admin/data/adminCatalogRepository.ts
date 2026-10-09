@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseClient } from "../../../lib/supabase";
-import type { Database } from "../../../types/database.generated";
+import type { Database, Json } from "../../../types/database.generated";
 import { makeStableCode } from "../productValidation";
 import { discardUploadedPublicMediaAsset, updatePublicMediaCopy, uploadPublicMediaAsset } from "./adminMediaService";
 import type {
@@ -14,10 +14,10 @@ import type {
 } from "../types";
 
 const ADMIN_PRODUCT_SELECT = `
-  id, stable_code, slug, product_type, visibility, availability,
+  id, stable_code, slug, product_type, category_id, visibility, availability,
   same_day_eligible, sort_order, updated_at,
   product_translations(locale, name, short_description, description, composition, seo_title, seo_description),
-  product_variants(id, stable_code, price_amount, active, sort_order, product_variant_translations(locale, name)),
+  product_variants(id, stable_code, sku, price_amount, active, sort_order, product_variant_translations(locale, name)),
   product_occasions(occasion_id),
   product_tones(tone_id, active),
   product_images(id, media_asset_id, role, active, sort_order,
@@ -32,11 +32,6 @@ function fail(message: string, error: unknown): never {
     ? error.code
     : null;
   throw new Error(code ? `${message} (${code}).` : message);
-}
-
-function nullable(value: string) {
-  const trimmed = value.trim();
-  return trimmed || null;
 }
 
 function localizedContent(
@@ -84,7 +79,8 @@ export class SupabaseAdminCatalogRepository implements AdminCatalogRepository {
     const { data, error } = await this.client
       .from("products")
       .select(`
-        id, slug, product_type, visibility, availability, same_day_eligible, updated_at,
+        id, slug, product_type, category_id, visibility, availability, same_day_eligible, updated_at,
+        categories(category_translations(locale, name)),
         product_translations(locale, name),
         product_variants(price_amount, active),
         product_images(role, active, media_assets(storage_bucket, storage_path, status))
@@ -102,6 +98,7 @@ export class SupabaseAdminCatalogRepository implements AdminCatalogRepository {
         id: row.id,
         slug: row.slug,
         productType: row.product_type,
+        categoryName: row.categories?.category_translations.find((translation) => translation.locale === "vi")?.name ?? "Chưa có Category",
         visibility: row.visibility,
         availability: row.availability,
         sameDayEligible: row.same_day_eligible,
@@ -148,6 +145,7 @@ export class SupabaseAdminCatalogRepository implements AdminCatalogRepository {
       stableCode: row.stable_code,
       slug: row.slug,
       productType: row.product_type,
+      categoryId: row.category_id,
       visibility: row.visibility,
       availability: row.availability,
       sameDayEligible: row.same_day_eligible,
@@ -157,6 +155,7 @@ export class SupabaseAdminCatalogRepository implements AdminCatalogRepository {
       variants: row.product_variants.map((variant) => ({
         id: variant.id,
         stableCode: variant.stable_code,
+        sku: variant.sku,
         priceAmount: variant.price_amount,
         active: variant.active,
         sortOrder: variant.sort_order,
@@ -171,13 +170,21 @@ export class SupabaseAdminCatalogRepository implements AdminCatalogRepository {
   }
 
   async getTaxonomy() {
-    const [occasionResult, toneResult] = await Promise.all([
+    const [categoryResult, occasionResult, toneResult] = await Promise.all([
+      this.client.from("categories").select("id, stable_code, sort_order, category_translations(locale, name)").neq("visibility", "ARCHIVED").order("sort_order"),
       this.client.from("occasions").select("id, stable_code, sort_order, occasion_translations(locale, name)").neq("visibility", "ARCHIVED").order("sort_order"),
       this.client.from("tones").select("id, stable_code, swatch_value, sort_order, tone_translations(locale, name)").neq("visibility", "ARCHIVED").order("sort_order"),
     ]);
+    if (categoryResult.error) fail("Không thể tải Category", categoryResult.error);
     if (occasionResult.error) fail("Không thể tải dịp tặng", occasionResult.error);
     if (toneResult.error) fail("Không thể tải tone màu", toneResult.error);
     return {
+      categories: (categoryResult.data ?? []).map((row) => ({
+        id: row.id,
+        stableCode: row.stable_code,
+        name: row.category_translations.find((translation) => translation.locale === "vi")?.name ?? row.stable_code,
+        secondaryName: row.category_translations.find((translation) => translation.locale === "ko")?.name ?? "",
+      })),
       occasions: (occasionResult.data ?? []).map((row) => ({
         id: row.id,
         stableCode: row.stable_code,
@@ -194,108 +201,42 @@ export class SupabaseAdminCatalogRepository implements AdminCatalogRepository {
     } satisfies AdminTaxonomy;
   }
 
-  private async saveTranslation(productId: string, locale: "vi" | "ko", content: LocalizedProductContent) {
-    if (!content.name.trim()) {
-      const { error } = await this.client.from("product_translations").delete().eq("product_id", productId).eq("locale", locale);
-      if (error) fail(`Không thể xoá nội dung ${locale.toUpperCase()}`, error);
-      return;
-    }
-    const { error } = await this.client.from("product_translations").upsert({
-      product_id: productId,
-      locale,
-      name: content.name.trim(),
-      short_description: nullable(content.shortDescription),
-      description: nullable(content.description),
-      composition: content.composition.split("\n").map((item) => item.trim()).filter(Boolean),
-      seo_title: nullable(content.seoTitle),
-      seo_description: nullable(content.seoDescription),
-    }, { onConflict: "product_id,locale" });
-    if (error) fail(`Không thể lưu nội dung ${locale.toUpperCase()}`, error);
-  }
-
   async saveProduct(product: AdminProductDraft) {
-    let productId = product.id;
-    if (!productId) {
-      const { data, error } = await this.client.from("products").insert({
-        stable_code: makeStableCode(product.slug),
-        slug: product.slug,
-        product_type: product.productType,
-        availability: product.availability,
-        same_day_eligible: product.sameDayEligible,
-        sort_order: product.sortOrder,
-        visibility: "DRAFT",
-      }).select("id").single();
-      if (error) fail("Không thể tạo sản phẩm nháp", error);
-      if (!data) throw new Error("Database không trả về Product ID sau khi tạo.");
-      productId = data.id;
-    } else {
-      if (product.visibility === "PUBLISHED") {
-        const hidden = await this.client.from("products").update({ visibility: "HIDDEN" }).eq("id", productId);
-        if (hidden.error) fail("Không thể đưa sản phẩm về trạng thái an toàn trước khi lưu", hidden.error);
-      }
-      const { error } = await this.client.from("products").update({
-        slug: product.slug,
-        product_type: product.productType,
-        availability: product.availability,
-        same_day_eligible: product.sameDayEligible,
-        sort_order: product.sortOrder,
-      }).eq("id", productId);
-      if (error) fail("Không thể cập nhật thông tin chung", error);
-    }
-
-    await this.saveTranslation(productId, "vi", product.vi);
-    await this.saveTranslation(productId, "ko", product.ko);
-
-    const retainedVariantIds: string[] = [];
-    for (const variant of product.variants) {
-      let variantId = variant.id;
-      const payload = {
-        product_id: productId,
+    const localizedPayload = (content: LocalizedProductContent) => ({
+      name: content.name.trim(),
+      short_description: content.shortDescription.trim(),
+      description: content.description.trim(),
+      composition: content.composition.split("\n").map((item) => item.trim()).filter(Boolean),
+      seo_title: content.seoTitle.trim(),
+      seo_description: content.seoDescription.trim(),
+    });
+    const payload: Json = {
+      id: product.id ?? null,
+      stable_code: product.stableCode ?? makeStableCode(product.slug),
+      slug: product.slug,
+      product_type: product.productType,
+      category_id: product.categoryId,
+      availability: product.availability,
+      same_day_eligible: product.sameDayEligible,
+      sort_order: product.sortOrder,
+      vi: localizedPayload(product.vi),
+      ko: localizedPayload(product.ko),
+      variants: product.variants.map((variant) => ({
+        id: variant.id ?? null,
         stable_code: variant.stableCode,
+        sku: variant.sku,
         price_amount: variant.priceAmount ?? 0,
         active: variant.active,
         sort_order: variant.sortOrder,
-      };
-      if (variantId) {
-        const { error } = await this.client.from("product_variants").update(payload).eq("id", variantId).eq("product_id", productId);
-        if (error) fail("Không thể cập nhật biến thể", error);
-      } else {
-        const { data, error } = await this.client.from("product_variants").insert(payload).select("id").single();
-        if (error) fail("Không thể tạo biến thể", error);
-        if (!data) throw new Error("Database không trả về Variant ID sau khi tạo.");
-        variantId = data.id;
-      }
-      retainedVariantIds.push(variantId);
-      const { error: translationError } = await this.client.from("product_variant_translations").upsert([
-        { product_variant_id: variantId, locale: "vi", name: variant.viName.trim() },
-        { product_variant_id: variantId, locale: "ko", name: variant.koName.trim() },
-      ], { onConflict: "product_variant_id,locale" });
-      if (translationError) fail("Không thể lưu tên biến thể", translationError);
-    }
-    const existing = await this.client.from("product_variants").select("id").eq("product_id", productId);
-    if (existing.error) fail("Không thể kiểm tra biến thể", existing.error);
-    const removedIds = (existing.data ?? []).map((row) => row.id).filter((id) => !retainedVariantIds.includes(id));
-    if (removedIds.length) {
-      const { error } = await this.client.from("product_variants").update({ active: false }).in("id", removedIds);
-      if (error) fail("Không thể vô hiệu biến thể đã xoá", error);
-    }
-
-    const { error: occasionDeleteError } = await this.client.from("product_occasions").delete().eq("product_id", productId);
-    if (occasionDeleteError) fail("Không thể cập nhật dịp tặng", occasionDeleteError);
-    if (product.occasionIds.length) {
-      const { error } = await this.client.from("product_occasions").insert(product.occasionIds.map((occasionId, index) => ({ product_id: productId, occasion_id: occasionId, sort_order: index })));
-      if (error) fail("Không thể lưu dịp tặng", error);
-    }
-    const { error: toneDeleteError } = await this.client.from("product_tones").delete().eq("product_id", productId);
-    if (toneDeleteError) fail("Không thể cập nhật tone màu", toneDeleteError);
-    if (product.toneIds.length) {
-      const { error } = await this.client.from("product_tones").insert(product.toneIds.map((toneId, index) => ({ product_id: productId, tone_id: toneId, sort_order: index, active: true })));
-      if (error) fail("Không thể lưu tone màu", error);
-    }
-    if (product.visibility === "PUBLISHED") {
-      const restored = await this.client.from("products").update({ visibility: "PUBLISHED" }).eq("id", productId);
-      if (restored.error) fail("Nội dung đã lưu nhưng sản phẩm chưa thể xuất bản lại", restored.error);
-    }
+        vi_name: variant.viName.trim(),
+        ko_name: variant.koName.trim(),
+      })),
+      occasion_ids: product.occasionIds,
+      tone_ids: product.toneIds,
+    };
+    const { data: productId, error } = await this.client.rpc("admin_save_product_atomic", { product_payload: payload });
+    if (error) fail("Không thể lưu Product atomically", error);
+    if (!productId) throw new Error("Database không trả về Product ID sau khi lưu.");
     const saved = await this.getProduct(productId);
     if (!saved) throw new Error("Sản phẩm đã lưu nhưng không thể tải lại.");
     return saved;

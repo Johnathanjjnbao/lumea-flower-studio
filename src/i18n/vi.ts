@@ -83,6 +83,8 @@ export const vi = {
     homepage: "Homepage",
     siteSettings: "Thông tin studio",
     products: "Sản phẩm",
+    categories: "Categories",
+    navigation: "Navigation",
     builderFlowers: "Hoa Builder",
     wrappings: "Giấy gói",
     viewSite: "Xem website ↗",

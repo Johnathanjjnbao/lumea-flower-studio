@@ -2,6 +2,7 @@
 -- catalog or Orders capability through a helper function or direct RLS path.
 -- The outer transaction always rolls back.
 begin;
+set local search_path = public, extensions;
 select plan(1);
 
 insert into auth.users (

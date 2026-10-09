@@ -24,6 +24,7 @@ function reconcileReadyMade(item: ReadyMadeCartItem, products: readonly CatalogP
     productSlug: product.slug,
     variantId: variant.id,
     variantCode: variant.stableCode,
+    sku: variant.sku,
     toneCode: tone?.stableCode ?? null,
     unitPriceSnapshot: variant.priceAmount,
     display: {

@@ -38,8 +38,9 @@ const client = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_PUBLISHABLE
 
 const { data, error } = await client.from("products").select(`
   stable_code, slug, visibility, availability, same_day_eligible, featured, bestseller, sort_order,
+  categories(stable_code, slug, category_translations(locale, name, description)),
   product_translations(locale, name, short_description, description, composition),
-  product_variants(stable_code, price_amount, active, sort_order, product_variant_translations(locale, name, description)),
+  product_variants(stable_code, sku, price_amount, active, sort_order, product_variant_translations(locale, name, description)),
   product_occasions(occasions(stable_code)),
   product_tones(active, tones(stable_code)),
   product_images(role, active, media_assets(storage_bucket, storage_path, access, status, media_asset_translations(locale, alt_text)))
@@ -57,6 +58,7 @@ for (const fixture of fixtureProducts) {
   assert(product.same_day_eligible === fixture.sameDayEligible, `Same-day mismatch for ${fixture.id}.`);
   assert(product.featured === Boolean(fixture.featured), `Featured mismatch for ${fixture.id}.`);
   assert(product.bestseller === (fixture.tag === "bestseller"), `Bestseller mismatch for ${fixture.id}.`);
+  assert(product.categories?.stable_code === "bouquets", `Category mismatch for ${fixture.id}.`);
 
   for (const [locale, dictionary] of [["vi", vi], ["ko", ko]]) {
     const translation = product.product_translations.find((item) => item.locale === locale);
@@ -71,6 +73,7 @@ for (const fixture of fixtureProducts) {
   fixture.sizes.forEach((fixtureVariant) => {
     const variant = product.product_variants.find((candidate) => candidate.stable_code === fixtureVariant.id);
     assert(variant?.active, `Active ${fixtureVariant.id} variant missing for ${fixture.id}.`);
+    assert(/^LUM-[A-Z0-9]+(?:-[A-Z0-9]+)*$/.test(variant?.sku ?? ""), `Invalid SKU for ${fixture.id}/${fixtureVariant.id}.`);
     // Admin-managed live prices are business source of truth and may intentionally diverge from seed fixtures.
     assert(Number.isSafeInteger(variant.price_amount) && variant.price_amount > 0, `Invalid live price for ${fixture.id}/${fixtureVariant.id}.`);
     assert(new Set(variant.product_variant_translations.map((item) => item.locale)).size === 2, `Variant translations missing for ${fixture.id}/${fixtureVariant.id}.`);

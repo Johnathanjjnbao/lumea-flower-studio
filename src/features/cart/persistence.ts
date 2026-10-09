@@ -54,6 +54,7 @@ function parseReadyMade(value: Record<string, unknown>): ReadyMadeCartItem | nul
   const productSlug = safeSlug(value.productSlug);
   const variantId = safeString(value.variantId);
   const variantCode = safeString(value.variantCode);
+  const sku = nullableString(value.sku, 96);
   const toneCode = nullableString(value.toneCode);
   const price = safePrice(value.unitPriceSnapshot);
   const quantity = safeCartQuantity(value.quantity);
@@ -67,7 +68,7 @@ function parseReadyMade(value: Record<string, unknown>): ReadyMadeCartItem | nul
   return {
     id: `ready:${productId}:${variantId}:${toneCode ?? "none"}`,
     type: "READY_MADE_PRODUCT",
-    productId, productCode, productSlug, variantId, variantCode, toneCode,
+    productId, productCode, productSlug, variantId, variantCode, sku, toneCode,
     quantity, unitPriceSnapshot: price, addedAt,
     display: { productName, variantName, toneName, imageUrl, imageAlt },
   };

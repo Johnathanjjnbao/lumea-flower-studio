@@ -1,5 +1,5 @@
 import type { Locale } from "../../../types/content";
-import type { CatalogProductRecord } from "./catalogRepository";
+import type { CatalogCategoryRecord, CatalogProductRecord } from "./catalogRepository";
 import { createSupabaseCatalogRepository } from "./supabaseCatalogRepository";
 
 const CACHE_TTL_MS = 10_000;
@@ -11,6 +11,7 @@ interface CacheEntry<T> {
 }
 
 const listCache = new Map<Locale, CacheEntry<CatalogProductRecord[]>>();
+const categoryCache = new Map<Locale, CacheEntry<CatalogCategoryRecord[]>>();
 const detailCache = new Map<string, CacheEntry<CatalogProductRecord | null>>();
 
 function readCache<T>(entry: CacheEntry<T> | undefined) {
@@ -27,6 +28,15 @@ export function loadPublishedCatalog(locale: Locale, force = false) {
   return promise;
 }
 
+export function loadPublishedCategories(locale: Locale, force = false) {
+  const cached = force ? null : readCache(categoryCache.get(locale));
+  if (cached) return cached;
+  const promise = repository.listPublishedCategories(locale);
+  categoryCache.set(locale, { expiresAt: Date.now() + CACHE_TTL_MS, promise });
+  void promise.catch(() => categoryCache.delete(locale));
+  return promise;
+}
+
 export function loadPublishedProduct(slug: string, locale: Locale, force = false) {
   const key = `${locale}:${slug}`;
   const cached = force ? null : readCache(detailCache.get(key));
@@ -40,5 +50,6 @@ export function loadPublishedProduct(slug: string, locale: Locale, force = false
 
 export function invalidateCatalogCache() {
   listCache.clear();
+  categoryCache.clear();
   detailCache.clear();
 }

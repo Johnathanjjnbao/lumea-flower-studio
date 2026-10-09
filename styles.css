@@ -4904,6 +4904,26 @@ body.catalog-filter-open {
 .admin-button--secondary { background: transparent; }
 .admin-button:disabled { opacity: 0.48; cursor: not-allowed; }
 
+.admin-editor-actions,
+.admin-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.admin-row-actions {
+  justify-content: flex-end;
+  margin: 0 0 0.45rem;
+}
+
+.admin-row-actions button {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  border: 1px solid var(--line-strong);
+  background: var(--paper);
+}
+
 .admin-action-panel {
   display: grid;
   padding: clamp(1.5rem, 4vw, 3.5rem);

@@ -5,9 +5,19 @@ export type CatalogProductType = "READY_MADE_BOUQUET" | "FLORIST_CHOICE" | "CUST
 export interface CatalogVariantRecord {
   id: string;
   stableCode: string;
+  sku: string;
   name: string;
   description: string | null;
   priceAmount: number;
+  sortOrder: number;
+}
+
+export interface CatalogCategoryRecord {
+  id: string;
+  stableCode: string;
+  slug: string;
+  name: string;
+  description: string | null;
   sortOrder: number;
 }
 
@@ -50,6 +60,7 @@ export interface CatalogProductRecord {
   seoTitle: string | null;
   seoDescription: string | null;
   startingPriceAmount: number;
+  category: CatalogCategoryRecord;
   variants: CatalogVariantRecord[];
   images: CatalogMediaRecord[];
   occasionCodes: string[];
@@ -59,11 +70,13 @@ export interface CatalogProductRecord {
 
 export interface CatalogProductFilters {
   availability?: ProductAvailability;
+  categoryCode?: string;
   occasionCode?: string;
   sameDayEligible?: boolean;
 }
 
 export interface CatalogRepository {
+  listPublishedCategories(locale: Locale): Promise<CatalogCategoryRecord[]>;
   listPublishedProducts(
     locale: Locale,
     filters?: CatalogProductFilters,

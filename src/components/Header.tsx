@@ -3,6 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { siteConfig } from "../config/siteConfig";
 import { usePrototypeAction } from "../context/PrototypeActionContext";
 import { useCart } from "../features/cart/CartContext";
+import { useStorefrontNavigation } from "../features/navigation/useStorefrontNavigation";
+import type { StorefrontNavigationItem } from "../features/navigation/types";
 import { formatMessage, localizePath, stripLocalePrefix, useI18n } from "../i18n";
 import type { Locale } from "../types/content";
 
@@ -28,11 +30,24 @@ export function Header() {
   const quickNavButtonRef = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const location = useLocation();
-  const { t, path } = useI18n();
+  const { locale, t, path } = useI18n();
+  const managedNavigation = useStorefrontNavigation(locale);
   const { itemCount } = useCart();
   const { showPrototypeAction } = usePrototypeAction();
   const appPathname = stripLocalePrefix(location.pathname);
   const isHome = appPathname === "/";
+  const fallbackNavigation: StorefrontNavigationItem[] = siteConfig.navigation.map((item, index) => ({
+    id: `fallback-${item.key}`,
+    stableCode: item.key,
+    label: t.header.navigation[item.key],
+    destinationType: "HOME",
+    categorySlug: null,
+    externalUrl: null,
+    sortOrder: index,
+    to: item.to,
+    external: false,
+  }));
+  const navigationItems = managedNavigation.status === "success" ? managedNavigation.items : fallbackNavigation;
 
   useEffect(() => {
     const updateHeaderState = () => setCompact(window.scrollY > 56);
@@ -78,8 +93,12 @@ export function Header() {
   const navigationIsActive = (to: string) => {
     const chapterId = to.split("#")[1];
     if (chapterId) return chapterIsActive(chapterId);
-    return appPathname === to || appPathname.startsWith(`${to}/`);
+    const pathname = to.split(/[?#]/)[0];
+    return appPathname === pathname || appPathname.startsWith(`${pathname}/`);
   };
+  const navigationLink = (item: StorefrontNavigationItem, onClick?: () => void) => item.external
+    ? <a key={item.id} href={item.to} rel="noreferrer" onClick={onClick}>{item.label}</a>
+    : <Link key={item.id} to={path(item.to)} onClick={onClick} data-active={navigationIsActive(item.to)} aria-current={navigationIsActive(item.to) ? (item.to.includes("#") ? "location" : "page") : undefined}>{item.label}</Link>;
 
   return <>
     <a className="skip-link" href="#main-content">{t.header.skip}</a>
@@ -88,7 +107,7 @@ export function Header() {
       <div className="header-inner">
         <button ref={menuButtonRef} className="menu-toggle" type="button" aria-label={menuOpen ? t.header.closeMenu : t.header.openMenu} aria-expanded={menuOpen} aria-controls="mobile-menu" onClick={() => setMenuOpen((open) => !open)}><span className="menu-toggle__icon" aria-hidden="true"><i /><i /></span><span className="menu-toggle__label">{menuOpen ? t.header.closeLabel : t.header.openLabel}</span></button>
         <nav className="desktop-nav" aria-label={t.header.primaryNavAria}>
-          {siteConfig.navigation.map((item) => <Link key={item.to} to={path(item.to)} data-active={navigationIsActive(item.to)} aria-current={navigationIsActive(item.to) ? (item.to.includes("#") ? "location" : "page") : undefined}>{t.header.navigation[item.key]}</Link>)}
+          {navigationItems.map((item) => navigationLink(item))}
           <button ref={quickNavButtonRef} className="quick-nav-trigger" type="button" aria-expanded={quickNavOpen} aria-controls="header-quick-nav" onClick={() => setQuickNavOpen((open) => !open)}>{t.header.quickNav} <span aria-hidden="true">{quickNavOpen ? "−" : "+"}</span></button>
         </nav>
         <Link className="wordmark" to={path("/#top")} aria-label={t.header.homeAria}><span className="wordmark__name">{siteConfig.brandName}</span><span className="wordmark__descriptor">{t.brand.descriptor} · {t.brand.city}</span></Link>
@@ -102,7 +121,9 @@ export function Header() {
       <nav className="mobile-menu" id="mobile-menu" aria-label={t.header.mobileNavAria} hidden={!menuOpen}>
         <div className="mobile-menu__head"><p><span>{t.header.goTo}</span><strong>{t.header.exploreLumea}</strong></p><Link className="mobile-menu__catalog" to={path("/flowers")} onClick={() => setMenuOpen(false)}>{t.header.viewAll} <span aria-hidden="true">→</span></Link></div>
         <LanguageSwitch variant="mobile" />
-        <div className="mobile-menu__chapters">{siteConfig.homeChapters.map((id, index) => <Link key={id} to={path(`/#${id}`)} data-active={chapterIsActive(id)} aria-current={chapterIsActive(id) ? "location" : undefined} onClick={() => setMenuOpen(false)}><span>{String(index + 1).padStart(2, "0")}</span>{t.header.chapters[id]}</Link>)}</div>
+        <div className="mobile-menu__chapters">{navigationItems.map((item, index) => item.external
+          ? <a key={item.id} href={item.to} rel="noreferrer" onClick={() => setMenuOpen(false)}><span>{String(index + 1).padStart(2, "0")}</span>{item.label}</a>
+          : <Link key={item.id} to={path(item.to)} data-active={navigationIsActive(item.to)} aria-current={navigationIsActive(item.to) ? (item.to.includes("#") ? "location" : "page") : undefined} onClick={() => setMenuOpen(false)}><span>{String(index + 1).padStart(2, "0")}</span>{item.label}</Link>)}</div>
         <p className="mobile-menu__note">{t.header.mobileNote}</p>
       </nav>
       <nav className="header-quick-nav" id="header-quick-nav" aria-label={t.header.quickNavAria} hidden={!quickNavOpen}>

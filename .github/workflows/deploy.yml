@@ -61,7 +61,11 @@ jobs:
           done
           cat /tmp/lumea-preview.log
           exit 1
-      - name: Run core-route browser smoke
+      - name: Run isolated V2 browser acceptance
+        if: github.event_name != 'push' || github.ref != 'refs/heads/main'
+        run: npm run check:v2-commerce-browser
+      - name: Run production-backed core-route browser smoke
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: npm run check:browser-smoke
       - name: Add SPA fallback
         if: github.event_name != 'pull_request'
@@ -95,7 +99,7 @@ jobs:
         run: supabase stop --no-backup
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
