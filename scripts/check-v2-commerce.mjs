@@ -17,6 +17,7 @@ const [foundationSql, adminSql, checkoutSql, atomicProductSql, legacyGuardSql, a
 assert.match(foundationSql, /alter table public\.product_variants[\s\S]*alter column sku set not null[\s\S]*product_variants_sku_unique unique \(sku\)/);
 assert.match(foundationSql, /PRODUCT_VARIANT_SKU_IMMUTABLE/);
 assert.match(foundationSql, /update public\.product_variants variant[\s\S]*product\.stable_code[\s\S]*variant\.stable_code/);
+assert.match(foundationSql, /set constraints all immediate;[\s\S]*alter table public\.product_variants[\s\S]*set constraints all deferred;/);
 assert.match(foundationSql, /create table public\.categories/);
 assert.match(foundationSql, /products_category_id_fkey[\s\S]*on delete restrict/);
 assert.match(foundationSql, /categories_stable_code_immutable/);

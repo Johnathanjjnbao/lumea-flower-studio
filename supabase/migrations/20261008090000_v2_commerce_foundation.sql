@@ -9,6 +9,10 @@ set sku = upper('LUM-' || product.stable_code || '-' || variant.stable_code)
 from public.products product
 where product.id = variant.product_id;
 
+-- V1 readiness is enforced by a deferred constraint trigger on this table.
+-- Flush those events before changing the table definition in the same migration.
+set constraints all immediate;
+
 alter table public.product_variants
   alter column sku set not null,
   add constraint product_variants_sku_unique unique (sku),
@@ -16,6 +20,8 @@ alter table public.product_variants
     char_length(sku) between 3 and 96
     and sku ~ '^[A-Z0-9]+(?:-[A-Z0-9]+)*$'
   );
+
+set constraints all deferred;
 
 comment on column public.product_variants.sku is
   'Globally unique, stable orderable SKU. Independent from localized display names.';
