@@ -12,6 +12,17 @@
 - Before significant implementation, answer the four Product Review Gate questions in the workflow.
 - Do not begin a later stage while an earlier required decision or approval is unresolved.
 
+## Repo-local skills
+
+Use the matching workflow under `.agents/skills/` when its trigger applies:
+
+- `$codebase-orientation` for recovery, large-task scoping, or unfamiliar code paths.
+- `$frontend-ui-review` for Storefront or Admin UI changes.
+- `$webapp-qa` after changes with browser-visible behavior.
+- `$security-review` for Auth, Supabase, RLS, RPC, Edge Function, Checkout, money, or secrets.
+- `$code-review` before committing or pushing a substantive task.
+- `$documentation-handoff` when closing a milestone or release boundary.
+
 ## Scope discipline
 
 - Keep each task and prompt narrowly scoped; match effort and testing depth to risk and complexity.
