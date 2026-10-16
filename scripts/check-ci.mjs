@@ -11,6 +11,7 @@ const checks = [
   "check:homepage-visit",
   "check:step15",
   "check:v2-commerce",
+  "check:v2-2-commercial-content",
   "typecheck",
 ];
 

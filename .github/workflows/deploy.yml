@@ -64,6 +64,8 @@ jobs:
       - name: Run isolated V2 browser acceptance
         if: github.event_name != 'push' || github.ref != 'refs/heads/main'
         run: npm run check:v2-commerce-browser
+      - name: Run isolated V2.2 browser acceptance
+        run: npm run check:v2-2-browser
       - name: Run production-backed core-route browser smoke
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: npm run check:browser-smoke
