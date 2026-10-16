@@ -2,7 +2,7 @@ name: Quality gates and GitHub Pages deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, v2-product-detail-policies]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -32,15 +32,15 @@ jobs:
         run: npm audit --audit-level=high
       - name: Verify public configuration
         env:
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+          VITE_SUPABASE_URL: ${{ github.ref == 'refs/heads/main' && vars.VITE_SUPABASE_URL || 'https://lumea-ci.invalid' }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ github.ref == 'refs/heads/main' && vars.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_ci_only' }}
+          VITE_TURNSTILE_SITE_KEY: ${{ github.ref == 'refs/heads/main' && vars.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA' }}
         run: test -n "$VITE_SUPABASE_URL" && test -n "$VITE_SUPABASE_PUBLISHABLE_KEY" && test -n "$VITE_TURNSTILE_SITE_KEY"
       - name: Build
         env:
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+          VITE_SUPABASE_URL: ${{ github.ref == 'refs/heads/main' && vars.VITE_SUPABASE_URL || 'https://lumea-ci.invalid' }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ github.ref == 'refs/heads/main' && vars.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_ci_only' }}
+          VITE_TURNSTILE_SITE_KEY: ${{ github.ref == 'refs/heads/main' && vars.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA' }}
         run: npm run build
       - name: Run PR-safe contract checks
         run: npm run check:ci
@@ -94,8 +94,10 @@ jobs:
           version: 2.120.0
       - name: Start local Supabase
         run: supabase start
+      - name: Lint local database schema
+        run: supabase db lint --local --schema public --level error --fail-on error
       - name: Run rollback-safe SQL security tests
-        run: supabase test db
+        run: supabase test db --local
       - name: Stop local Supabase
         if: always()
         run: supabase stop --no-backup
