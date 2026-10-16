@@ -68,13 +68,13 @@ $$;
 insert into public.commercial_content_translations (
   commercial_content_section_id, locale, title, summary, body
 )
-select id, 'vi', 'Giao nhận', 'Tóm tắt giao nhận', 'Nội dung do owner xác nhận.'
+select id, 'vi'::public.locale_code, 'Giao nhận', 'Tóm tắt giao nhận', 'Nội dung do owner xác nhận.'
 from public.commercial_content_sections where code = 'DELIVERY'
 union all
-select id, 'ko', '배송', '배송 요약', '소유자가 확인한 내용입니다.'
+select id, 'ko'::public.locale_code, '배송', '배송 요약', '소유자가 확인한 내용입니다.'
 from public.commercial_content_sections where code = 'DELIVERY'
 union all
-select id, 'vi', 'Đổi trả', 'Tóm tắt nháp', 'Nội dung nháp.'
+select id, 'vi'::public.locale_code, 'Đổi trả', 'Tóm tắt nháp', 'Nội dung nháp.'
 from public.commercial_content_sections where code = 'RETURNS_REFUNDS';
 
 update public.commercial_content_sections set visibility = 'PUBLISHED' where code = 'DELIVERY';
