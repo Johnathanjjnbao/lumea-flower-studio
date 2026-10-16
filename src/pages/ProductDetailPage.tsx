@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { PageFrame } from "../components/PageFrame";
 import { ProductGallery } from "../components/ProductGallery";
@@ -7,6 +7,12 @@ import { clampCartQuantity, createReadyMadeCartItem } from "../features/cart/dom
 import { MAX_CART_ITEM_QUANTITY } from "../features/cart/types";
 import type { CatalogProductRecord } from "../features/catalog/data/catalogRepository";
 import { usePublishedProduct } from "../features/catalog/useCatalogData";
+import { loadCheckoutOptions, isSameDayAvailable } from "../features/checkout/options";
+import type { CheckoutOptions } from "../features/checkout/types";
+import { publishedContentMap } from "../features/commercialContent/types";
+import { useCommercialContent } from "../features/commercialContent/useCommercialContent";
+import { useSiteProfile } from "../features/siteSettings/useSiteProfile";
+import { isSafeEmail, isSafeInstagramUrl, normalizePhoneHref } from "../features/siteSettings/validation";
 import { useDocumentMetadata } from "../hooks/useDocumentMetadata";
 import { useImagePipeline } from "../hooks/useImagePipeline";
 import { formatMessage, useI18n } from "../i18n";
@@ -54,11 +60,46 @@ function ProductDetailContent({ product }: { product: CatalogProductRecord }) {
   const [toneId, setToneId] = useState(product.tones[0]?.stableCode ?? "");
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
-  const { t, path } = useI18n();
+  const { locale, t, path } = useI18n();
   const { addItem } = useCart();
+  const commercialContent = useCommercialContent(locale);
+  const policies = publishedContentMap(commercialContent.data);
+  const siteProfile = useSiteProfile();
+  const [checkoutOptions, setCheckoutOptions] = useState<CheckoutOptions | null>(null);
+  const [checkoutOptionsStatus, setCheckoutOptionsStatus] = useState<"loading" | "success" | "error">("loading");
   const unavailable = product.availability !== "AVAILABLE" || !product.variants.some((variant) => variant.id === variantId);
   const unavailableLabel = product.availability === "SEASONAL" ? t.product.detail.seasonalUnavailable : t.product.detail.unavailable;
   const selectedPrice = getProductPrice(product, variantId);
+  const deliveryPolicy = policies.get("DELIVERY");
+  const returnsPolicy = policies.get("RETURNS_REFUNDS");
+  const paymentPolicy = policies.get("PAYMENT");
+  const inquiryPolicy = policies.get("CONTACT_INQUIRY");
+  const careCopy = product.careInstructions || policies.get("FLOWER_CARE_DEFAULT")?.body || null;
+  const defaultFreshnessCopy = policies.get("FRESHNESS_SUBSTITUTION_DEFAULT")?.body || null;
+  const hasProductFreshnessCopy = Boolean(product.freshnessSeasonalityNote || product.substitutionNote);
+  const sameDayAvailable = product.availability === "AVAILABLE" && product.sameDayEligible && isSameDayAvailable(checkoutOptions);
+  const phoneHref = siteProfile ? normalizePhoneHref(siteProfile.phone) : null;
+  const emailHref = siteProfile && isSafeEmail(siteProfile.email) ? `mailto:${siteProfile.email.trim()}` : null;
+  const instagramHref = siteProfile?.instagramUrl.trim() && isSafeInstagramUrl(siteProfile.instagramUrl) ? siteProfile.instagramUrl.trim() : null;
+  const hasContactChannel = Boolean(phoneHref || emailHref || instagramHref);
+
+  useEffect(() => {
+    let active = true;
+    setCheckoutOptions(null);
+    setCheckoutOptionsStatus("loading");
+    void loadCheckoutOptions(locale).then(
+      (options) => {
+        if (!active) return;
+        setCheckoutOptions(options);
+        setCheckoutOptionsStatus("success");
+      },
+      () => {
+        if (!active) return;
+        setCheckoutOptionsStatus("error");
+      },
+    );
+    return () => { active = false; };
+  }, [locale]);
 
   useImagePipeline(pageRef, { observe: "images", prioritySelector: ".product-gallery__main", preloadMargin: "500px 0px" });
   useDocumentMetadata(
@@ -87,18 +128,76 @@ function ProductDetailContent({ product }: { product: CatalogProductRecord }) {
         {product.tones.length > 0 && <fieldset className="product-options"><legend>{t.product.detail.tone}</legend><div className="tone-options">
           {product.tones.map((tone) => <label className="tone-option" data-selected={toneId === tone.stableCode} key={tone.stableCode}><input type="radio" name="tone" value={tone.stableCode} checked={toneId === tone.stableCode} onChange={() => { setToneId(tone.stableCode); setAdded(false); }} />{tone.swatchValue && <i style={{ backgroundColor: tone.swatchValue }} aria-hidden="true" />}<span>{tone.name}</span></label>)}
         </div></fieldset>}
-        {product.composition.length > 0 && <div className="product-composition"><p>{t.product.detail.composition}</p><ul>{product.composition.map((flower) => <li key={flower}>{flower}</li>)}</ul><small>{t.product.detail.seasonalNote}</small></div>}
+        {product.composition.length > 0 && <div className="product-composition"><p>{t.product.detail.composition}</p><ul>{product.composition.map((flower) => <li key={flower}>{flower}</li>)}</ul></div>}
         <div className="product-purchase">
-          {product.availability === "AVAILABLE" && product.sameDayEligible && <p className="same-day-eligibility"><span className="status-dot" aria-hidden="true" />{t.product.detail.sameDay}</p>}
+          {sameDayAvailable && <p className="same-day-eligibility"><span className="status-dot" aria-hidden="true" />{t.product.detail.sameDayAvailable}</p>}
           <div className="product-purchase__row">
             <label className="product-quantity"><span>{t.product.detail.quantity}</span><input type="number" inputMode="numeric" min={1} max={MAX_CART_ITEM_QUANTITY} value={quantity} onChange={(event) => { setQuantity(clampCartQuantity(Number(event.target.value))); setAdded(false); }} /></label>
             <button className="button button--solid product-purchase__button" type="button" disabled={unavailable || added} onClick={addToCart}>{unavailable ? unavailableLabel : added ? t.product.detail.added : t.product.detail.add}</button>
           </div>
           {added && <p className="product-add-status" role="status">{t.product.detail.addedText} <Link to={path("/cart")}>{t.product.detail.viewCart}</Link></p>}
-          <p className="product-delivery-note">{t.product.detail.delivery}</p>
         </div>
+        <section className="product-commercial-overview" aria-labelledby="commercial-overview-heading" aria-busy={commercialContent.status === "loading"}>
+          <div className="product-commercial-overview__heading"><h2 id="commercial-overview-heading">{t.product.detail.commercialInfo}</h2><Link to={path("/policies")}>{t.product.detail.policiesLink}</Link></div>
+          <div className="product-commercial-overview__grid">
+            <div><strong>{t.product.detail.deliveryOverview}</strong><p>{commercialContent.status === "loading" ? t.policies.loading : deliveryPolicy?.summary || t.product.detail.contentUnavailable}</p></div>
+            <div><strong>{t.product.detail.returnsOverview}</strong><p>{commercialContent.status === "loading" ? t.policies.loading : returnsPolicy?.summary || t.product.detail.contentUnavailable}</p></div>
+          </div>
+        </section>
       </div>
     </div>
+    <section className="product-commercial-details" aria-label={t.product.detail.commercialInfo}>
+      <details>
+        <summary>{t.product.detail.deliveryHeading}</summary>
+        <div className="product-commercial-details__body">
+          {product.fulfillmentNote && <p>{product.fulfillmentNote}</p>}
+          {deliveryPolicy?.body ? <div className="commercial-copy">{deliveryPolicy.body}</div> : <p>{t.product.detail.contentUnavailable}</p>}
+          {checkoutOptionsStatus === "success" && checkoutOptions ? <div className="commercial-status-list" aria-label={t.product.detail.deliveryHeading}>
+            {checkoutOptions.deliveryEnabled && <span>{t.product.detail.deliveryAvailable}</span>}
+            {checkoutOptions.pickupEnabled && <span>{t.product.detail.pickupAvailable}</span>}
+            {sameDayAvailable && <span>{t.product.detail.sameDayAvailable}</span>}
+          </div> : <p className="commercial-live-status">{checkoutOptionsStatus === "loading" ? t.policies.loading : t.product.detail.liveOptionsUnavailable}</p>}
+          {checkoutOptions?.deliveryHelp && <p>{checkoutOptions.deliveryHelp}</p>}
+          {checkoutOptions?.pickup && <p>{checkoutOptions.pickup.name} · {checkoutOptions.pickup.address} · {checkoutOptions.pickup.hours}</p>}
+        </div>
+      </details>
+      <details>
+        <summary>{t.product.detail.returnsHeading}</summary>
+        <div className="product-commercial-details__body">{returnsPolicy?.body ? <div className="commercial-copy">{returnsPolicy.body}</div> : <p>{t.product.detail.contentUnavailable}</p>}</div>
+      </details>
+      <details>
+        <summary>{t.product.detail.careHeading}</summary>
+        <div className="product-commercial-details__body">{careCopy ? <div className="commercial-copy">{careCopy}</div> : <p>{t.product.detail.contentUnavailable}</p>}</div>
+      </details>
+      <details>
+        <summary>{t.product.detail.freshnessHeading}</summary>
+        <div className="product-commercial-details__body">
+          {hasProductFreshnessCopy ? <>
+            {product.freshnessSeasonalityNote && <div className="commercial-copy">{product.freshnessSeasonalityNote}</div>}
+            {product.substitutionNote && <div className="commercial-copy">{product.substitutionNote}</div>}
+          </> : defaultFreshnessCopy ? <div className="commercial-copy">{defaultFreshnessCopy}</div> : <p>{t.product.detail.contentUnavailable}</p>}
+        </div>
+      </details>
+      <details>
+        <summary>{t.product.detail.paymentHeading}</summary>
+        <div className="product-commercial-details__body">
+          {paymentPolicy?.body ? <div className="commercial-copy">{paymentPolicy.body}</div> : <p>{t.product.detail.contentUnavailable}</p>}
+          {checkoutOptionsStatus === "success" && checkoutOptions ? <div className="commercial-status-list" aria-label={t.product.detail.paymentHeading}>
+            {checkoutOptions.paymentMethods.bankTransfer && <span>{t.product.detail.bankTransfer}</span>}
+            {(checkoutOptions.paymentMethods.cash || checkoutOptions.paymentMethods.cashDelivery || checkoutOptions.paymentMethods.cashPickup) && <span>{t.product.detail.cash}</span>}
+          </div> : <p className="commercial-live-status">{checkoutOptionsStatus === "loading" ? t.policies.loading : t.product.detail.liveOptionsUnavailable}</p>}
+        </div>
+      </details>
+    </section>
+    <aside className="product-inquiry" aria-labelledby="product-inquiry-heading">
+      <div><p className="eyebrow"><span aria-hidden="true">?</span>{t.product.detail.commercialInfo}</p><h2 id="product-inquiry-heading">{t.product.detail.inquiryHeading}</h2><p>{inquiryPolicy?.summary || t.product.detail.inquiryText}</p></div>
+      <div className="product-inquiry__links">
+        {phoneHref && <a className="button button--outline" href={phoneHref}>{t.product.detail.phone}</a>}
+        {emailHref && <a className="button button--outline" href={emailHref}>{t.product.detail.email}</a>}
+        {instagramHref && <a className="button button--outline" href={instagramHref} target="_blank" rel="noreferrer">{t.product.detail.instagram}</a>}
+        {!hasContactChannel && <p>{t.product.detail.contactUnavailable}</p>}
+      </div>
+    </aside>
   </article></PageFrame>;
 }
 

@@ -22,6 +22,7 @@ import { AdminSiteSettingsPage } from "./pages/AdminSiteSettingsPage";
 import { AdminDiscoveryPage } from "./pages/AdminDiscoveryPage";
 import { AdminCategoriesPage } from "./categories/AdminCategoriesPage";
 import { AdminNavigationPage } from "./navigation/AdminNavigationPage";
+import { AdminCommercialPoliciesPage } from "./pages/AdminCommercialPoliciesPage";
 
 export default function AdminRoutes() {
   const { path } = useI18n();
@@ -38,6 +39,7 @@ export default function AdminRoutes() {
           <Route path="orders/:id" element={<AdminOrderDetailPage />} />
           <Route path="operations" element={<AdminOperationsPage />} />
           <Route path="site-settings" element={<AdminSiteSettingsPage />} />
+          <Route path="commercial-policies" element={<AdminCommercialPoliciesPage />} />
           <Route path="discovery" element={<AdminDiscoveryPage />} />
           <Route path="products" element={<AdminProductsPage />} />
           <Route path="products/new" element={<AdminProductEditorPage />} />

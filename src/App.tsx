@@ -9,6 +9,7 @@ import { CheckoutPage } from "./pages/CheckoutPage";
 import { HomePage } from "./pages/HomePage";
 import { OrderConfirmationPage } from "./pages/OrderConfirmationPage";
 import { ProductDetailPage } from "./pages/ProductDetailPage";
+import { PoliciesPage } from "./pages/PoliciesPage";
 import { I18nProvider } from "./i18n";
 import { CartProvider } from "./features/cart/CartContext";
 
@@ -31,6 +32,7 @@ export default function App() {
               <Route path="/cart" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
+              <Route path="/policies" element={<PoliciesPage />} />
               <Route path="/ko" element={<HomePage />} />
               <Route path="/ko/flowers" element={<CatalogPage />} />
               <Route path="/ko/flowers/:slug" element={<ProductDetailPage />} />
@@ -38,6 +40,7 @@ export default function App() {
               <Route path="/ko/cart" element={<CartPage />} />
               <Route path="/ko/checkout" element={<CheckoutPage />} />
               <Route path="/ko/order-confirmation" element={<OrderConfirmationPage />} />
+              <Route path="/ko/policies" element={<PoliciesPage />} />
             <Route path="/admin/*" element={<Suspense fallback={<main className="admin-gate" aria-busy="true"><p>Đang tải khu vực quản trị…</p></main>}><AdminRoutes /></Suspense>} />
             <Route path="/ko/admin/*" element={<Suspense fallback={<main className="admin-gate" aria-busy="true"><p>관리자 페이지를 불러오는 중…</p></main>}><AdminRoutes /></Suspense>} />
           </Routes>

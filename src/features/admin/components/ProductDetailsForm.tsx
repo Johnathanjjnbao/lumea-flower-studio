@@ -20,6 +20,11 @@ function TextContentFields({ locale, value, onChange }: {
       <label className="admin-field-span">Mô tả ngắn<textarea rows={2} value={value.shortDescription} onChange={(event) => update("shortDescription", event.target.value)} /></label>
       <label className="admin-field-span">Mô tả đầy đủ<textarea rows={5} value={value.description} onChange={(event) => update("description", event.target.value)} /></label>
       <label className="admin-field-span">Thành phần <small>Mỗi dòng một thành phần</small><textarea rows={4} value={value.composition} onChange={(event) => update("composition", event.target.value)} /></label>
+      <div className="admin-field-span admin-guidance-heading"><h3>Care &amp; Fulfillment Guidance</h3><p>Nội dung tùy chọn cho riêng sản phẩm; để trống để storefront dùng hướng dẫn global cùng ngôn ngữ.</p></div>
+      <label className="admin-field-span">Hướng dẫn chăm hoa<textarea rows={4} maxLength={8000} value={value.careInstructions} onChange={(event) => update("careInstructions", event.target.value)} /></label>
+      <label className="admin-field-span">Độ tươi / mùa vụ<textarea rows={3} maxLength={4000} value={value.freshnessSeasonalityNote} onChange={(event) => update("freshnessSeasonalityNote", event.target.value)} /></label>
+      <label className="admin-field-span">Ghi chú thay thế<textarea rows={3} maxLength={4000} value={value.substitutionNote} onChange={(event) => update("substitutionNote", event.target.value)} /></label>
+      <label className="admin-field-span">Ghi chú thực hiện / giao nhận<textarea rows={3} maxLength={4000} value={value.fulfillmentNote} onChange={(event) => update("fulfillmentNote", event.target.value)} /></label>
       <label>SEO title<input value={value.seoTitle} onChange={(event) => update("seoTitle", event.target.value)} /></label>
       <label>SEO description<textarea rows={3} value={value.seoDescription} onChange={(event) => update("seoDescription", event.target.value)} /></label>
     </div>

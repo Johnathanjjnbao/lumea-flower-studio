@@ -7040,8 +7040,12 @@ h2 em,
     border-bottom: 1px solid var(--line);
   }
 
-  .product-composition {
+  .product-commercial-overview {
     order: 7;
+  }
+
+  .product-composition {
+    order: 8;
     padding: 1.25rem 0 0;
     border-bottom: 0;
   }
@@ -8176,4 +8180,210 @@ html[lang="ko"] .footer-wordmark {
   .catalog-skeleton::after {
     animation: none;
   }
+}
+
+/* V2.2: owner-managed commercial content and product guidance. */
+.product-commercial-overview {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.product-commercial-overview__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.product-commercial-overview__heading h2 {
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.product-commercial-overview__heading a {
+  color: var(--burgundy);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.22rem;
+}
+
+.product-commercial-overview__grid {
+  display: grid;
+  margin-top: 1rem;
+  gap: 0.75rem;
+}
+
+.product-commercial-overview__grid > div {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  background: rgba(253, 249, 243, 0.52);
+}
+
+.product-commercial-overview__grid strong {
+  font-family: var(--serif);
+  font-size: 1.08rem;
+}
+
+.product-commercial-overview__grid p {
+  margin-top: 0.45rem;
+  color: var(--ink-soft);
+  font-size: 0.69rem;
+  line-height: 1.6;
+}
+
+.product-commercial-details {
+  max-width: 58rem;
+  margin: clamp(3rem, 7vw, 6rem) auto 0;
+  border-top: 1px solid var(--line-strong);
+}
+
+.product-commercial-details details {
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.product-commercial-details summary {
+  position: relative;
+  padding: 1.35rem 2.5rem 1.35rem 0;
+  font-family: var(--serif);
+  font-size: clamp(1.25rem, 3vw, 1.65rem);
+  cursor: pointer;
+  list-style: none;
+}
+
+.product-commercial-details summary::-webkit-details-marker { display: none; }
+.product-commercial-details summary::after {
+  position: absolute;
+  top: 50%;
+  right: 0.25rem;
+  content: "+";
+  font-family: var(--sans);
+  font-size: 1rem;
+  transform: translateY(-50%);
+}
+.product-commercial-details details[open] summary::after { content: "−"; }
+.product-commercial-details summary:focus-visible { outline: 2px solid var(--burgundy); outline-offset: 4px; }
+
+.product-commercial-details__body {
+  padding: 0 2.5rem 1.5rem 0;
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  line-height: 1.75;
+}
+
+.product-commercial-details__body > * + * { margin-top: 0.85rem; }
+.commercial-copy,
+.policy-body,
+.admin-policy-preview > div { overflow-wrap: anywhere; white-space: pre-line; }
+
+.commercial-status-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.commercial-status-list span {
+  padding: 0.38rem 0.6rem;
+  border: 1px solid rgba(92, 107, 77, 0.38);
+  background: rgba(170, 179, 156, 0.18);
+  color: #4a5941;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.commercial-live-status { font-size: 0.68rem; }
+
+.product-inquiry {
+  display: grid;
+  margin-top: clamp(3rem, 7vw, 6rem);
+  padding: clamp(1.5rem, 5vw, 3.5rem);
+  border: 1px solid var(--line);
+  background: var(--blush);
+  gap: 1.5rem;
+}
+
+.product-inquiry h2 { max-width: 14em; font-size: clamp(2rem, 5vw, 3.5rem); }
+.product-inquiry > div > p:not(.eyebrow) { max-width: 38rem; margin-top: 0.75rem; color: var(--ink-soft); font-size: 0.76rem; line-height: 1.7; }
+.product-inquiry__links { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem; }
+.product-inquiry__links p { color: var(--ink-soft); font-size: 0.72rem; }
+
+.policies-heading { max-width: 52rem; margin-bottom: clamp(2.5rem, 6vw, 5rem); }
+.policies-heading h1 { margin-top: 1rem; font-size: clamp(3.4rem, 8vw, 7rem); line-height: 0.9; }
+.policies-heading > p:last-child { max-width: 42rem; margin-top: 1.25rem; color: var(--ink-soft); font-size: 0.84rem; line-height: 1.75; }
+.policies-layout { display: grid; gap: 2.5rem; }
+.policies-index { display: grid; align-content: start; border-top: 1px solid var(--line-strong); }
+.policies-index a { padding: 0.9rem 0; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-size: 0.68rem; line-height: 1.4; }
+.policies-index a:hover { color: var(--burgundy); }
+.policies-sections { display: grid; gap: 1rem; }
+.policies-sections > section { padding: clamp(1.35rem, 4vw, 2.5rem); border: 1px solid var(--line); background: rgba(253, 249, 243, 0.5); scroll-margin-top: 7rem; }
+.policies-sections h2 { font-size: clamp(1.9rem, 5vw, 3rem); }
+.policy-code { margin-bottom: 0.65rem; color: var(--rose); font-size: 0.55rem; font-weight: 750; letter-spacing: 0.08em; }
+.policy-summary { margin-top: 0.8rem; color: var(--burgundy); font-family: var(--serif); font-size: 1.05rem; line-height: 1.45; }
+.policy-body { margin-top: 1.2rem; color: var(--ink-soft); font-size: 0.76rem; line-height: 1.8; }
+.policy-empty { max-width: 46rem; padding: clamp(1.5rem, 5vw, 3rem); border: 1px solid var(--line); background: var(--surface-raised); }
+.policy-empty p { margin-block: 0.85rem 1.25rem; color: var(--ink-soft); font-size: 0.78rem; line-height: 1.7; }
+
+.admin-policy-context {
+  display: grid;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  background: #fbf7f1;
+  gap: 1rem;
+}
+.admin-policy-context p { margin-top: 0.35rem; color: var(--ink-soft); font-size: 0.7rem; line-height: 1.6; }
+.admin-policy-context > div:last-child { display: flex; flex-wrap: wrap; gap: 0.65rem 1.25rem; }
+.admin-policy-context a { color: var(--burgundy); font-size: 0.68rem; font-weight: 700; text-decoration: underline; text-underline-offset: 0.2rem; }
+.admin-policy-list { display: grid; gap: 0.85rem; }
+.admin-policy-card { border: 1px solid var(--line-strong); background: #fbf8f3; }
+.admin-policy-card > summary {
+  display: grid;
+  min-height: 4.5rem;
+  padding: 1rem 1.2rem;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+.admin-policy-card > summary::-webkit-details-marker { display: none; }
+.admin-policy-card > summary:focus-visible { outline: 2px solid var(--burgundy); outline-offset: -3px; }
+.admin-policy-card > summary > span:first-child { display: grid; gap: 0.25rem; }
+.admin-policy-card > summary strong { font-family: var(--serif); font-size: 1.3rem; }
+.admin-policy-card > summary small { color: var(--ink-soft); font-size: 0.52rem; letter-spacing: 0.07em; }
+.admin-policy-completion { color: var(--ink-soft); font-size: 0.6rem; font-weight: 700; }
+.admin-policy-editor { padding: 1.25rem; border-top: 1px solid var(--line); }
+.admin-policy-layout { display: grid; gap: 1.25rem; }
+.admin-policy-preview { min-width: 0; padding: 1.25rem; border: 1px solid var(--line); background: #fffdf9; }
+.admin-policy-preview h3 { margin-top: 0.75rem; font-size: 1.7rem; }
+.admin-policy-preview p,
+.admin-policy-preview > div { margin-top: 0.7rem; color: var(--ink-soft); font-size: 0.7rem; line-height: 1.7; }
+.admin-policy-actions { display: flex; margin-top: 1.25rem; flex-wrap: wrap; justify-content: flex-end; gap: 0.65rem; }
+
+@media (min-width: 760px) {
+  .product-commercial-overview__grid,
+  .product-inquiry { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .product-inquiry { align-items: center; }
+  .product-inquiry__links { justify-content: flex-end; }
+  .policies-layout { grid-template-columns: minmax(10rem, 0.32fr) minmax(0, 1fr); }
+  .policies-index { position: sticky; top: 7rem; }
+  .admin-policy-context { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .admin-policy-layout { grid-template-columns: minmax(0, 1.2fr) minmax(17rem, 0.8fr); }
+}
+
+@media (min-width: 1100px) {
+  .policies-layout { gap: clamp(3rem, 7vw, 7rem); }
+}
+
+@media (max-width: 620px) {
+  .product-commercial-overview__heading { align-items: flex-start; flex-direction: column; }
+  .product-commercial-details__body { padding-right: 0; }
+  .product-inquiry__links { align-items: stretch; flex-direction: column; }
+  .product-inquiry__links .button { width: 100%; }
+  .admin-policy-card > summary { grid-template-columns: minmax(0, 1fr) auto; }
+  .admin-policy-completion { grid-column: 1 / -1; }
+  .admin-policy-actions { display: grid; grid-template-columns: 1fr; }
 }
