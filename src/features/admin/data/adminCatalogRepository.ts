@@ -16,7 +16,7 @@ import type {
 const ADMIN_PRODUCT_SELECT = `
   id, stable_code, slug, product_type, category_id, visibility, availability,
   same_day_eligible, sort_order, updated_at,
-  product_translations(locale, name, short_description, description, composition, seo_title, seo_description),
+  product_translations(locale, name, short_description, description, composition, care_instructions, freshness_seasonality_note, substitution_note, fulfillment_note, seo_title, seo_description),
   product_variants(id, stable_code, sku, price_amount, active, sort_order, product_variant_translations(locale, name)),
   product_occasions(occasion_id),
   product_tones(tone_id, active),
@@ -44,6 +44,10 @@ function localizedContent(
     shortDescription: row?.short_description ?? "",
     description: row?.description ?? "",
     composition: row?.composition.join("\n") ?? "",
+    careInstructions: row?.care_instructions ?? "",
+    freshnessSeasonalityNote: row?.freshness_seasonality_note ?? "",
+    substitutionNote: row?.substitution_note ?? "",
+    fulfillmentNote: row?.fulfillment_note ?? "",
     seoTitle: row?.seo_title ?? "",
     seoDescription: row?.seo_description ?? "",
   };
@@ -207,6 +211,10 @@ export class SupabaseAdminCatalogRepository implements AdminCatalogRepository {
       short_description: content.shortDescription.trim(),
       description: content.description.trim(),
       composition: content.composition.split("\n").map((item) => item.trim()).filter(Boolean),
+      care_instructions: content.careInstructions.trim(),
+      freshness_seasonality_note: content.freshnessSeasonalityNote.trim(),
+      substitution_note: content.substitutionNote.trim(),
+      fulfillment_note: content.fulfillmentNote.trim(),
       seo_title: content.seoTitle.trim(),
       seo_description: content.seoDescription.trim(),
     });

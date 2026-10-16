@@ -222,6 +222,71 @@ export type Database = {
         }
         Relationships: []
       }
+      commercial_content_sections: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          sort_order: number
+          updated_at: string
+          visibility: Database["public"]["Enums"]["visibility_status"]
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["visibility_status"]
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          sort_order?: number
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["visibility_status"]
+        }
+        Relationships: []
+      }
+      commercial_content_translations: {
+        Row: {
+          body: string
+          commercial_content_section_id: string
+          created_at: string
+          locale: Database["public"]["Enums"]["locale_code"]
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          commercial_content_section_id: string
+          created_at?: string
+          locale: Database["public"]["Enums"]["locale_code"]
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          commercial_content_section_id?: string
+          created_at?: string
+          locale?: Database["public"]["Enums"]["locale_code"]
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_content_translations_commercial_content_section_id_fkey"
+            columns: ["commercial_content_section_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_content_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deliveries: {
         Row: {
           created_at: string
@@ -1829,39 +1894,51 @@ export type Database = {
       }
       product_translations: {
         Row: {
+          care_instructions: string | null
           composition: string[]
           created_at: string
           description: string | null
+          freshness_seasonality_note: string | null
+          fulfillment_note: string | null
           locale: Database["public"]["Enums"]["locale_code"]
           name: string
           product_id: string
           seo_description: string | null
           seo_title: string | null
           short_description: string | null
+          substitution_note: string | null
           updated_at: string
         }
         Insert: {
+          care_instructions?: string | null
           composition?: string[]
           created_at?: string
           description?: string | null
+          freshness_seasonality_note?: string | null
+          fulfillment_note?: string | null
           locale: Database["public"]["Enums"]["locale_code"]
           name: string
           product_id: string
           seo_description?: string | null
           seo_title?: string | null
           short_description?: string | null
+          substitution_note?: string | null
           updated_at?: string
         }
         Update: {
+          care_instructions?: string | null
           composition?: string[]
           created_at?: string
           description?: string | null
+          freshness_seasonality_note?: string | null
+          fulfillment_note?: string | null
           locale?: Database["public"]["Enums"]["locale_code"]
           name?: string
           product_id?: string
           seo_description?: string | null
           seo_title?: string | null
           short_description?: string | null
+          substitution_note?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2333,6 +2410,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_save_commercial_content: {
+        Args: {
+          target_body_ko: string
+          target_body_vi: string
+          target_code: string
+          target_summary_ko: string
+          target_summary_vi: string
+          target_title_ko: string
+          target_title_vi: string
+          target_visibility: Database["public"]["Enums"]["visibility_status"]
+        }
+        Returns: string
+      }
       admin_save_product_atomic: {
         Args: { product_payload: Json }
         Returns: string

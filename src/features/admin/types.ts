@@ -17,6 +17,10 @@ export interface LocalizedProductContent {
   shortDescription: string;
   description: string;
   composition: string;
+  careInstructions: string;
+  freshnessSeasonalityNote: string;
+  substitutionNote: string;
+  fulfillmentNote: string;
   seoTitle: string;
   seoDescription: string;
 }
@@ -247,6 +251,10 @@ export function emptyLocalizedContent(): LocalizedProductContent {
     shortDescription: "",
     description: "",
     composition: "",
+    careInstructions: "",
+    freshnessSeasonalityNote: "",
+    substitutionNote: "",
+    fulfillmentNote: "",
     seoTitle: "",
     seoDescription: "",
   };

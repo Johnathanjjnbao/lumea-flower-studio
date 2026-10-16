@@ -57,6 +57,10 @@ export interface CatalogProductRecord {
   shortDescription: string | null;
   description: string | null;
   composition: string[];
+  careInstructions: string | null;
+  freshnessSeasonalityNote: string | null;
+  substitutionNote: string | null;
+  fulfillmentNote: string | null;
   seoTitle: string | null;
   seoDescription: string | null;
   startingPriceAmount: number;

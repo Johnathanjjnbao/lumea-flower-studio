@@ -21,6 +21,11 @@ export function normalizePhoneHref(value: string) {
   return /^\+?[0-9]{7,15}$/.test(normalized) ? `tel:${normalized}` : null;
 }
 
+export function isSafeEmail(value: string) {
+  const email = value.trim();
+  return Boolean(email && email.length <= 254 && EMAIL_PATTERN.test(email));
+}
+
 export function isSafeInstagramUrl(value: string) {
   if (!value.trim()) return true;
   try {
@@ -40,7 +45,7 @@ export function validateSiteProfile(profile: SiteProfile): SiteProfileErrors {
   const handle = profile.instagramHandle.trim();
   if (name.length < 2 || name.length > 120) errors.businessName = "businessName";
   if (profile.phone.trim() && !normalizePhoneHref(profile.phone)) errors.phone = "phone";
-  if (email && (email.length > 254 || !EMAIL_PATTERN.test(email))) errors.email = "email";
+  if (email && !isSafeEmail(email)) errors.email = "email";
   if (!isSafeInstagramUrl(profile.instagramUrl)) errors.instagramUrl = "instagramUrl";
   if (handle && !HANDLE_PATTERN.test(handle)) errors.instagramHandle = "instagramHandle";
   if (Boolean(profile.instagramUrl.trim()) !== Boolean(handle)) errors.instagramHandle = "instagramPair";

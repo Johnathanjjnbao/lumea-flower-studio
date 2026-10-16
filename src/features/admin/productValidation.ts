@@ -35,6 +35,12 @@ export function validateProductDraft(product: AdminProductDraft): ValidationIssu
     issues.push({ field: "sortOrder", message: "Thứ tự hiển thị phải là số nguyên từ 0 trở lên." });
   }
   product.variants.forEach((variant, index) => issues.push(...variantIssues(variant, index)));
+  for (const [locale, content] of [["vi", product.vi], ["ko", product.ko]] as const) {
+    if (content.careInstructions.length > 8000) issues.push({ field: `${locale}-care`, message: "Hướng dẫn chăm hoa tối đa 8.000 ký tự." });
+    if (content.freshnessSeasonalityNote.length > 4000) issues.push({ field: `${locale}-freshness`, message: "Ghi chú độ tươi/mùa vụ tối đa 4.000 ký tự." });
+    if (content.substitutionNote.length > 4000) issues.push({ field: `${locale}-substitution`, message: "Ghi chú thay thế tối đa 4.000 ký tự." });
+    if (content.fulfillmentNote.length > 4000) issues.push({ field: `${locale}-fulfillment`, message: "Ghi chú thực hiện tối đa 4.000 ký tự." });
+  }
   return issues;
 }
 
