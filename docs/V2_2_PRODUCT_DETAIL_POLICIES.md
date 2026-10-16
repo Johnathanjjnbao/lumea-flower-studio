@@ -1,6 +1,6 @@
 # Luméa V2.2 — Product Detail + Commercial Policies
 
-**Status:** Code complete on `v2-product-detail-policies` as of 2026-10-16. Local contract, build, and mocked browser acceptance pass. Database runtime/staging acceptance is blocked because this PC has neither Supabase CLI nor Docker nor approved staging credentials. V2.2 is not deployed or released.
+**Status:** Code complete on `v2-product-detail-policies` as of 2026-10-16. Local contract, build, and mocked browser acceptance pass. GitHub-hosted fresh-database migrations, lint, and pgTAP pass without Docker on the owner's PC. Staging acceptance awaits Supabase CLI authentication and an owner-approved migration dry-run. V2.2 is not deployed or released.
 
 ## Purpose and scope
 
@@ -59,9 +59,10 @@ The V2.1 Product function is retained as a non-browser-callable internal functio
 - `scripts/check-v2-2-browser.py`: PASS with mocked public/Admin Supabase contracts at 390, 768, and 1440 px for VI/KO PDP, exact-locale/default/missing behavior, disclosure focus, safe inquiry links, public policy routes, Draft visibility, READY Cart/Checkout entry, SEASONAL purchase lock, policy editing/publish validation/preview, and atomic Product-guidance payload.
 - `scripts/check-v2-commerce-browser.py`: PASS for V2.1 Category, Navigation, Product/SKU, Cart, Checkout, and Admin regressions.
 - `supabase/tests/v2_2_commercial_content.sql`: added for fixed codes, RLS, grants, ADMIN/STAFF/ordinary-user boundaries, VI/KO publication, invalid locale, rollback, guidance, and old Product-payload compatibility. It has not run against a database on this PC.
+- [GitHub Actions run 38885440061](https://github.com/Johnathanjjnbao/lumea-flower-studio/actions/runs/38885440061) on `bd3e937`: PASS. Hosted runner applied all migrations from a fresh database, including exactly the two V2.2 files; `supabase db lint --local --schema public --level error --fail-on error` found no schema errors; all six pgTAP files passed (27 assertions), including V2.1 and V2.2. The quality job passed and the production deploy job was skipped.
 
 ## Required owner content and remaining gate
 
 All six records start as Draft without invented translations. The owner must supply and approve final VI/KO delivery, returns/refunds (including any cancellation/rescheduling wording), payment, inquiry, care, and freshness/substitution text before publication. This implementation does not claim legal or commercial compliance.
 
-Before release, apply the two V2.2 migrations to an explicitly approved non-production Supabase project, run database lint and `supabase test db`, exercise the real ADMIN RPC/Product propagation flows, and record staging evidence. Production migration, deployment, and merge require separate owner authorization.
+Before release, authenticate the Supabase CLI through its official login on this PC, verify staging project `puzuubnxarmviwgpjclj`, compare remote migration history for drift, and present a dry-run showing only the two V2.2 migrations for owner approval. Only then apply to staging and exercise the real ADMIN RPC/Product propagation flows. Production migration, deployment, and merge require separate owner authorization.
