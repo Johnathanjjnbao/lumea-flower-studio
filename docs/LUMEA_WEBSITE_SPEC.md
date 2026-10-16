@@ -229,11 +229,22 @@ Every homepage section, including text, media, links, display order, visibility,
 
 - Show product name, image gallery, description, price behavior, availability, and seasonal expectations.
 - Let the customer select size and tone from valid options.
-- Accept a card message, delivery date, and preferred delivery window.
+- Keep card message, delivery date, and preferred delivery window in Checkout; Product Detail does not duplicate that state.
 - Clearly identify same-day eligibility without implying that same-day delivery is guaranteed before the address, cut-off, capacity, and date are validated.
-- Explain that handmade floral work and seasonal materials may create natural variation; the owner must approve final substitution language.
+- Show concise delivery/pickup and returns/refunds summaries near the purchase controls, followed by accessible disclosures for delivery, returns/refunds, care, freshness/substitution, and payment.
+- Source live delivery and safe payment availability from the existing public Checkout-options contract. Checkout remains authoritative for fees, zones, windows, dates, and final eligibility.
+- Resolve care and freshness/substitution guidance from same-locale Product copy first, then the same-locale published global default. Never fall back across locales for commercial policy copy.
+- Explain handmade/seasonal variation only through owner-managed Product or published policy content; the owner must approve final substitution language.
+- Keep an inquiry action outside the disclosures and source only validated phone, email, and Instagram channels from Site Profile.
 - Prevent unavailable or inactive products from being added to cart.
 - Preserve selections and show validation errors next to the relevant field.
+
+### 9.3.1 Commercial policies
+
+- `/policies` and `/ko/policies` render only published content for the requested locale from six fixed sections: Delivery, Returns & refunds, Payment, Contact & inquiry, Flower care, and Freshness & substitutions.
+- Policy title, summary, and body are plain text with preserved line breaks. React owns layout; Admin cannot add arbitrary page types, HTML, scripts, or links.
+- Missing, Draft, or incomplete same-locale content uses a neutral unavailable state and never fabricates a promise or silently substitutes Vietnamese for Korean.
+- Cancellation/rescheduling wording may live within Returns & refunds, but V2.2 does not add an Order workflow or action for it.
 
 ### 9.4 Custom Bouquet
 

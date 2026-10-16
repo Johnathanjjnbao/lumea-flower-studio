@@ -1,6 +1,6 @@
 # Luméa Supabase-Ready Data Model
 
-**Status:** V1 commerce is closed at `v1.0.0`. V2.1 Commerce Foundation adds stable SKU identity, first-class Category data, managed Navigation, and SKU Order snapshots. V2.1 was released to production and passed production acceptance on 2026-10-09 as `v2.1.0`.
+**Status:** V1 commerce is closed at `v1.0.0`. V2.1 Commerce Foundation was released to production and passed production acceptance on 2026-10-09 as `v2.1.0`. V2.2 commercial-content and Product-guidance code is implemented on its feature branch, but database staging acceptance is blocked on this PC and V2.2 is not released.
 
 **Database target:** PostgreSQL through Supabase
 
@@ -89,7 +89,7 @@ erDiagram
 | Table / entity | Purpose | Important fields | Relationships | Admin editable? | Snapshot required? |
 |---|---|---|---|---|---|
 | `products` | Commercial product identity and publication state. | `id`, `stable_code`, `slug`, `type`, `category_id`, `visibility`, `availability`, `same_day_eligible`, `featured`, `bestseller`, `display_order`, timestamps. | N:1 Category; 1:N variants/images/translations/composition; M:N occasions/tones. | Yes | OrderItem stores product identity/name snapshot. |
-| `product_translations` | VI/KO product copy. | `product_id`, `locale`, `name`, `short_description`, `description`, optional `seo_title`, `seo_description`. Unique `(product_id, locale)`. | N:1 Product. | Yes | Product name/copy needed for Order history is copied selectively. |
+| `product_translations` | VI/KO product copy and optional Product-specific guidance. | `product_id`, `locale`, `name`, `short_description`, `description`, nullable `care_instructions`, `freshness_seasonality_note`, `substitution_note`, `fulfillment_note`, optional `seo_title`, `seo_description`. Unique `(product_id, locale)`. | N:1 Product. | Yes through the atomic Product save. | Product name/copy needed for Order history is copied selectively. Guidance is current display content, not an Order promise snapshot. |
 | `product_variants` | Orderable ready-made size/offer and its explicit price. | `id`, `product_id`, immutable globally unique `sku`, `stable_code`, `price_amount`, `active`, `sort_order`, timestamps. | N:1 Product; referenced by CartItem/OrderItem. | Yes | SKU, variant code/name, and price copied to OrderItem. |
 | `product_variant_translations` | Localized variant label/description when business-managed. | `product_variant_id`, `locale`, `name`, `description`. | N:1 ProductVariant. | Yes | Name snapshot copied to OrderItem. |
 | `product_images` | Ordered Product media placement. | `id`, `product_id`, `media_asset_id`, `role` (`PRIMARY`/`GALLERY`), `display_order`, `active`. | N:1 Product; N:1 MediaAsset. | Yes | Optional image key snapshot for receipts/Admin history; not required for price integrity. |
@@ -214,8 +214,10 @@ There is no Delivery row or delivery-address row for `PICKUP`. Pickup details se
 | `homepage_product_slots` | Curated Best Seller/featured placements. | `homepage_section_id`, `product_id`, `display_order`, `active`. | N:1 section and Product. | Yes | No. |
 | `navigation_items` | Ordered storefront primary menu. | `id`, immutable `stable_code`, bounded `destination_type`, optional `category_id` or HTTPS `external_url`, `active`, `sort_order`, timestamps. | Optional N:1 Category; 1:N translations. | ADMIN only | No. |
 | `navigation_item_translations` | VI/KO menu labels. | `navigation_item_id`, `locale`, `label`. Unique `(navigation_item_id, locale)`. | N:1 NavigationItem. | ADMIN only | No. |
+| `commercial_content_sections` | Six fixed global commercial/guidance sections; not a generic page CMS. | `id`, immutable bounded `code`, `visibility` restricted to `DRAFT`/`PUBLISHED`, bounded `sort_order`, timestamps. | 1:N translations. | ADMIN only through the atomic policy RPC. | No. |
+| `commercial_content_translations` | Owner-managed plain-text commercial copy. | `commercial_content_section_id`, `locale`, bounded `title`, `summary`, `body`. Unique `(section, locale)`. | N:1 CommercialContentSection. | ADMIN only through the atomic policy RPC. | No. |
 | `gallery_items` | Managed gallery/social proof media. | `id`, `media_asset_id`, optional destination URL, `visibility`, `display_order`, timestamps. | N:1 MediaAsset; 1:N translations if captions are used. | Yes | No. |
-| `site_profile` | Reserved normalization target for future global business identity; it is not the current Homepage Visit source. | phone, email, address components, map URL/embed config, timezone, timestamps. | 1:N translations/hours/social links. | Yes when implemented. | Selected facts may be copied to Order/payment instructions when operationally relevant. |
+| `site_profile` | Singleton public business identity used by validated contact actions. | business name, phone, email, Instagram URL/handle, timestamps. | Independent from commercial wording and operational delivery/payment settings. | ADMIN only. | Selected facts may be copied to Order/payment instructions when operationally relevant. |
 | `site_profile_translations` | VI/KO studio/address/help copy. | `site_profile_id`, `locale`, studio name/display address/help text. | N:1 SiteProfile. | Yes | No. |
 | `business_hours` | Structured opening hours. | weekday, open/closed, open time, close time, display order. | N:1 SiteProfile. | Yes | No. |
 | `social_links` | Ordered social/contact destinations. | `id`, `platform`, `url`, `active`, `display_order`. | N:1 SiteProfile. | Yes | No. |
@@ -226,6 +228,8 @@ There is no Delivery row or delivery-address row for `PICKUP`. Pickup details se
 Homepage section translation fields remain typed per fixed section contract. This avoids both extremes: one table per sentence and one unconstrained page-sized JSON blob. Layout variants, grids, animation, and component selection remain in React code.
 
 The current Visit contract keeps localized studio name, address, opening hours, and directions label in `homepage_section_translations`. Phone, map visibility, map query, and the Google Maps destination URL live on the `visit` row in `homepage_sections`. The destination must be an allowlisted HTTPS Google Maps URL. The storefront generates the iframe URL from the validated query and a fixed Google Maps origin; Admin never stores or renders raw iframe HTML.
+
+V2.2 commercial content uses only the fixed codes `DELIVERY`, `RETURNS_REFUNDS`, `PAYMENT`, `CONTACT_INQUIRY`, `FLOWER_CARE_DEFAULT`, and `FRESHNESS_SUBSTITUTION_DEFAULT`. Public RLS exposes only Published sections and their translations. Publishing requires complete VI and KO title/summary/body through an ADMIN-only `SECURITY DEFINER` RPC with an empty `search_path`; Draft may be incomplete. Product guidance resolves product-specific same-locale copy, then a same-locale published global default, then a neutral missing state. It never uses cross-locale fallback for commercial policy.
 
 ## 5. OrderItem snapshot strategy
 

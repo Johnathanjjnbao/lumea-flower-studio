@@ -165,6 +165,14 @@ Admin can view the submitted brief, approved contact fields, delivery date, and 
 
 This request flow remains distinct from the self-service Create Your Bouquet configuration.
 
+### 3.9 Commercial policies and Product guidance
+
+Authorized ADMIN can edit the six fixed Commercial Policy cards in VI and KO, save incomplete Drafts, preview plain text, and explicitly publish only when both locales have a non-empty title, summary, and body. ADMIN cannot create/delete policy types, add arbitrary HTML/scripts/links, or store operational payment/contact secrets in this model. STAFF and ordinary authenticated users cannot mutate it.
+
+Delivery zones, fees, cutoff, pickup and enabled payment methods remain owned by Delivery/Payment Operations. Phone, email, and Instagram identity remain owned by Site Profile. The policy editor links to those sources rather than duplicating them.
+
+The Product editor adds optional per-locale care, freshness/seasonality, substitution, and fulfillment guidance. These fields use the existing atomic Product RPC so Category, SKU, variants, taxonomy, translations, and guidance still commit or roll back together.
+
 ## 4. Homepage and site-content ownership
 
 ### 4.1 Admin-editable content

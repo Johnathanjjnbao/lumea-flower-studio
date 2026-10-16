@@ -111,6 +111,7 @@ The application is deployed, but the owner must confirm the final logistics and 
 - [Technical handoff](docs/V1_HANDOFF.md)
 - [Owner operations runbook](docs/OWNER_RUNBOOK.md)
 - [V1 release notes](docs/V1_RELEASE_NOTES.md)
+- [V2.2 Product Detail and commercial-policy implementation record](docs/V2_2_PRODUCT_DETAIL_POLICIES.md)
 
 ## Future scope
 
