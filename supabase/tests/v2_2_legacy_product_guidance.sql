@@ -173,10 +173,10 @@ begin
   full_payload := jsonb_set(full_payload, '{id}', to_jsonb(saved_id::text));
   full_payload := jsonb_set(full_payload, '{variants,0,id}', to_jsonb(variant_id::text));
   legacy_payload := jsonb_set(full_payload, '{vi}',
-    full_payload->'vi' - 'care_instructions' - 'freshness_seasonality_note'
+    (full_payload -> 'vi') - 'care_instructions' - 'freshness_seasonality_note'
       - 'substitution_note' - 'fulfillment_note');
   legacy_payload := jsonb_set(legacy_payload, '{ko}',
-    full_payload->'ko' - 'care_instructions' - 'freshness_seasonality_note'
+    (full_payload -> 'ko') - 'care_instructions' - 'freshness_seasonality_note'
       - 'substitution_note' - 'fulfillment_note');
 
   -- Mandatory regression: UPDATE the same populated Product with V2.1 keys.
