@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import time
+from pathlib import Path
 from urllib.parse import unquote
 
 from playwright.sync_api import sync_playwright
@@ -12,6 +13,9 @@ SCREENSHOT_DIR = os.environ.get("LUMEA_QA_SCREENSHOT_DIR")
 PRODUCT_ID = "55000000-0000-4500-8500-000000000001"
 CATEGORY_ID = "55000000-0000-4500-8500-000000000002"
 VARIANT_ID = "55000000-0000-4500-8500-000000000003"
+VALID_IMAGE = Path(__file__).parent / "fixtures" / "pdp-qa-bouquet.svg"
+# Run the reported 768 px regression immediately after mobile, then the breakpoint edges.
+PDP_WIDTHS = (390, 768, 759, 760, 820, 1024, 1100, 1440)
 
 
 def b64url(value):
@@ -26,6 +30,40 @@ def fake_access_token():
 def no_overflow(page, label):
     size = page.evaluate("() => ({client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth})")
     assert size["scroll"] <= size["client"], f"{label} overflow: {size}"
+
+
+def assert_pdp_geometry(page, label, available=True):
+    geometry = page.evaluate("""() => {
+      const rect = (selector) => {
+        const box = document.querySelector(selector)?.getBoundingClientRect();
+        return box && { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width };
+      };
+      return {
+        layout: rect('.product-detail__layout'),
+        gallery: rect('.product-gallery'),
+        image: rect('.product-gallery__main'),
+        info: rect('.product-detail__info'),
+        heading: rect('.product-detail__heading'),
+        stacked: getComputedStyle(document.querySelector('.product-detail__info')).display === 'contents',
+      };
+    }""")
+    layout, gallery, image = geometry["layout"], geometry["gallery"], geometry["image"]
+    assert image["width"] <= gallery["width"] + 1, f"{label} image exceeds gallery cell: {geometry}"
+    assert image["right"] <= layout["right"] + 1, f"{label} image exceeds layout: {geometry}"
+    if geometry["stacked"]:
+        assert image["top"] >= geometry["heading"]["bottom"] - 1, f"{label} gallery overlaps heading: {geometry}"
+    else:
+        assert image["right"] <= geometry["info"]["left"] + 1, f"{label} gallery overlaps info: {geometry}"
+    no_overflow(page, label)
+    assert page.locator(".product-detail__heading h1").is_visible(), f"{label} heading hidden"
+    assert page.locator(".product-detail__commerce-head strong").is_visible(), f"{label} price hidden"
+    page.locator(".size-option").first.click(trial=True)
+    button = page.locator(".product-purchase__button")
+    if available:
+        button.click(trial=True)
+    else:
+        assert button.is_disabled(), f"{label} seasonal purchase was enabled"
+    return {"gallery_width": round(image["width"], 1), "cell_width": round(gallery["width"], 1)}
 
 
 USER = {
@@ -83,6 +121,7 @@ def make_state():
             "vi": {"care_instructions": "Chăm hoa riêng cho sản phẩm.", "freshness_seasonality_note": "Ghi chú mùa vụ riêng.", "substitution_note": "Ghi chú thay thế riêng.", "fulfillment_note": "Ghi chú giao nhận riêng."},
             "ko": {"care_instructions": None, "freshness_seasonality_note": None, "substitution_note": None, "fulfillment_note": None},
         },
+        "image_broken": False,
     }
 
 
@@ -95,7 +134,13 @@ def install_mocks(page, state):
         "refresh_token": "v22-browser-qa", "user": USER,
     })))
     page.route("https://challenges.cloudflare.com/**", lambda route: route.fulfill(status=200, content_type="application/javascript", body=""))
-    page.route("**/storage/v1/object/public/**", lambda route: route.fulfill(status=200, content_type="image/svg+xml", body='<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000"><rect width="100%" height="100%" fill="#ead8d5"/></svg>'))
+    def serve_image(route):
+        if state["image_broken"]:
+            route.fulfill(status=404, body="QA image intentionally missing")
+        else:
+            route.fulfill(status=200, content_type="image/svg+xml", path=str(VALID_IMAGE))
+
+    page.route("**/storage/v1/object/public/**", serve_image)
 
     category = {
         "id": CATEGORY_ID, "stable_code": "bouquets", "slug": "hoa-bo", "visibility": "PUBLISHED", "sort_order": 10,
@@ -228,11 +273,13 @@ with sync_playwright() as playwright:
     browser = playwright.chromium.launch(**launch_options)
     page = browser.new_page(viewport={"width": 1440, "height": 1000})
     errors = []
+    console_errors = []
     page.on("pageerror", lambda error: errors.append(str(error)))
+    page.on("console", lambda message: console_errors.append(message.text) if message.type == "error" else None)
     page.on("dialog", lambda dialog: dialog.accept())
     install_mocks(page, state)
 
-    for width in (390, 768, 1440):
+    for width in PDP_WIDTHS:
         page.set_viewport_size({"width": width, "height": 1000})
         page.goto(f"{BASE_URL}/flowers/pink-garden", wait_until="networkidle")
         page.get_by_role("heading", name="Pink Garden").wait_for(state="visible")
@@ -246,9 +293,12 @@ with sync_playwright() as playwright:
         assert page.get_by_role("link", name="Gọi studio").get_attribute("href") == "tel:+84909111222"
         assert page.get_by_role("link", name="Gửi email").get_attribute("href") == "mailto:studio@example.com"
         assert page.get_by_text("Thông tin này chưa được studio công bố.", exact=False).count() >= 1
-        no_overflow(page, f"PDP VI {width}")
-        if SCREENSHOT_DIR and width in (390, 1440):
+        page.wait_for_function("() => document.querySelector('.product-gallery__main img')?.naturalWidth > 0")
+        if SCREENSHOT_DIR and width in (390, 768, 1440):
+            page.evaluate("() => window.scrollTo(0, 0)")
             page.screenshot(path=os.path.join(SCREENSHOT_DIR, f"pdp-vi-{width}.png"), full_page=True)
+        dimensions = assert_pdp_geometry(page, f"PDP VI {width}")
+        print(f"PDP VI {width}: {dimensions}")
 
     page.get_by_label("Pastel").check()
     page.locator(".product-purchase__button").click()
@@ -258,25 +308,54 @@ with sync_playwright() as playwright:
     page.goto(f"{BASE_URL}/checkout", wait_until="networkidle")
     page.locator(".checkout-page").wait_for(state="visible")
 
-    page.set_viewport_size({"width": 390, "height": 1000})
-    page.goto(f"{BASE_URL}/ko/flowers/pink-garden", wait_until="networkidle")
-    page.get_by_role("heading", name="핑크 가든").wait_for(state="visible")
-    assert page.get_by_text("소유자 delivery 요약 KO", exact=True).is_visible()
-    assert page.get_by_text("Owner delivery summary VI", exact=True).count() == 0
-    ko_care = page.locator(".product-commercial-details details").nth(2)
-    ko_care.locator("summary").click()
-    assert ko_care.get_by_text("소유자 flower_care_default 본문 KO.", exact=True).is_visible()
-    no_overflow(page, "PDP KO 390")
+    for width in PDP_WIDTHS:
+        page.set_viewport_size({"width": width, "height": 1000})
+        page.goto(f"{BASE_URL}/ko/flowers/pink-garden", wait_until="networkidle")
+        page.get_by_role("heading", name="핑크 가든").wait_for(state="visible")
+        assert page.get_by_text("소유자 delivery 요약 KO", exact=True).is_visible()
+        assert page.get_by_text("Owner delivery summary VI", exact=True).count() == 0
+        ko_care = page.locator(".product-commercial-details details").nth(2)
+        ko_care.locator("summary").click()
+        assert ko_care.get_by_text("소유자 flower_care_default 본문 KO.", exact=True).is_visible()
+        page.wait_for_function("() => document.querySelector('.product-gallery__main img')?.naturalWidth > 0")
+        dimensions = assert_pdp_geometry(page, f"PDP KO {width}")
+        print(f"PDP KO {width}: {dimensions}")
 
     state["availability"] = "SEASONAL"
-    page.goto(f"{BASE_URL}/flowers/pink-garden", wait_until="networkidle")
-    assert page.locator(".product-purchase__button").is_disabled()
-    assert page.get_by_text("Hiện có thể yêu cầu giao trong ngày", exact=False).count() == 0
-    seasonal_care = page.locator(".product-commercial-details details").nth(2)
-    seasonal_care.locator("summary").click()
-    assert seasonal_care.get_by_text("Chăm hoa riêng cho sản phẩm.", exact=True).is_visible()
+    for width in PDP_WIDTHS:
+        page.set_viewport_size({"width": width, "height": 1000})
+        page.goto(f"{BASE_URL}/flowers/pink-garden", wait_until="networkidle")
+        assert page.get_by_text("Hiện có thể yêu cầu giao trong ngày", exact=False).count() == 0
+        seasonal_care = page.locator(".product-commercial-details details").nth(2)
+        seasonal_care.locator("summary").click()
+        assert seasonal_care.get_by_text("Chăm hoa riêng cho sản phẩm.", exact=True).is_visible()
+        assert_pdp_geometry(page, f"PDP SEASONAL {width}", available=False)
+
+    for width in PDP_WIDTHS:
+        page.set_viewport_size({"width": width, "height": 1000})
+        page.goto(f"{BASE_URL}/ko/flowers/pink-garden", wait_until="networkidle")
+        page.get_by_role("heading", name="핑크 가든").wait_for(state="visible")
+        assert_pdp_geometry(page, f"PDP KO SEASONAL {width}", available=False)
     state["availability"] = "AVAILABLE"
 
+    assert not console_errors, f"browser console errors before invalid-image test: {console_errors}"
+    state["image_broken"] = True
+    page.set_viewport_size({"width": 768, "height": 1000})
+    page.goto(f"{BASE_URL}/flowers/pink-garden", wait_until="networkidle")
+    page.locator(".product-gallery__main.image-missing").wait_for(state="visible")
+    assert page.locator(".product-gallery__main img").is_hidden()
+    assert page.locator(".product-gallery__fallback").is_visible()
+    assert page.locator(".product-gallery__fallback").text_content().strip() == "Hình ảnh đang được cập nhật"
+    assert_pdp_geometry(page, "PDP missing image 768")
+    page.goto(f"{BASE_URL}/ko/flowers/pink-garden", wait_until="networkidle")
+    page.locator(".product-gallery__main.image-missing").wait_for(state="visible")
+    assert page.locator(".product-gallery__main img").is_hidden()
+    assert page.locator(".product-gallery__fallback").is_visible()
+    assert page.locator(".product-gallery__fallback").text_content().strip() == "이미지를 준비 중입니다"
+    assert_pdp_geometry(page, "PDP KO missing image 768")
+    state["image_broken"] = False
+
+    page.set_viewport_size({"width": 390, "height": 1000})
     page.goto(f"{BASE_URL}/policies", wait_until="networkidle")
     page.get_by_role("heading", name="DELIVERY owner VI").wait_for(state="visible")
     assert page.get_by_role("heading", name="RETURNS_REFUNDS owner VI").count() == 0

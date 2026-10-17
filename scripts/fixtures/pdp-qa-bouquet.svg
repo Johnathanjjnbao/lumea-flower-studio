@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="QA bouquet illustration">
+  <rect width="800" height="1000" fill="#f1e2dc"/>
+  <path d="M214 629h372l-92 307H307z" fill="#d7c6b6"/>
+  <path d="M251 611c52 39 108 57 149 57s97-18 149-57" fill="none" stroke="#986b73" stroke-width="15"/>
+  <g fill="none" stroke="#728265" stroke-width="14" stroke-linecap="round">
+    <path d="M400 660V267M399 661 252 344M399 663 550 332M398 660 303 483M401 660 495 472"/>
+  </g>
+  <g fill="#b97886">
+    <circle cx="401" cy="251" r="81"/><circle cx="240" cy="325" r="76"/>
+    <circle cx="560" cy="315" r="77"/><circle cx="294" cy="468" r="70"/>
+    <circle cx="504" cy="455" r="73"/>
+  </g>
+  <g fill="#f5d8d8">
+    <circle cx="401" cy="251" r="39"/><circle cx="240" cy="325" r="37"/>
+    <circle cx="560" cy="315" r="38"/><circle cx="294" cy="468" r="34"/>
+    <circle cx="504" cy="455" r="36"/>
+  </g>
+</svg>

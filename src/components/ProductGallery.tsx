@@ -16,6 +16,7 @@ export function ProductGallery({ images, name }: { images: CatalogMediaRecord[];
     <div className="product-gallery" aria-label={formatMessage(t.product.detail.galleryAria, { name })}>
       <figure className="product-gallery__main">
         <ManagedImage src={selectedImage.url} alt={selectedImage.altText} fetchPriority="high" width={960} height={1200} />
+        <span className="product-gallery__fallback" role="status">{t.product.imageUnavailable}</span>
         <figcaption><span aria-hidden="true">L</span> {t.product.detail.imageCaption}</figcaption>
       </figure>
       {images.length > 1 && (

@@ -3681,9 +3681,16 @@ body.catalog-filter-open {
   gap: 2.5rem;
 }
 
+.product-gallery,
+.product-detail__info {
+  min-width: 0;
+}
+
 .product-gallery__main {
   position: relative;
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
   aspect-ratio: 4 / 5;
   border: 1px solid rgba(51, 43, 41, 0.12);
   background: var(--blush);
@@ -3691,6 +3698,35 @@ body.catalog-filter-open {
 
 .product-gallery__main img {
   filter: saturate(0.9) contrast(0.98);
+}
+
+.product-gallery__main img[hidden] {
+  display: none;
+}
+
+.product-gallery__main.image-missing figcaption {
+  display: none;
+}
+
+.product-gallery__fallback {
+  display: none;
+}
+
+.product-gallery__main.image-missing::after {
+  content: none;
+}
+
+.product-gallery__main.image-missing .product-gallery__fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  color: var(--charcoal);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .product-gallery__thumbs {
@@ -4665,20 +4701,6 @@ body.catalog-filter-open {
     gap: 3rem;
   }
 
-  .product-detail__layout {
-    grid-template-columns: minmax(0, 1.08fr) minmax(24rem, 0.92fr);
-    align-items: start;
-    gap: clamp(2.5rem, 5vw, 5rem);
-  }
-
-  .product-gallery__main {
-    min-height: 42rem;
-  }
-
-  .product-detail__info {
-    padding-top: 0.5rem;
-  }
-
   .size-options {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -4693,6 +4715,27 @@ body.catalog-filter-open {
   }
 }
 
+@media (min-width: 760px) and (max-width: 1099px) {
+  .product-detail__layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .product-detail__info {
+    display: contents;
+  }
+
+  .product-detail__heading { order: -3; }
+  .product-detail__commerce-head { order: -2; }
+
+  .product-gallery {
+    order: -1;
+    width: min(100%, 36rem);
+    justify-self: center;
+    margin-block: 1.5rem;
+  }
+}
+
 @media (min-width: 1100px) {
   .catalog-page.section-space,
   .product-detail.section-space {
@@ -4700,10 +4743,14 @@ body.catalog-filter-open {
   }
 
   .product-detail__layout {
-    grid-template-columns: minmax(30rem, 1.12fr) minmax(29rem, 0.88fr);
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+    align-items: start;
     gap: clamp(4rem, 6vw, 7rem);
   }
 
+  .product-detail__info {
+    padding-top: 0.5rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6668,7 +6715,7 @@ h2 em,
   right: 50%;
   left: 50%;
   z-index: -1;
-  width: 100vw;
+  width: 100%;
   height: min(34rem, 42vw);
   background: linear-gradient(180deg, rgba(231, 208, 207, 0.3), transparent);
   content: "";
