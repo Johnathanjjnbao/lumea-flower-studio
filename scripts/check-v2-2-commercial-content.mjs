@@ -6,6 +6,8 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const [
   contentSql,
   productSql,
+  guidanceFixSql,
+  guidanceRegressionSql,
   contentRepository,
   contentTypes,
   adminContentPage,
@@ -21,6 +23,8 @@ const [
 ] = await Promise.all([
   read("supabase/migrations/20261016090000_v2_2_commercial_content.sql"),
   read("supabase/migrations/20261016090100_v2_2_atomic_product_guidance.sql"),
+  read("supabase/migrations/20261017090000_v2_2_preserve_omitted_product_guidance.sql"),
+  read("supabase/tests/v2_2_legacy_product_guidance.sql"),
   read("src/features/commercialContent/repository.ts"),
   read("src/features/commercialContent/types.ts"),
   read("src/features/admin/pages/AdminCommercialPoliciesPage.tsx"),
@@ -73,6 +77,19 @@ assert.match(productSql, /rename to admin_save_product_atomic_v21_internal/);
 assert.match(productSql, /revoke all on function public\.admin_save_product_atomic_v21_internal\(jsonb\)[\s\S]*from public, anon, authenticated/);
 assert.match(productSql, /create function public\.admin_save_product_atomic\(product_payload jsonb\)[\s\S]*security definer[\s\S]*set search_path = ''/);
 assert.match(productSql, /saved_product_id := public\.admin_save_product_atomic_v21_internal\(product_payload\)[\s\S]*update public\.product_translations/);
+assert.match(guidanceFixSql, /create or replace function public\.admin_save_product_atomic\(product_payload jsonb\)[\s\S]*security definer[\s\S]*set search_path = ''/);
+assert.match(guidanceFixSql, /if not public\.is_admin\(\)/);
+assert.match(guidanceFixSql, /saved_product_id := public\.admin_save_product_atomic_v21_internal\(product_payload\)/);
+assert.doesNotMatch(guidanceFixSql, /\b(?:grant|revoke)\s+(?:all|execute)\b/i, "forward fix must retain existing RPC grants");
+for (const column of ["care_instructions", "freshness_seasonality_note", "substitution_note", "fulfillment_note"]) {
+  assert.match(
+    guidanceFixSql,
+    new RegExp(`${column} = case when locale_payload \\? '${column}'[\\s\\S]*?else translation\\.${column} end`),
+    `${column} must preserve its own value when omitted`,
+  );
+}
+assert.match(guidanceRegressionSql, /legacy UPDATE erased existing VI\/KO guidance/);
+assert.match(guidanceRegressionSql, /V22_GUIDANCE_LATE_FAILURE/);
 assert.match(adminCatalogRepository, /\.rpc\("admin_save_product_atomic", \{ product_payload: payload \}\)/);
 
 assert.match(contentRepository, /\.eq\("visibility", "PUBLISHED"\)/);
