@@ -11,12 +11,27 @@ begin
   select prosecdef, proconfig into wrapper
   from pg_catalog.pg_proc
   where oid = 'public.admin_save_product_atomic(jsonb)'::pg_catalog.regprocedure;
-  if not wrapper.prosecdef or not (wrapper.proconfig @> array['search_path='])
-    or has_function_privilege('anon', 'public.admin_save_product_atomic(jsonb)', 'EXECUTE')
-    or not has_function_privilege('authenticated', 'public.admin_save_product_atomic(jsonb)', 'EXECUTE')
-    or has_function_privilege('anon', 'public.admin_save_product_atomic_v21_internal(jsonb)', 'EXECUTE')
-    or has_function_privilege('authenticated', 'public.admin_save_product_atomic_v21_internal(jsonb)', 'EXECUTE') then
-    raise exception 'Product RPC security attributes or grants changed';
+  if not found then
+    raise exception 'Product RPC wrapper is missing';
+  end if;
+  if wrapper.prosecdef is distinct from true then
+    raise exception 'Product RPC wrapper is not SECURITY DEFINER';
+  end if;
+  -- PostgreSQL quotes the empty search_path list item in proconfig as "".
+  if (wrapper.proconfig @> array['search_path=""']) is distinct from true then
+    raise exception 'Product RPC wrapper search_path is not empty';
+  end if;
+  if has_function_privilege('anon', 'public.admin_save_product_atomic(jsonb)', 'EXECUTE') is distinct from false then
+    raise exception 'anon can execute Product RPC wrapper';
+  end if;
+  if has_function_privilege('authenticated', 'public.admin_save_product_atomic(jsonb)', 'EXECUTE') is distinct from true then
+    raise exception 'authenticated cannot execute Product RPC wrapper';
+  end if;
+  if has_function_privilege('anon', 'public.admin_save_product_atomic_v21_internal(jsonb)', 'EXECUTE') is distinct from false then
+    raise exception 'anon can execute internal Product RPC';
+  end if;
+  if has_function_privilege('authenticated', 'public.admin_save_product_atomic_v21_internal(jsonb)', 'EXECUTE') is distinct from false then
+    raise exception 'authenticated can execute internal Product RPC';
   end if;
 end;
 $$;
