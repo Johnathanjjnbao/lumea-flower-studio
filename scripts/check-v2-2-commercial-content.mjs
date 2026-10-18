@@ -7,6 +7,7 @@ const [
   contentSql,
   productSql,
   guidanceFixSql,
+  asciiWhitespaceSql,
   guidanceRegressionSql,
   contentRepository,
   contentTypes,
@@ -24,6 +25,7 @@ const [
   read("supabase/migrations/20261016090000_v2_2_commercial_content.sql"),
   read("supabase/migrations/20261016090100_v2_2_atomic_product_guidance.sql"),
   read("supabase/migrations/20261017090000_v2_2_preserve_omitted_product_guidance.sql"),
+  read("supabase/migrations/20261018090000_v2_2_normalize_product_guidance_ascii_whitespace.sql"),
   read("supabase/tests/v2_2_legacy_product_guidance.sql"),
   read("src/features/commercialContent/repository.ts"),
   read("src/features/commercialContent/types.ts"),
@@ -81,6 +83,24 @@ assert.match(guidanceFixSql, /create or replace function public\.admin_save_prod
 assert.match(guidanceFixSql, /if not public\.is_admin\(\)/);
 assert.match(guidanceFixSql, /saved_product_id := public\.admin_save_product_atomic_v21_internal\(product_payload\)/);
 assert.doesNotMatch(guidanceFixSql, /\b(?:grant|revoke)\s+(?:all|execute)\b/i, "forward fix must retain existing RPC grants");
+assert.match(asciiWhitespaceSql, /create or replace function public\.admin_save_product_atomic\(product_payload jsonb\)[\s\S]*security definer[\s\S]*set search_path = ''/);
+assert.match(asciiWhitespaceSql, /if not public\.is_admin\(\)/);
+assert.match(asciiWhitespaceSql, /saved_product_id := public\.admin_save_product_atomic_v21_internal\(product_payload\)/);
+assert.doesNotMatch(asciiWhitespaceSql, /\b(?:grant|revoke)\s+(?:all|execute)\b/i, "ASCII whitespace fix must retain existing RPC grants");
+assert.equal((asciiWhitespaceSql.match(/E' \\t\\n\\r\\f\\x0B'/g) ?? []).length, 8,
+  "all eight validation/write paths must use the same explicit ASCII whitespace set");
+for (const column of ["care_instructions", "freshness_seasonality_note", "substitution_note", "fulfillment_note"]) {
+  assert.equal(
+    asciiWhitespaceSql.split("btrim(coalesce(locale_payload->>'" + column + "', ''), E'").length - 1,
+    2,
+    column + " must normalize before validation and before storage",
+  );
+  assert.match(
+    asciiWhitespaceSql,
+    new RegExp(column + " = case when locale_payload \\? '" + column + "'[\\s\\S]*?else translation\\." + column + " end"),
+    column + " must still preserve its own value when omitted",
+  );
+}
 for (const column of ["care_instructions", "freshness_seasonality_note", "substitution_note", "fulfillment_note"]) {
   assert.match(
     guidanceFixSql,
@@ -90,6 +110,8 @@ for (const column of ["care_instructions", "freshness_seasonality_note", "substi
 }
 assert.match(guidanceRegressionSql, /legacy UPDATE erased existing VI\/KO guidance/);
 assert.match(guidanceRegressionSql, /V22_GUIDANCE_LATE_FAILURE/);
+assert.match(guidanceRegressionSql, /ASCII whitespace did not clear all VI\/KO guidance fields/);
+assert.match(guidanceRegressionSql, /maximum normalized guidance length was rejected or altered/);
 assert.match(adminCatalogRepository, /\.rpc\("admin_save_product_atomic", \{ product_payload: payload \}\)/);
 
 assert.match(contentRepository, /\.eq\("visibility", "PUBLISHED"\)/);

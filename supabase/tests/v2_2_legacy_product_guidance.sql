@@ -123,6 +123,10 @@ declare
   expected_guidance jsonb;
   before_name text;
   before_price integer;
+  guidance_field text;
+  guidance_locale text;
+  clear_text text;
+  guidance_limit integer;
 begin
   full_payload := jsonb_build_object(
     'id', null,
@@ -228,6 +232,155 @@ begin
   if public.v22_ci_guidance_snapshot(saved_id) is distinct from expected_guidance then
     raise exception 'VI guidance changed KO guidance when KO keys were absent';
   end if;
+
+  -- Exercise each of the four fields in both locales. Seed a non-null value
+  -- before every clear so an already-null field cannot produce a false pass.
+  foreach clear_text in array array[
+    ''::text, ' '::text, E'\t', E' \t \t ', E'\r\n',
+    E'\f\x0B', E' \t\r\n\f\x0B '
+  ]
+  loop
+    changed_payload := legacy_payload;
+    foreach guidance_locale in array array['vi', 'ko']
+    loop
+      foreach guidance_field in array array[
+        'care_instructions', 'freshness_seasonality_note',
+        'substitution_note', 'fulfillment_note'
+      ]
+      loop
+        changed_payload := jsonb_set(changed_payload, array[guidance_locale, guidance_field],
+          to_jsonb('QA seed'::text), true);
+        expected_guidance := jsonb_set(expected_guidance, array[guidance_locale, guidance_field],
+          to_jsonb('QA seed'::text));
+      end loop;
+    end loop;
+    perform public.admin_save_product_atomic(changed_payload);
+    if public.v22_ci_guidance_snapshot(saved_id) is distinct from expected_guidance then
+      raise exception 'whitespace test could not seed all VI/KO guidance fields';
+    end if;
+
+    changed_payload := legacy_payload;
+    foreach guidance_locale in array array['vi', 'ko']
+    loop
+      foreach guidance_field in array array[
+        'care_instructions', 'freshness_seasonality_note',
+        'substitution_note', 'fulfillment_note'
+      ]
+      loop
+        changed_payload := jsonb_set(changed_payload, array[guidance_locale, guidance_field],
+          to_jsonb(clear_text), true);
+        expected_guidance := jsonb_set(expected_guidance, array[guidance_locale, guidance_field],
+          'null'::jsonb);
+      end loop;
+    end loop;
+    perform public.admin_save_product_atomic(changed_payload);
+    if public.v22_ci_guidance_snapshot(saved_id) is distinct from expected_guidance then
+      raise exception 'ASCII whitespace did not clear all VI/KO guidance fields: %',
+        encode(convert_to(clear_text, 'UTF8'), 'hex');
+    end if;
+  end loop;
+
+  changed_payload := legacy_payload;
+  foreach guidance_locale in array array['vi', 'ko']
+  loop
+    foreach guidance_field in array array[
+      'care_instructions', 'freshness_seasonality_note',
+      'substitution_note', 'fulfillment_note'
+    ]
+    loop
+      changed_payload := jsonb_set(changed_payload, array[guidance_locale, guidance_field],
+        to_jsonb('QA seed'::text), true);
+      expected_guidance := jsonb_set(expected_guidance, array[guidance_locale, guidance_field],
+        to_jsonb('QA seed'::text));
+    end loop;
+  end loop;
+  perform public.admin_save_product_atomic(changed_payload);
+  changed_payload := legacy_payload;
+  foreach guidance_locale in array array['vi', 'ko']
+  loop
+    foreach guidance_field in array array[
+      'care_instructions', 'freshness_seasonality_note',
+      'substitution_note', 'fulfillment_note'
+    ]
+    loop
+      changed_payload := jsonb_set(changed_payload, array[guidance_locale, guidance_field],
+        'null'::jsonb, true);
+      expected_guidance := jsonb_set(expected_guidance, array[guidance_locale, guidance_field],
+        'null'::jsonb);
+    end loop;
+  end loop;
+  perform public.admin_save_product_atomic(changed_payload);
+  if public.v22_ci_guidance_snapshot(saved_id) is distinct from expected_guidance then
+    raise exception 'explicit JSON null did not clear all VI/KO guidance fields';
+  end if;
+
+  -- Only boundaries are normalized. Internal tab and LF must remain intact.
+  changed_payload := legacy_payload;
+  foreach guidance_locale in array array['vi', 'ko']
+  loop
+    foreach guidance_field in array array[
+      'care_instructions', 'freshness_seasonality_note',
+      'substitution_note', 'fulfillment_note'
+    ]
+    loop
+      changed_payload := jsonb_set(changed_payload, array[guidance_locale, guidance_field],
+        to_jsonb(E'\t \rQA A\t B\nC\f \x0B'::text), true);
+      expected_guidance := jsonb_set(expected_guidance, array[guidance_locale, guidance_field],
+        to_jsonb(E'QA A\t B\nC'::text));
+    end loop;
+  end loop;
+  perform public.admin_save_product_atomic(changed_payload);
+  if public.v22_ci_guidance_snapshot(saved_id) is distinct from expected_guidance then
+    raise exception 'boundary trimming changed meaningful internal whitespace';
+  end if;
+  perform public.admin_save_product_atomic(legacy_payload);
+  if public.v22_ci_guidance_snapshot(saved_id) is distinct from expected_guidance then
+    raise exception 'legacy payload erased normalized guidance';
+  end if;
+
+  -- Length limits apply after boundary normalization, but not to internal text.
+  changed_payload := legacy_payload;
+  foreach guidance_locale in array array['vi', 'ko']
+  loop
+    foreach guidance_field in array array[
+      'care_instructions', 'freshness_seasonality_note',
+      'substitution_note', 'fulfillment_note'
+    ]
+    loop
+      guidance_limit := case when guidance_field = 'care_instructions' then 8000 else 4000 end;
+      changed_payload := jsonb_set(changed_payload, array[guidance_locale, guidance_field],
+        to_jsonb((E'\t' || repeat('x', guidance_limit) || E'\x0B')::text), true);
+      expected_guidance := jsonb_set(expected_guidance, array[guidance_locale, guidance_field],
+        to_jsonb(repeat('x', guidance_limit)));
+    end loop;
+  end loop;
+  perform public.admin_save_product_atomic(changed_payload);
+  if public.v22_ci_guidance_snapshot(saved_id) is distinct from expected_guidance then
+    raise exception 'maximum normalized guidance length was rejected or altered';
+  end if;
+
+  foreach guidance_locale in array array['vi', 'ko']
+  loop
+    foreach guidance_field in array array[
+      'care_instructions', 'freshness_seasonality_note',
+      'substitution_note', 'fulfillment_note'
+    ]
+    loop
+      guidance_limit := case when guidance_field = 'care_instructions' then 8000 else 4000 end;
+      changed_payload := jsonb_set(legacy_payload, array[guidance_locale, guidance_field],
+        to_jsonb((E'\t' || repeat('x', guidance_limit + 1) || E'\x0B')::text), true);
+      begin
+        perform public.admin_save_product_atomic(changed_payload);
+        raise exception 'oversized normalized guidance unexpectedly saved';
+      exception when invalid_parameter_value then
+        if sqlerrm <> 'ADMIN_PRODUCT_GUIDANCE_INVALID' then raise; end if;
+      end;
+      if public.v22_ci_guidance_snapshot(saved_id) is distinct from expected_guidance then
+        raise exception 'oversized % % guidance altered Product data',
+          guidance_locale, guidance_field;
+      end if;
+    end loop;
+  end loop;
 
   changed_payload := jsonb_set(legacy_payload, '{vi,care_instructions}', '42'::jsonb, true);
   changed_payload := jsonb_set(changed_payload, '{vi,name}', to_jsonb('Invalid type changed name'::text));
