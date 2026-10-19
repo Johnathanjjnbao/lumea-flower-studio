@@ -1,6 +1,6 @@
 # Luméa Supabase-Ready Data Model
 
-**Status:** V1 commerce is closed at `v1.0.0`. V2.1 Commerce Foundation was released to production and passed production acceptance on 2026-10-09 as `v2.1.0`. V2.2 commercial-content and Product-guidance code is implemented on its feature branch, but database staging acceptance is blocked on this PC and V2.2 is not released.
+**Status:** V1 commerce is closed at `v1.0.0`. V2.1 Commerce Foundation was released to production and passed production acceptance on 2026-10-09 as `v2.1.0`. V2.2 Product Detail + Commercial Policies passed staging acceptance on 2026-10-19, but has not been released to production.
 
 **Database target:** PostgreSQL through Supabase
 
