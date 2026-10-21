@@ -82,13 +82,17 @@ def main():
                     add_button.click()
                     page.wait_for_function("document.querySelector('.cart-count')?.textContent?.trim() === '1'")
                     page.goto(f"{BASE_URL}/cart", wait_until="domcontentloaded")
-                    page.locator(".cart-line").first.wait_for(state="visible")
-                    page.locator(".cart-summary__checkout").wait_for(state="visible")
+                    page.locator(".cart-line[data-valid='true']").first.wait_for(state="visible")
+                    page.locator("a.cart-summary__checkout").wait_for(state="visible")
+                    if SCREENSHOT_DIR:
+                        page.screenshot(path=str(Path(SCREENSHOT_DIR) / "vi-cart-filled-390.png"), full_page=True)
                     page.goto(f"{BASE_URL}/ko/cart", wait_until="domcontentloaded")
-                    page.locator(".cart-line").first.wait_for(state="visible")
+                    page.locator(".cart-line[data-valid='true']").first.wait_for(state="visible")
                     assert page.evaluate("document.documentElement.lang") == "ko", "Cart locale switch failed"
                     page.goto(f"{BASE_URL}/ko/checkout", wait_until="domcontentloaded")
-                    page.locator("main h1").first.wait_for(state="visible")
+                    page.locator(".checkout-form").wait_for(state="visible")
+                    if SCREENSHOT_DIR:
+                        page.screenshot(path=str(Path(SCREENSHOT_DIR) / "ko-checkout-pre-submit-390.png"), full_page=True)
                     print("READY PDP → Cart persistence → KO Cart/Checkout preview PASS; no order submitted", flush=True)
                     page.emulate_media(reduced_motion="reduce")
                     page.goto(f"{BASE_URL}/", wait_until="domcontentloaded")
