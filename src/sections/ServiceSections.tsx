@@ -7,6 +7,7 @@ import { isSameDayAvailable, loadCheckoutOptions } from "../features/checkout/op
 import type { CheckoutOptions } from "../features/checkout/types";
 import { businessTimeInVietnam } from "../features/checkout/validation";
 import { mediaBySlot, type HomepageSection } from "../features/homepage/types";
+import type { DiscoveryBudgetRange } from "../features/discovery/types";
 import { useI18n } from "../i18n";
 
 export function SameDay({ section }: { section: HomepageSection }) {
@@ -52,7 +53,7 @@ export function SameDay({ section }: { section: HomepageSection }) {
   );
 }
 
-export function FloristChoice({ section }: { section: HomepageSection }) {
+export function FloristChoice({ section, budgetRanges }: { section: HomepageSection; budgetRanges: DiscoveryBudgetRange[] }) {
   const { t, path } = useI18n();
   const copy = section.copy;
   const image = mediaBySlot(section, "florist-main");
@@ -72,7 +73,7 @@ export function FloristChoice({ section }: { section: HomepageSection }) {
             <div className="florist-brief__head"><span>{t.home.florist.brief}</span><span>{t.home.florist.interprets}</span></div>
             <dl className="florist-brief__grid">
               <div className="brief-field brief-field--budget">
-                <dt>{t.home.florist.budget}</dt><dd><span className="brief-price">650–900k</span></dd>
+                <dt>{t.home.florist.budget}</dt><dd><span className="brief-price">{budgetRanges[0]?.label ?? t.home.florist.budget}</span></dd>
               </div>
               <div className="brief-field brief-field--tone">
                 <dt>{t.home.florist.tone}</dt>

@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { Link } from "react-router-dom";
 import { PageFrame } from "../components/PageFrame";
 import { useDocumentMetadata } from "../hooks/useDocumentMetadata";
 import { useHomeMotion } from "../hooks/useHomeMotion";
@@ -11,7 +12,7 @@ import { useHomepageContent } from "../features/homepage/useHomepageContent";
 import { useI18n } from "../i18n";
 
 export function HomePage() {
-  const { locale, t } = useI18n();
+  const { locale, t, path } = useI18n();
   const homepage = useHomepageContent(locale);
   const pageRef = useRef<HTMLDivElement>(null);
   useImagePipeline(pageRef, {
@@ -36,6 +37,15 @@ export function HomePage() {
 
   const { sections, featuredProducts, occasions, budgetRanges } = homepage.data;
 
+  if (Object.values(sections).every((section) => section === null)) {
+    return <PageFrame pageRef={pageRef}><section className="home-data-state" aria-labelledby="home-empty-title"><div className="section-shell">
+      <p className="eyebrow">LUMÉA FLOWER STUDIO</p>
+      <h1 id="home-empty-title">{t.home.empty.title}</h1>
+      <p>{t.home.empty.text}</p>
+      <Link className="button button--solid" to={path("/flowers")}>{t.home.empty.action}</Link>
+    </div></section></PageFrame>;
+  }
+
   return (
     <PageFrame pageRef={pageRef}>
       {sections.hero && <Hero section={sections.hero} />}
@@ -43,7 +53,7 @@ export function HomePage() {
       {sections.best_sellers && <BestSellers section={sections.best_sellers} products={featuredProducts} />}
       {sections.budget && <Budget section={sections.budget} budgetRanges={budgetRanges} />}
       {sections.same_day && <SameDay section={sections.same_day} />}
-      {sections.florist_choice && <FloristChoice section={sections.florist_choice} />}
+      {sections.florist_choice && <FloristChoice section={sections.florist_choice} budgetRanges={budgetRanges} />}
       {sections.create_bouquet && <CustomBouquet section={sections.create_bouquet} />}
       {sections.why_lumea && <WhyLumea section={sections.why_lumea} />}
       {sections.gallery && <Gallery section={sections.gallery} />}

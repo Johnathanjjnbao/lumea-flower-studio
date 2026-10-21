@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { siteConfig } from "../config/siteConfig";
-import { usePrototypeAction } from "../context/PrototypeActionContext";
 import { useCart } from "../features/cart/CartContext";
 import { useStorefrontNavigation } from "../features/navigation/useStorefrontNavigation";
 import type { StorefrontNavigationItem } from "../features/navigation/types";
@@ -33,9 +32,9 @@ export function Header() {
   const { locale, t, path } = useI18n();
   const managedNavigation = useStorefrontNavigation(locale);
   const { itemCount } = useCart();
-  const { showPrototypeAction } = usePrototypeAction();
   const appPathname = stripLocalePrefix(location.pathname);
   const isHome = appPathname === "/";
+  const searchDestination = path("/flowers#catalog-search");
   const fallbackNavigation: StorefrontNavigationItem[] = siteConfig.navigation.map((item, index) => ({
     id: `fallback-${item.key}`,
     stableCode: item.key,
@@ -113,7 +112,9 @@ export function Header() {
         <Link className="wordmark" to={path("/#top")} aria-label={t.header.homeAria}><span className="wordmark__name">{siteConfig.brandName}</span><span className="wordmark__descriptor">{t.brand.descriptor} · {t.brand.city}</span></Link>
         <div className="header-actions">
           <LanguageSwitch variant="desktop" />
-          <button className="icon-button search-button" type="button" aria-label={t.header.search} onClick={() => showPrototypeAction(t.header.search)}><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.6" /><path d="m16 16 4.2 4.2" /></svg></button>
+          {appPathname === "/flowers"
+            ? <button className="icon-button search-button" type="button" aria-label={t.header.search} onClick={() => document.getElementById("catalog-search")?.focus()}><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.6" /><path d="m16 16 4.2 4.2" /></svg></button>
+            : <Link className="icon-button search-button" to={searchDestination} aria-label={t.header.search}><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.6" /><path d="m16 16 4.2 4.2" /></svg></Link>}
           <Link className="cart-button" to={path("/cart")} aria-label={formatMessage(t.header.cartCountAria, { count: itemCount })}><span>{t.header.cart}</span><span className="cart-count" aria-hidden="true">{itemCount}</span></Link>
           <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">{formatMessage(t.header.cartCountAria, { count: itemCount })}</span>
         </div>

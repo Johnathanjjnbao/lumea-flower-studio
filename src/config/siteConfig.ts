@@ -8,9 +8,9 @@ export const siteConfig = {
     { key: "flowers", to: "/flowers" },
     { key: "occasions", to: "/#occasions" },
     { key: "custom", to: "/create-bouquet" },
-    { key: "sameDay", to: "/#same-day" },
-    { key: "about", to: "/#why-lumea" },
-    { key: "visit", to: "/#visit" },
+    { key: "sameDay", to: "/same-day" },
+    { key: "about", to: "/about" },
+    { key: "visit", to: "/contact" },
   ] satisfies NavigationItem[],
   homeChapters: ["top", "occasions", "best-sellers", "budget", "same-day", "florist-choice", "custom", "why-lumea", "gallery", "visit"] satisfies HomeChapterId[],
 } as const;

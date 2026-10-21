@@ -14,6 +14,7 @@
     "check:v2-commerce": "node scripts/check-v2-commerce.mjs",
     "check:v2-2-commercial-content": "node scripts/check-v2-2-commercial-content.mjs",
     "check:v2-2-browser": "python scripts/check-v2-2-browser.py",
+    "check:v2-3-browser": "python scripts/check-v2-3-browser.py",
     "check:v2-commerce-browser": "python scripts/check-v2-commerce-browser.py",
     "check:v2-staging-runtime": "node scripts/check-v2-staging-runtime.mjs",
     "check:v2-staging-browser": "python scripts/check-v2-staging-browser.py",
