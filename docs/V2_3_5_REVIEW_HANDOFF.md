@@ -1,5 +1,7 @@
 # Luméa V2.3–V2.5 — reviewer preview handoff
 
+For the final engineering/reviewer matrix and the 21 October refinement, see [the final project handoff](LUMEA_FINAL_PROJECT_HANDOFF.md).
+
 **Status (2026-10-21):** The independent, bilingual reviewer demo is available at **https://johnathanjjnbao.github.io/lumea-review-preview/**. Open it on a phone or computer; no installation or account is needed. This public demo is **not** the production Luméa storefront, production acceptance, or a release of V2.2. V2.2 staging acceptance remains PASS; V2.2 has not been released to production.
 
 ## What to review
