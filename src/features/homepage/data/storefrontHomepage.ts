@@ -3,17 +3,20 @@ import { loadPublishedCatalog } from "../../catalog/data/storefrontCatalog";
 import { loadDiscoveryOptions } from "../../discovery/storefrontDiscovery";
 import { homepageSectionKeys, type HomepageContent } from "../types";
 import { createSupabaseHomepageRepository } from "./supabaseHomepageRepository";
+import { reviewMode } from "../../../review/mode";
+import { getReviewHomepage } from "../../../review/fixtures";
 
 const CACHE_TTL_MS = 10_000;
-const repository = createSupabaseHomepageRepository();
+const repository = reviewMode ? null : createSupabaseHomepageRepository();
 const cache = new Map<Locale, { expiresAt: number; promise: Promise<HomepageContent> }>();
 
 export function loadHomepageContent(locale: Locale, force = false) {
+  if (reviewMode) return Promise.resolve(getReviewHomepage(locale));
   const cached = cache.get(locale);
   if (!force && cached && cached.expiresAt > Date.now()) return cached.promise;
 
   const promise = Promise.all([
-    repository.getHomepageSections(locale),
+    repository!.getHomepageSections(locale),
     loadPublishedCatalog(locale, force),
     loadDiscoveryOptions(locale, force),
   ]).then(([sectionList, products, discovery]) => {

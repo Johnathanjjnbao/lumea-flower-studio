@@ -15,6 +15,8 @@ import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { PoliciesPage } from "./pages/PoliciesPage";
 import { I18nProvider } from "./i18n";
 import { CartProvider } from "./features/cart/CartContext";
+import { reviewMode } from "./review/mode";
+import { ReviewAdminNotice } from "./review/ReviewAdminNotice";
 
 const AdminRoutes = lazy(() => import("./features/admin/AdminRoutes"));
 
@@ -50,8 +52,8 @@ export default function App() {
               <Route path="/ko/about" element={<AboutPage />} />
               <Route path="/ko/contact" element={<ContactPage />} />
               <Route path="/ko/same-day" element={<SameDayPage />} />
-            <Route path="/admin/*" element={<Suspense fallback={<main className="admin-gate" aria-busy="true"><p>Đang tải khu vực quản trị…</p></main>}><AdminRoutes /></Suspense>} />
-            <Route path="/ko/admin/*" element={<Suspense fallback={<main className="admin-gate" aria-busy="true"><p>관리자 페이지를 불러오는 중…</p></main>}><AdminRoutes /></Suspense>} />
+            <Route path="/admin/*" element={reviewMode ? <ReviewAdminNotice /> : <Suspense fallback={<main className="admin-gate" aria-busy="true"><p>Đang tải khu vực quản trị…</p></main>}><AdminRoutes /></Suspense>} />
+            <Route path="/ko/admin/*" element={reviewMode ? <ReviewAdminNotice /> : <Suspense fallback={<main className="admin-gate" aria-busy="true"><p>관리자 페이지를 불러오는 중…</p></main>}><AdminRoutes /></Suspense>} />
           </Routes>
           </PrototypeActionProvider>
         </CartProvider>

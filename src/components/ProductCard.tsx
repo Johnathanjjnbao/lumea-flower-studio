@@ -3,6 +3,7 @@ import type { CatalogProductRecord } from "../features/catalog/data/catalogRepos
 import { formatMessage, useI18n } from "../i18n";
 import { formatVnd } from "../utils/product";
 import { ManagedImage } from "./ManagedImage";
+import { reviewMode } from "../review/mode";
 
 interface ProductCardProps {
   product: CatalogProductRecord;
@@ -12,7 +13,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, headingLevel = 3, showAvailability = false, showStartingPrice = false }: ProductCardProps) {
-  const { t, path } = useI18n();
+  const { t, path, locale } = useI18n();
   const primaryImage = product.images.find((image) => image.role === "PRIMARY") ?? product.images[0];
   const statusLabel = product.bestseller
     ? t.product.tags.bestseller
@@ -43,7 +44,7 @@ export function ProductCard({ product, headingLevel = 3, showAvailability = fals
           {product.shortDescription && <p className="product-description">{product.shortDescription}</p>}
         </div>
         <div className="product-footer">
-          <p className="product-price">{showStartingPrice || product.variants.length > 1 ? `${t.common.from} ` : ""}{formatVnd(product.startingPriceAmount)}</p>
+          <p className="product-price">{showStartingPrice || product.variants.length > 1 ? `${t.common.from} ` : ""}{formatVnd(product.startingPriceAmount)}{reviewMode && <small className="demo-price">{locale === "vi" ? "Giá minh họa" : "예시 가격"}</small>}</p>
           <span className="product-arrow" aria-hidden="true">→</span>
         </div>
       </div>

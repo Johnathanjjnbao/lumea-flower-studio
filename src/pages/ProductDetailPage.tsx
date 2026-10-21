@@ -17,6 +17,7 @@ import { useDocumentMetadata } from "../hooks/useDocumentMetadata";
 import { useImagePipeline } from "../hooks/useImagePipeline";
 import { formatMessage, useI18n } from "../i18n";
 import { formatVnd, getProductPrice, getVariantPriceLabel } from "../utils/product";
+import { reviewMode } from "../review/mode";
 
 function ProductNotFound() {
   const { t, path } = useI18n();
@@ -121,7 +122,7 @@ function ProductDetailContent({ product }: { product: CatalogProductRecord }) {
       <ProductGallery images={product.images} name={product.name} />
       <div className="product-detail__info">
         <div className="product-detail__heading"><p className="product-category">{product.category.name}</p><h1>{product.name}</h1>{product.description && <p className="product-detail__description">{product.description}</p>}</div>
-        <div className="product-detail__commerce-head"><div><span>{t.product.detail.price}</span><strong aria-live="polite">{formatVnd(selectedPrice)}</strong></div><p className={`availability availability--${product.availability.toLowerCase()}`}>{t.product.availability[product.availability]}</p></div>
+        <div className="product-detail__commerce-head"><div><span>{reviewMode ? (locale === "vi" ? "Giá minh họa" : "예시 가격") : t.product.detail.price}</span><strong aria-live="polite">{formatVnd(selectedPrice)}</strong></div><p className={`availability availability--${product.availability.toLowerCase()}`}>{t.product.availability[product.availability]}</p></div>
         <fieldset className="product-options"><legend>{t.product.detail.size}</legend><div className="size-options">
           {product.variants.map((variant) => <label className="size-option" data-selected={variantId === variant.id} key={variant.id}><input type="radio" name="size" value={variant.id} checked={variantId === variant.id} onChange={() => { setVariantId(variant.id); setAdded(false); }} /><span className="size-option__head"><strong>{variant.name}</strong><span>{getVariantPriceLabel(product, variant)}</span></span>{variant.description && <small>{variant.description}</small>}</label>)}
         </div></fieldset>

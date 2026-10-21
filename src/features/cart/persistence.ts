@@ -1,7 +1,8 @@
 import { customBouquetConfigurationKey } from "./domain.ts";
 import type { CartItem, CustomBouquetCartItem, ReadyMadeCartItem } from "./types";
+import { reviewMode } from "../../review/mode.ts";
 
-export const CART_STORAGE_KEY = "lumea.cart.v1";
+export const CART_STORAGE_KEY = reviewMode ? "lumea.review.cart.v1" : "lumea.cart.v1";
 export const CART_PERSISTENCE_VERSION = 1;
 const MAX_PERSISTED_ITEMS = 100;
 

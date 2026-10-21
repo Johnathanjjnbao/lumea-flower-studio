@@ -1,9 +1,11 @@
 import type { Locale } from "../../../types/content";
 import type { CatalogCategoryRecord, CatalogProductRecord } from "./catalogRepository";
 import { createSupabaseCatalogRepository } from "./supabaseCatalogRepository";
+import { reviewMode } from "../../../review/mode";
+import { reviewCatalogRepository } from "../../../review/fixtures";
 
 const CACHE_TTL_MS = 10_000;
-const repository = createSupabaseCatalogRepository();
+const repository = reviewMode ? reviewCatalogRepository : createSupabaseCatalogRepository();
 
 interface CacheEntry<T> {
   expiresAt: number;

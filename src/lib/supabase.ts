@@ -1,11 +1,13 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { readSupabasePublicEnv } from "../config/supabaseEnv";
 import type { Database } from "../types/database.generated";
+import { assertLiveBackendAllowed } from "../review/mode";
 
 let browserClient: SupabaseClient<Database> | null | undefined;
 let publicBrowserClient: SupabaseClient<Database> | null | undefined;
 
 export function getSupabaseClient() {
+  assertLiveBackendAllowed();
   if (browserClient !== undefined) return browserClient;
 
   const config = readSupabasePublicEnv();
@@ -34,6 +36,7 @@ export function requireSupabaseClient() {
 }
 
 export function getPublicSupabaseClient() {
+  assertLiveBackendAllowed();
   if (publicBrowserClient !== undefined) return publicBrowserClient;
 
   const config = readSupabasePublicEnv();

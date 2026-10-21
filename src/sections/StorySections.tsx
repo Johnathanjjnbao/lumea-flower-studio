@@ -1,4 +1,5 @@
 import { ManagedImage } from "../components/ManagedImage";
+import { Link } from "react-router-dom";
 import type { HomepageSection } from "../features/homepage/types";
 import { buildGoogleMapsEmbedUrl, isSafeGoogleMapsUrl, normalizePhoneHref } from "../features/homepage/visitLocation";
 import { useSiteProfile } from "../features/siteSettings/useSiteProfile";
@@ -9,8 +10,9 @@ const storyClasses = ["fresh", "handmade", "delivery"];
 
 export function WhyLumea({ section }: { section: HomepageSection }) {
   const copy = section.copy;
+  const { path } = useI18n();
   return <section className="why section-space" id="why-lumea" aria-labelledby="why-title"><div className="section-shell why-layout">
-    <div className="why-heading"><p className="eyebrow"><span aria-hidden="true">08</span>{copy.eyebrow}</p><h2 id="why-title">{copy.titleOne}<br />{copy.titleTwo}</h2><p>{copy.body}</p></div>
+    <div className="why-heading"><p className="eyebrow"><span aria-hidden="true">08</span>{copy.eyebrow}</p><h2 id="why-title">{copy.titleOne}<br />{copy.titleTwo}</h2><p>{copy.body}</p>{section.primaryCtaTarget && copy.primaryCtaLabel && <Link className="text-link" to={path(section.primaryCtaTarget)}>{copy.primaryCtaLabel}</Link>}</div>
     <div className="craft-stories">{section.features.map((story, index) => (
       <figure className={`craft-story craft-story--${storyClasses[index] ?? "fresh"}`} key={story.id}><div className="craft-story__image">{story.media && <ManagedImage src={story.media.url} alt={story.media.altText} loading="lazy" />}</div><figcaption><span>{story.label}</span><h3>{story.title}</h3><p>{story.body}</p></figcaption></figure>
     ))}</div>
@@ -19,15 +21,16 @@ export function WhyLumea({ section }: { section: HomepageSection }) {
 
 export function Gallery({ section }: { section: HomepageSection }) {
   const profile = useSiteProfile();
+  const { path } = useI18n();
   const copy = section.copy;
   return <section className="gallery section-space section-shell" id="gallery" aria-labelledby="gallery-title">
-    <div className="section-heading section-heading--row gallery-heading"><div><p className="eyebrow"><span aria-hidden="true">09</span>{copy.eyebrow}</p><span className="botanical-hairline" aria-hidden="true" /><h2 id="gallery-title">{copy.titleOne}<br /><em>{copy.titleTwo}</em></h2></div>{profile?.instagramUrl && <a className="text-link" href={profile.instagramUrl} target="_blank" rel="noreferrer">{copy.primaryCtaLabel} {profile.instagramHandle}</a>}</div>
+    <div className="section-heading section-heading--row gallery-heading"><div><p className="eyebrow"><span aria-hidden="true">09</span>{copy.eyebrow}</p><span className="botanical-hairline" aria-hidden="true" /><h2 id="gallery-title">{copy.titleOne}<br /><em>{copy.titleTwo}</em></h2></div>{profile?.instagramUrl ? <a className="text-link" href={profile.instagramUrl} target="_blank" rel="noreferrer">{copy.primaryCtaLabel} {profile.instagramHandle}</a> : section.primaryCtaTarget && copy.primaryCtaLabel && <Link className="text-link" to={path(section.primaryCtaTarget)}>{copy.primaryCtaLabel}</Link>}</div>
     <div className="gallery-grid">{section.media.map((media, index) => <figure className={`gallery-item gallery-item--${galleryClasses[index] ?? "ten"}`} key={media.id}><ManagedImage src={media.url} alt={media.altText} loading="lazy" />{media.caption && <figcaption>{media.caption}</figcaption>}</figure>)}</div>
   </section>;
 }
 
 export function Visit({ section }: { section: HomepageSection }) {
-  const { t } = useI18n();
+  const { t, path } = useI18n();
   const profile = useSiteProfile();
   const copy = section.copy;
   const phoneHref = normalizePhoneHref(profile?.phone ?? "");
@@ -39,7 +42,7 @@ export function Visit({ section }: { section: HomepageSection }) {
       <div><dt>{copy.detailOneLabel}</dt><dd>{copy.detailOneValue}</dd></div><div><dt>{copy.detailTwoLabel}</dt><dd>{copy.detailTwoValue}</dd></div>
       {phoneHref && <div><dt>{t.home.visit.phone}</dt><dd><a href={phoneHref}>{profile?.phone}</a></dd></div>}
       {directionsUrl && copy.primaryCtaLabel && <div><dt>{t.home.visit.mapAria}</dt><dd><a href={directionsUrl} target="_blank" rel="noreferrer">{copy.primaryCtaLabel}</a></dd></div>}
-    </dl></div>
+    </dl>{section.primaryCtaTarget && copy.primaryCtaLabel && <Link className="text-link" to={path(section.primaryCtaTarget)}>{copy.primaryCtaLabel}</Link>}</div>
     <div className={`map-placeholder${mapEmbedUrl ? " map-placeholder--live" : ""}`} aria-label={t.home.visit.mapAria}>
       {mapEmbedUrl
         ? <iframe src={mapEmbedUrl} title={`${t.home.visit.mapAria}: ${studioName}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />

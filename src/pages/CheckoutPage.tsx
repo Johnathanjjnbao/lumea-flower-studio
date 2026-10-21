@@ -25,6 +25,7 @@ import {
 import { useDocumentMetadata } from "../hooks/useDocumentMetadata";
 import { formatMessage, useI18n } from "../i18n";
 import { formatVnd } from "../utils/product";
+import { reviewMode } from "../review/mode";
 
 const initialValues: CheckoutFormValues = {
   buyerName: "",
@@ -131,6 +132,7 @@ export function CheckoutPage() {
   const [optionsLoading, setOptionsLoading] = useState(lines.length > 0);
   const [optionsError, setOptionsError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [demoComplete, setDemoComplete] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [priceReviewRequired, setPriceReviewRequired] = useState(false);
   const [priceReviewed, setPriceReviewed] = useState(false);
@@ -280,7 +282,7 @@ export function CheckoutPage() {
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitLock.current) return;
-    if (!turnstileToken) {
+    if (!reviewMode && !turnstileToken) {
       setServerError(t.checkout.errors.verificationRequired);
       resetVerification();
       return;
@@ -324,8 +326,15 @@ export function CheckoutPage() {
         return;
       }
       const reviewedSubtotal = checkoutSubtotal(checkedLines);
+      if (reviewMode) {
+        // Keep form values in React memory only. No order payload, RPC, receipt,
+        // payment confirmation, or network mutation exists in the review path.
+        setDemoComplete(true);
+        completed = true;
+        return;
+      }
       const payload = createCheckoutPayload(values, checkedLines, locale, previewFee);
-      const receipt = await createCheckoutOrder({ payload, reviewedSubtotal }, turnstileToken);
+      const receipt = await createCheckoutOrder({ payload, reviewedSubtotal }, turnstileToken!);
       const stored = writeOrderReceipt(receipt);
       clearCheckoutAttempt();
       clearCart();
@@ -371,12 +380,19 @@ export function CheckoutPage() {
   };
 
   const cartBlocked = lineStatus.hasUnavailableItems || lineStatus.hasCheckErrors;
+  if (demoComplete) return <PageFrame><section className="review-complete section-shell section-space" role="status" aria-labelledby="review-complete-title">
+    <p className="eyebrow">LUMÉA · REVIEW MODE</p>
+    <h1 id="review-complete-title">{locale === "vi" ? "Đã hoàn tất bản xem trước" : "미리보기 과정을 마쳤습니다"}</h1>
+    <p>{locale === "vi" ? "Đây chỉ là mô phỏng. Không có đơn hàng, thanh toán hay dữ liệu cá nhân nào được gửi đi." : "이 화면은 시뮬레이션입니다. 주문, 결제 또는 개인정보가 전송되지 않았습니다."}</p>
+    <p>{locale === "vi" ? `Tạm tính minh họa: ${formatVnd(checkoutSubtotal(lines) + (previewFee ?? 0))}` : `예시 합계: ${formatVnd(checkoutSubtotal(lines) + (previewFee ?? 0))}`}</p>
+    <Link className="button button--solid" to={path("/flowers")}>{locale === "vi" ? "Tiếp tục xem hoa" : "꽃 더 보기"}</Link>
+  </section></PageFrame>;
   return <PageFrame><section className="checkout-page section-shell section-space" aria-labelledby="checkout-title">
     <Link className="checkout-back" to={path("/cart")}>{t.checkout.backToCart}</Link>
     <header className="checkout-page__header">
       <p className="eyebrow"><span aria-hidden="true">02</span>{t.checkout.eyebrow}</p>
       <h1 id="checkout-title">{t.checkout.title}</h1>
-      <p>{t.checkout.intro}</p>
+      <p>{reviewMode ? (locale === "vi" ? "Thử chọn cách nhận hoa và xem tạm tính. Đây là biểu mẫu minh họa, không gửi thông tin hoặc tạo đơn." : "수령 방법과 예시 합계를 살펴보세요. 이 양식은 정보를 전송하거나 주문을 생성하지 않습니다.") : t.checkout.intro}</p>
     </header>
 
     {checking && <p className="checkout-cart-status" role="status" aria-live="polite">{t.checkout.checkingCart}</p>}
@@ -493,16 +509,16 @@ export function CheckoutPage() {
             <h3>{t.checkout.priceChangedTitle}</h3><p>{t.checkout.priceChangedText}</p>
             <label htmlFor="price-reviewed"><input id="price-reviewed" type="checkbox" checked={priceReviewed} onChange={(event) => setPriceReviewed(event.target.checked)} /><span>{t.checkout.acknowledgePrice}</span></label>
           </div>}
-          <TurnstileWidget
+          {!reviewMode && <TurnstileWidget
             ref={turnstileRef}
             locale={locale}
             label={t.checkout.verification.label}
             help={t.checkout.verification.help}
             unavailable={t.checkout.verification.unavailable}
             onTokenChange={setTurnstileToken}
-          />
-          <button className="button button--solid checkout-submit" type="submit" disabled={submitting || checking}>{submitting ? t.checkout.submitting : t.checkout.submit}</button>
-          <p className="checkout-submit-note">{t.checkout.submitNote}</p>
+          />}
+          <button className="button button--solid checkout-submit" type="submit" disabled={submitting || checking}>{reviewMode ? (locale === "vi" ? "Xem kết thúc demo" : "데모 종료 화면 보기") : submitting ? t.checkout.submitting : t.checkout.submit}</button>
+          <p className="checkout-submit-note">{reviewMode ? (locale === "vi" ? "Không tạo đơn hàng hoặc thanh toán thật." : "실제 주문이나 결제는 생성되지 않습니다.") : t.checkout.submitNote}</p>
         </CheckoutSection>
       </form>
       <CheckoutSummary lines={lines} deliveryFee={previewFee} />

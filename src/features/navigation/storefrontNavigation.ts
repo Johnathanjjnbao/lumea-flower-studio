@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requirePublicSupabaseClient } from "../../lib/supabase";
 import type { Locale } from "../../types/content";
 import { navigationDestinationPath, type NavigationDestinationType, type StorefrontNavigationItem } from "./types";
+import { reviewMode } from "../../review/mode";
+import { getReviewNavigation } from "../../review/fixtures";
 
 const CACHE_TTL_MS = 10_000;
 const cache = new Map<Locale, { expiresAt: number; promise: Promise<StorefrontNavigationItem[]> }>();
@@ -35,6 +37,7 @@ async function requestNavigation(locale: Locale, client: SupabaseClient<any>): P
 }
 
 export function loadStorefrontNavigation(locale: Locale, force = false) {
+  if (reviewMode) return Promise.resolve(getReviewNavigation(locale));
   const cached = cache.get(locale);
   if (!force && cached && cached.expiresAt > Date.now()) return cached.promise;
   const promise = Promise.resolve().then(() => requestNavigation(locale, requirePublicSupabaseClient() as SupabaseClient<any>));

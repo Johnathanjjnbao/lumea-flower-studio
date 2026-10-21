@@ -3,6 +3,8 @@ import { requirePublicSupabaseClient } from "../../lib/supabase";
 import type { Locale } from "../../types/content";
 import type { CheckoutOptions } from "./types";
 import { businessTimeInVietnam } from "./validation";
+import { reviewMode } from "../../review/mode";
+import { getReviewCheckoutOptions } from "../../review/fixtures";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -68,6 +70,7 @@ function parseOptions(value: unknown): CheckoutOptions {
 }
 
 export async function loadCheckoutOptions(locale: Locale): Promise<CheckoutOptions> {
+  if (reviewMode) return getReviewCheckoutOptions(locale);
   const client = requirePublicSupabaseClient() as SupabaseClient<any>;
   const { data, error } = await client.rpc("get_checkout_options", { requested_locale: locale });
   if (error) throw new Error(error.message);

@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import type { SiteProfile } from "./types";
 import { createSiteProfileRepository } from "./repository";
+import { reviewMode } from "../../review/mode";
+import { reviewSiteProfile } from "../../review/fixtures";
 
-const repository = createSiteProfileRepository();
+const repository = reviewMode ? null : createSiteProfileRepository();
 let cached: Promise<SiteProfile> | null = null;
 
 function loadSiteProfile() {
-  cached ??= repository.getProfile();
+  if (reviewMode) return Promise.resolve(reviewSiteProfile);
+  cached ??= repository!.getProfile();
   void cached.catch(() => { cached = null; });
   return cached;
 }

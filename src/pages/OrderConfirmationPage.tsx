@@ -6,6 +6,7 @@ import type { OrderReceipt } from "../features/checkout/types";
 import { useDocumentMetadata } from "../hooks/useDocumentMetadata";
 import { formatMessage, useI18n } from "../i18n";
 import { formatVnd } from "../utils/product";
+import { reviewMode } from "../review/mode";
 
 interface ConfirmationLocationState {
   receipt?: unknown;
@@ -17,6 +18,7 @@ export function OrderConfirmationPage() {
   const location = useLocation();
   const state = location.state as ConfirmationLocationState | null;
   const receipt = useMemo<OrderReceipt | null>(() => {
+    if (reviewMode) return null;
     if (isOrderReceipt(state?.receipt)) return state.receipt;
     return readOrderReceipt();
   }, [state?.receipt]);

@@ -9,6 +9,7 @@ import { businessTimeInVietnam } from "../features/checkout/validation";
 import { mediaBySlot, type HomepageSection } from "../features/homepage/types";
 import type { DiscoveryBudgetRange } from "../features/discovery/types";
 import { useI18n } from "../i18n";
+import { reviewMode } from "../review/mode";
 
 export function SameDay({ section }: { section: HomepageSection }) {
   const { t, path, locale } = useI18n();
@@ -41,7 +42,7 @@ export function SameDay({ section }: { section: HomepageSection }) {
           <span className="status-dot" aria-hidden="true" />
           <span>{status === "loading" ? t.home.sameDay.statusChecking : available ? copy.note : t.home.sameDay.unavailable}</span>
         </div>
-        {available
+        {available || reviewMode
           ? <Link className="button button--dark" to={resolveHomepageTarget(section.primaryCtaTarget, path)}>{copy.primaryCtaLabel}</Link>
           : <Link className="button button--dark" to={path("/#visit")}>{t.home.sameDay.contact}</Link>}
       </div>
@@ -89,7 +90,7 @@ export function FloristChoice({ section, budgetRanges }: { section: HomepageSect
             </dl>
             <p className="florist-brief__note">{t.home.florist.note}</p>
           </div>
-          <a className="button button--light" href={resolveHomepageTarget(section.primaryCtaTarget, path)}>{copy.primaryCtaLabel}</a>
+          <Link className="button button--light" to={resolveHomepageTarget(section.primaryCtaTarget, path)}>{copy.primaryCtaLabel}</Link>
         </div>
       </div>
     </section>
@@ -149,7 +150,7 @@ export function CustomBouquet({ section }: { section: HomepageSection }) {
             <h3>{copy.secondaryHeading}</h3>
             <p>{copy.secondaryBody}</p>
           </div>
-          <a className="text-link" href={resolveHomepageTarget(section.secondaryCtaTarget, path)}>{copy.secondaryCtaLabel}</a>
+          <Link className="text-link" to={resolveHomepageTarget(section.secondaryCtaTarget, path)}>{copy.secondaryCtaLabel}</Link>
         </aside>
       </div>
     </section>

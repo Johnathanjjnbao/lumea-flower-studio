@@ -1,4 +1,5 @@
 import { ManagedImage } from "../components/ManagedImage";
+import { Link } from "react-router-dom";
 import { siteConfig } from "../config/siteConfig";
 import { resolveHomepageTarget } from "../features/homepage/cta";
 import { mediaBySlot, type HomepageSection } from "../features/homepage/types";
@@ -20,8 +21,8 @@ export function Hero({ section }: { section: HomepageSection }) {
         <h1 id="hero-title">{copy.titleOne}<br />{copy.titleTwo}</h1>
         <p className="hero-intro">{copy.body}</p>
         <div className="hero-actions">
-          <a className="button button--solid" href={resolveHomepageTarget(section.primaryCtaTarget, path)}>{copy.primaryCtaLabel}</a>
-          <a className="button button--outline" href={resolveHomepageTarget(section.secondaryCtaTarget, path)}>{copy.secondaryCtaLabel}</a>
+          <Link className="button button--solid" to={resolveHomepageTarget(section.primaryCtaTarget, path)}>{copy.primaryCtaLabel}</Link>
+          <Link className="button button--outline" to={resolveHomepageTarget(section.secondaryCtaTarget, path)}>{copy.secondaryCtaLabel}</Link>
         </div>
         {copy.detailOneLabel && copy.detailOneValue && copy.detailTwoLabel && <div className="hero-commerce">
           <span className="botanical-hairline" aria-hidden="true" />
