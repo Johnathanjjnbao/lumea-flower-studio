@@ -3,7 +3,7 @@ import { requirePublicSupabaseClient } from "../../lib/supabase";
 import { getCheckoutIdempotencyKey } from "./attempt";
 import { isOrderReceipt } from "./receipt";
 import type { CheckoutOrderRequest, OrderReceipt } from "./types";
-import { reviewMode } from "../../review/mode";
+import { reviewBuild } from "../../review/mode";
 
 export type CheckoutOrderErrorCode =
   | "REVIEW_CHANGED"
@@ -105,7 +105,7 @@ function parseRpcRow(value: unknown): CheckoutRpcRow {
 }
 
 export async function createCheckoutOrder(request: CheckoutOrderRequest, turnstileToken: string): Promise<OrderReceipt> {
-  if (reviewMode) throw new CheckoutOrderError("INVALID_REQUEST", "REVIEW_MODE_ORDER_DISABLED");
+  if (reviewBuild) throw new CheckoutOrderError("INVALID_REQUEST", "REVIEW_MODE_ORDER_DISABLED");
   const idempotencyKey = await getCheckoutIdempotencyKey(request);
   const client = requirePublicSupabaseClient();
   let result: Awaited<ReturnType<typeof client.functions.invoke<{ data?: unknown; code?: unknown }>>>;

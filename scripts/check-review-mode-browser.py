@@ -10,7 +10,7 @@ from playwright.sync_api import sync_playwright
 BASE = os.environ.get("LUMEA_REVIEW_URL", "http://127.0.0.1:4174/lumea-flower-studio").rstrip("/")
 SHOTS = os.environ.get("LUMEA_REVIEW_SCREENSHOTS")
 ROUTES = ("", "/flowers", "/flowers/pink-garden", "/flowers/morning-peony", "/cart", "/checkout", "/order-confirmation", "/about", "/contact", "/same-day", "/policies", "/create-bouquet", "/admin/login")
-WIDTHS = (320, 390, 768, 1440)
+WIDTHS = tuple(int(value) for value in os.environ.get("LUMEA_REVIEW_WIDTHS", "320,390,768,1440").split(",") if value)
 HOME_IDS = ("top", "occasions", "best-sellers", "budget", "same-day", "florist-choice", "custom", "why-lumea", "gallery", "visit")
 
 
@@ -57,7 +57,8 @@ def main():
                 for prefix, locale in (("", "vi"), ("/ko", "ko")):
                     for route in ROUTES:
                         label = f"{locale}{route or '/'}@{width}"
-                        page.goto(f"{BASE}{prefix}{route or '/'}", wait_until="domcontentloaded")
+                        response = page.goto(f"{BASE}{prefix}{route or '/'}", wait_until="domcontentloaded")
+                        assert response and response.status < 400, f"{label}: direct link returned {response.status if response else 'no response'}"
                         inspect(page, label)
                         assert page.evaluate("document.documentElement.lang") == locale, f"{label}: wrong language"
                         if route == "":
@@ -139,7 +140,7 @@ def main():
             for route in ("", "/flowers/pink-garden", "/policies"):
                 page.goto(f"{BASE}{route or '/'}")
                 page.locator(".language-switch--desktop a").last.click()
-                page.wait_for_url(f"**/ko{route}")
+                page.wait_for_function("(route) => location.pathname.replace(/\\/$/, '').endsWith('/ko' + route)", arg=route)
                 page.wait_for_function("document.documentElement.lang === 'ko'")
                 assert page.evaluate("document.documentElement.lang") == "ko", f"language switch failed at {route}"
             page.evaluate("""() => localStorage.setItem('lumea.order-receipt.v1', JSON.stringify({
@@ -153,6 +154,22 @@ def main():
             }))""")
             page.goto(f"{BASE}/order-confirmation")
             assert page.locator(".confirmation-missing").count() == 1, "stored live receipt leaked into review"
+            page.goto(f"{BASE}/flowers/pink-garden")
+            page.reload()
+            page.locator(".product-detail__heading h1").wait_for(state="visible")
+            page.goto(f"{BASE}/cart")
+            page.reload()
+            page.locator("main h1").wait_for(state="visible")
+            page.goto(f"{BASE}/policies")
+            page.reload()
+            page.locator("main h1").wait_for(state="visible")
+            page.go_back()
+            assert "/cart" in page.url, "browser back did not restore Cart"
+            page.go_forward()
+            assert "/policies" in page.url, "browser forward did not restore Policies"
+            page.goto(f"{BASE}/not-a-demo-page")
+            page.locator("main h1").wait_for(state="visible")
+            assert "Không tìm thấy" in page.locator("main h1").inner_text(), "unknown route did not show review 404"
             context.close()
             context = browser.new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce")
             page = context.new_page()

@@ -8,6 +8,7 @@
     "dev:review": "vite --mode review --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "build:review": "tsc -b && vite build --mode review",
+    "build:review-hosted": "tsc -b && vite build --mode review-hosted",
     "check:review-bundle": "node scripts/check-review-bundle.mjs",
     "check:builder-persistence": "node --experimental-strip-types scripts/check-builder-persistence.mjs",
     "check:builder-pricing": "node --experimental-strip-types scripts/check-builder-pricing.mjs",

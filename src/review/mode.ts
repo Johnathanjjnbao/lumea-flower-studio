@@ -1,10 +1,18 @@
-// Vite replaces MODE at build time. Only an explicitly requested review build on
-// loopback may expose fixtures; the ordinary production build can never opt in
-// through a URL parameter, localStorage value, or stale browser session.
-const reviewBuild = import.meta.env?.MODE === "review";
-export const reviewMode = reviewBuild
-  && typeof window !== "undefined"
-  && (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost");
+// Both demo modes are build-time choices. The hosted build has one exact Pages
+// project path; it cannot turn the separate production Pages project into a demo.
+const mode = import.meta.env?.MODE;
+export const reviewBuild = mode === "review" || mode === "review-hosted";
+const base = import.meta.env?.BASE_URL ?? "/";
+const baseWithoutSlash = base.endsWith("/") ? base.slice(0, -1) : base;
+
+export const reviewMode = reviewBuild && typeof window !== "undefined" && (() => {
+  const { hostname, pathname, protocol } = window.location;
+  const onExpectedPath = pathname === baseWithoutSlash || pathname.startsWith(`${baseWithoutSlash}/`);
+  const loopback = hostname === "127.0.0.1" || hostname === "localhost";
+  return onExpectedPath && (mode === "review"
+    ? loopback
+    : loopback || (hostname === "johnathanjjnbao.github.io" && protocol === "https:"));
+})();
 
 export function assertLiveBackendAllowed() {
   if (reviewBuild) throw new Error("REVIEW_MODE_LIVE_BACKEND_DISABLED");

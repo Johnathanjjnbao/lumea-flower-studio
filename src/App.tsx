@@ -15,13 +15,19 @@ import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { PoliciesPage } from "./pages/PoliciesPage";
 import { I18nProvider } from "./i18n";
 import { CartProvider } from "./features/cart/CartContext";
-import { reviewMode } from "./review/mode";
+import { reviewBuild, reviewMode } from "./review/mode";
 import { ReviewAdminNotice } from "./review/ReviewAdminNotice";
+import { ReviewNotFound } from "./review/ReviewNotFound";
 
-const AdminRoutes = lazy(() => import("./features/admin/AdminRoutes"));
+const AdminRoutes = reviewBuild ? ReviewAdminNotice : lazy(() => import("./features/admin/AdminRoutes"));
 
 export default function App() {
   const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+  if (reviewBuild && !reviewMode) return <main role="alert" className="review-admin-notice section-shell section-space">
+    <h1>Review demo unavailable on this address</h1>
+    <p>This build cannot connect to the live shop. Open the approved preview URL.</p>
+  </main>;
 
   return (
     <BrowserRouter basename={basename}>
@@ -52,8 +58,9 @@ export default function App() {
               <Route path="/ko/about" element={<AboutPage />} />
               <Route path="/ko/contact" element={<ContactPage />} />
               <Route path="/ko/same-day" element={<SameDayPage />} />
-            <Route path="/admin/*" element={reviewMode ? <ReviewAdminNotice /> : <Suspense fallback={<main className="admin-gate" aria-busy="true"><p>Đang tải khu vực quản trị…</p></main>}><AdminRoutes /></Suspense>} />
-            <Route path="/ko/admin/*" element={reviewMode ? <ReviewAdminNotice /> : <Suspense fallback={<main className="admin-gate" aria-busy="true"><p>관리자 페이지를 불러오는 중…</p></main>}><AdminRoutes /></Suspense>} />
+            <Route path="/admin/*" element={<Suspense fallback={<main className="admin-gate" aria-busy="true"><p>Đang tải khu vực quản trị…</p></main>}><AdminRoutes /></Suspense>} />
+            <Route path="/ko/admin/*" element={<Suspense fallback={<main className="admin-gate" aria-busy="true"><p>관리자 페이지를 불러오는 중…</p></main>}><AdminRoutes /></Suspense>} />
+            {reviewBuild && <Route path="*" element={<ReviewNotFound />} />}
           </Routes>
           </PrototypeActionProvider>
         </CartProvider>
