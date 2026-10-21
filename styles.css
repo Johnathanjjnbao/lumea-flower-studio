@@ -14,7 +14,7 @@
   --line-strong: rgba(51, 43, 41, 0.3);
   --paper-shadow: 0 1.2rem 3.25rem rgba(74, 51, 48, 0.065);
   --serif: "Fraunces", Georgia, serif;
-  --sans: "Manrope", Arial, sans-serif;
+  --sans: "DM Sans", Arial, sans-serif;
   --serif-ko: "Noto Serif KR", "Noto Serif", serif;
   --sans-ko: "Noto Sans KR", "Noto Sans", sans-serif;
   --page-gutter: clamp(1.25rem, 4vw, 4.75rem);
@@ -1174,6 +1174,14 @@
 .admin-operation-card__body,
 .admin-operation-card--flat { display: grid; gap: 1.2rem; padding: 1rem; border-top: 1px solid var(--line); }
 .admin-operation-card--flat { border-top: 1px solid var(--line); }
+article.admin-operation-card { display: grid; min-width: 0; padding: 1rem; gap: 1rem; }
+article.admin-operation-card > header { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1rem; }
+article.admin-operation-card > header > div { display: grid; min-width: 0; gap: 0.2rem; }
+article.admin-operation-card > header small { color: var(--ink-soft); font-size: 0.6rem; }
+article.admin-operation-card > fieldset { min-width: 0; margin: 0; padding: 0.85rem; border: 1px solid var(--line); }
+article.admin-operation-card > fieldset legend { padding-inline: 0.35rem; color: var(--burgundy); font-family: var(--serif); }
+article.admin-operation-card > .admin-editor-actions { margin-top: 0; }
+article.admin-operation-card > .admin-button { justify-self: start; }
 .admin-operation-areas { display: grid; gap: 0.8rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 .admin-operation-areas__heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .admin-operation-areas__heading h3 { font-size: 1.1rem; }
@@ -1784,6 +1792,19 @@ h3 {
 
 .mobile-menu[hidden] {
   display: none;
+}
+
+.mobile-menu:not([hidden]) {
+  animation: menu-enter 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes menu-enter {
+  from { opacity: 0; transform: translateY(-0.5rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-menu:not([hidden]) { animation: none; }
 }
 
 .mobile-menu a {
@@ -5754,6 +5775,7 @@ main > section[id] {
   padding: 1.4rem var(--page-gutter) 2rem;
   background: var(--surface-raised);
   box-shadow: 0 1.5rem 3rem rgba(51, 43, 41, 0.12);
+  overscroll-behavior: contain;
 }
 
 .site-header[data-compact="true"] .mobile-menu {
@@ -6824,8 +6846,14 @@ h2 em,
   }
 
   .hero h1 {
-    font-size: clamp(3.25rem, 16.5vw, 4.25rem);
+    font-size: clamp(3rem, 13.8vw, 3.7rem);
     line-height: 0.9;
+  }
+
+  html[lang="ko"] .hero h1 {
+    max-width: 100%;
+    font-size: clamp(2.1rem, 9.4vw, 3.25rem);
+    letter-spacing: -0.035em;
   }
 
   .hero-intro {

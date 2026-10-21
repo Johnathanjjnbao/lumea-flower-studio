@@ -2,11 +2,13 @@ import base64
 import json
 import os
 import time
+from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
 
 BASE_URL = os.environ.get("LUMEA_BASE_URL", "http://127.0.0.1:4173/lumea-flower-studio").rstrip("/")
+SHOT_DIR = os.environ.get("LUMEA_ADMIN_QA_SCREENSHOTS")
 
 
 def b64url(value):
@@ -203,6 +205,9 @@ with sync_playwright() as playwright:
 
     page.goto(f"{BASE_URL}/admin/categories", wait_until="networkidle")
     page.get_by_role("heading", name="Categories").wait_for(state="visible")
+    if SHOT_DIR:
+        Path(SHOT_DIR).mkdir(parents=True, exist_ok=True)
+        page.screenshot(path=str(Path(SHOT_DIR) / "final-admin-categories-390.png"), full_page=True)
     cards = page.locator(".admin-operation-card")
     cards.first.get_by_label("Mã ổn định").fill("wedding")
     cards.first.get_by_label("Slug").fill("hoa-cuoi")
@@ -250,6 +255,8 @@ with sync_playwright() as playwright:
 
     page.goto(f"{BASE_URL}/admin/products/{PRODUCT_ID}", wait_until="networkidle")
     page.get_by_role("heading", name="Pink Garden").wait_for(state="visible")
+    if SHOT_DIR:
+        page.screenshot(path=str(Path(SHOT_DIR) / "final-admin-product-390.png"), full_page=True)
     assert page.get_by_label("Category").input_value() == CATEGORY_ID
     sku = page.get_by_label("SKU")
     assert sku.input_value() == "LUM-PINK-GARDEN-STANDARD" and sku.is_disabled()

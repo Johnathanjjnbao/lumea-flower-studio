@@ -80,8 +80,8 @@ type Copy = Partial<HomepageSection["copy"]>;
 type HomeDraft = { vi: Copy; ko: Copy; primary?: string; secondary?: string };
 const home: Record<HomepageSectionKey, HomeDraft> = {
   hero: {
-    vi: { eyebrow: "LUMÉA FLOWER STUDIO", titleOne: "Hoa cho những điều", titleTwo: "khó nói thành lời.", body: "Một không gian để khám phá những bó hoa giàu cảm xúc, được kể qua từng sắc độ và dáng hoa.", primaryCtaLabel: "Xem bộ sưu tập", secondaryCtaLabel: "Tạo bó hoa của bạn" },
-    ko: { eyebrow: "LUMÉA FLOWER STUDIO", titleOne: "말로 다 전하기", titleTwo: "어려운 마음을 꽃으로.", body: "색과 형태에 담긴 이야기를 따라, 마음에 어울리는 꽃다발을 만나보세요.", primaryCtaLabel: "컬렉션 보기", secondaryCtaLabel: "나만의 꽃다발 만들기" },
+    vi: { eyebrow: "LUMÉA FLOWER STUDIO", titleOne: "Hoa cho những điều", titleTwo: "khó nói thành lời.", body: "Bạn muốn gửi lời chúc hay một lời nhắn dịu dàng? Hãy bắt đầu từ bó hoa hợp với người nhận.", primaryCtaLabel: "Xem bộ sưu tập", secondaryCtaLabel: "Tạo bó hoa của bạn" },
+    ko: { eyebrow: "LUMÉA FLOWER STUDIO", titleOne: "말로 다 전하기", titleTwo: "어려운 마음을 꽃으로.", body: "축하나 따뜻한 마음을 전하고 싶다면, 받는 분에게 어울리는 꽃다발부터 골라 보세요.", primaryCtaLabel: "컬렉션 보기", secondaryCtaLabel: "나만의 꽃다발 만들기" },
     primary: "/flowers", secondary: "/create-bouquet",
   },
   occasions: {
@@ -89,7 +89,7 @@ const home: Record<HomepageSectionKey, HomeDraft> = {
     ko: { eyebrow: "상황별 컬렉션", titleOne: "모든 순간에는", titleTwo: "저마다의 표현이 있어요.", body: "기억하고 싶은 순간에서 시작해 어울리는 디자인을 찾아보세요." },
   },
   best_sellers: {
-    vi: { eyebrow: "ĐƯỢC YÊU THÍCH", titleOne: "Những thiết kế", titleTwo: "đáng ngắm lại.", primaryCtaLabel: "Xem tất cả", note: "Sản phẩm minh họa đang được chuẩn bị." },
+    vi: { eyebrow: "ĐƯỢC YÊU THÍCH", titleOne: "Những bó hoa", titleTwo: "được yêu thích.", primaryCtaLabel: "Xem tất cả", note: "Sản phẩm minh họa đang được chuẩn bị." },
     ko: { eyebrow: "많이 찾는 디자인", titleOne: "다시 보고 싶은", titleTwo: "꽃의 장면들.", primaryCtaLabel: "전체 보기", note: "예시 상품을 준비하고 있습니다." },
     primary: "/flowers",
   },

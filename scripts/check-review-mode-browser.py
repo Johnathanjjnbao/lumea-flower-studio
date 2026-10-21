@@ -1,4 +1,4 @@
-"""Browser acceptance for explicit, loopback-only Luméa Review Mode."""
+"""Browser acceptance for the isolated local or hosted Luméa Review Mode."""
 
 import os
 from datetime import date, timedelta
@@ -180,6 +180,16 @@ def main():
             assert page.locator(".menu-toggle").get_attribute("aria-expanded") == "true", "mobile menu did not open"
             page.keyboard.press("Escape")
             assert page.locator(".menu-toggle").get_attribute("aria-expanded") == "false", "mobile menu did not close"
+            context.close()
+            context = browser.new_context(viewport={"width": 320, "height": 640}, reduced_motion="reduce")
+            page = context.new_page()
+            page.goto(f"{BASE}/")
+            page.locator(".menu-toggle").click()
+            menu_bottom = page.locator(".mobile-menu").evaluate("element => element.getBoundingClientRect().bottom")
+            assert menu_bottom <= 641, f"short-viewport menu extends past screen: {menu_bottom}"
+            page.locator(".mobile-menu").evaluate("element => { element.scrollTop = element.scrollHeight; }")
+            last_link_bottom = page.locator(".mobile-menu__chapters a").last.evaluate("element => element.getBoundingClientRect().bottom")
+            assert last_link_bottom <= 640, f"last mobile navigation link is unreachable: {last_link_bottom}"
             context.close()
             assert not backend, f"Review Mode contacted Supabase/Order backend: {backend[:3]}"
             assert not mutations, f"Review Mode sent mutation-capable requests: {mutations[:3]}"

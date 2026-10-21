@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { siteConfig } from "../config/siteConfig";
 import { useCart } from "../features/cart/CartContext";
@@ -28,6 +28,7 @@ export function Header() {
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const quickNavButtonRef = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLElement>(null);
+  const mobileMenuRef = useRef<HTMLElement>(null);
   const location = useLocation();
   const { locale, t, path } = useI18n();
   const managedNavigation = useStorefrontNavigation(locale);
@@ -72,6 +73,22 @@ export function Header() {
 
   useEffect(() => { setMenuOpen(false); setQuickNavOpen(false); }, [location.pathname, location.hash]);
   useEffect(() => { document.body.classList.toggle("menu-open", menuOpen); return () => document.body.classList.remove("menu-open"); }, [menuOpen]);
+  useLayoutEffect(() => {
+    if (!menuOpen) return;
+    const fitMenuToViewport = () => {
+      const menu = mobileMenuRef.current;
+      if (!menu) return;
+      menu.style.maxHeight = `${Math.max(0, window.innerHeight - menu.getBoundingClientRect().top)}px`;
+    };
+    fitMenuToViewport();
+    window.addEventListener("resize", fitMenuToViewport);
+    window.addEventListener("scroll", fitMenuToViewport, { passive: true });
+    return () => {
+      window.removeEventListener("resize", fitMenuToViewport);
+      window.removeEventListener("scroll", fitMenuToViewport);
+      mobileMenuRef.current?.style.removeProperty("max-height");
+    };
+  }, [menuOpen]);
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
@@ -119,7 +136,7 @@ export function Header() {
           <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">{formatMessage(t.header.cartCountAria, { count: itemCount })}</span>
         </div>
       </div>
-      <nav className="mobile-menu" id="mobile-menu" aria-label={t.header.mobileNavAria} hidden={!menuOpen}>
+      <nav ref={mobileMenuRef} className="mobile-menu" id="mobile-menu" aria-label={t.header.mobileNavAria} hidden={!menuOpen}>
         <div className="mobile-menu__head"><p><span>{t.header.goTo}</span><strong>{t.header.exploreLumea}</strong></p><Link className="mobile-menu__catalog" to={path("/flowers")} onClick={() => setMenuOpen(false)}>{t.header.viewAll} <span aria-hidden="true">→</span></Link></div>
         <LanguageSwitch variant="mobile" />
         <div className="mobile-menu__chapters">{navigationItems.map((item, index) => item.external
