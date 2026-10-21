@@ -17,9 +17,11 @@ STEP 10.6 moves the existing Homepage business copy, photography, and Product cu
 9. Gallery
 10. Visit / Studio
 
-The Admin can edit the copy fields that already exist for each section, in separate Vietnamese and Korean tabs. Hero and other critical story sections remain structurally fixed. Optional promotional sections can be hidden where the Admin UI offers a visibility control; hiding a section does not delete its content.
+The Admin can edit the copy fields that already exist for each section, in separate Vietnamese and Korean tabs. Hero and other critical story sections remain structurally fixed. Non-Hero sections have visibility controls; hiding a section does not delete its content.
 
 React continues to own component hierarchy, section order, layout, typography, responsive behavior, motion, image crops, and decorative assets. The CMS does not accept arbitrary HTML, CSS, scripts, blocks, or layout changes and is not a page builder.
+
+If a project has no Homepage rows, an active ADMIN may initialize the ten fixed section slots and three Why Luméa card slots from `/admin/homepage`. Newly created sections remain hidden and contain no copy or media. The editor then accepts VI/KO copy and first-image uploads for fixed slots. Saving Hero with complete VI/KO headings, intro and CTA labels plus both images enables it; other sections require the Admin to enable visibility before saving. An unfilled Hero price/delivery note stays hidden instead of rendering partial claims. The initializer does not import Products, download photography, or publish commercial claims.
 
 ## Media
 

@@ -217,6 +217,8 @@ export interface AdminHomepageProductOption {
 export interface AdminHomepageSnapshot {
   sections: AdminHomepageSection[];
   products: AdminHomepageProductOption[];
+  occasionMediaSlots: Array<{ key: string; label: string }>;
+  budgetMediaSlots: Array<{ key: string; label: string }>;
 }
 
 export function emptyLocalizedBuilderContent(): LocalizedBuilderContent {

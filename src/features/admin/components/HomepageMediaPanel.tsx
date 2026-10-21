@@ -3,6 +3,7 @@ import type { AdminHomepageMedia, AdminHomepageSection } from "../types";
 
 interface HomepageMediaPanelProps {
   section: AdminHomepageSection;
+  availableSlots: Array<{ key: string; label: string }>;
   onCopyChange: (media: AdminHomepageMedia) => void;
   onSaveCopy: (media: AdminHomepageMedia) => Promise<void>;
   onUpload: (slotKey: string, file: File, copy: { viAlt: string; koAlt: string; viCaption?: string; koCaption?: string }, sortOrder?: number) => Promise<void>;
@@ -11,11 +12,14 @@ interface HomepageMediaPanelProps {
   gallery?: boolean;
 }
 
-export function HomepageMediaPanel({ section, onCopyChange, onSaveCopy, onUpload, onMove, onRemove, gallery = false }: HomepageMediaPanelProps) {
+export function HomepageMediaPanel({ section, availableSlots, onCopyChange, onSaveCopy, onUpload, onMove, onRemove, gallery = false }: HomepageMediaPanelProps) {
   const [newViAlt, setNewViAlt] = useState("");
   const [newKoAlt, setNewKoAlt] = useState("");
+  const [selectedSlot, setSelectedSlot] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const visibleMedia = section.media.filter((media) => media.active).sort((a, b) => a.sortOrder - b.sortOrder);
+  const missingSlots = availableSlots.filter((slot) => !visibleMedia.some((media) => media.slotKey === slot.key));
+  const nextSlot = missingSlots.some((slot) => slot.key === selectedSlot) ? selectedSlot : missingSlots[0]?.key;
 
   const upload = async (slotKey: string, file: File, media?: AdminHomepageMedia) => {
     setBusy(slotKey);
@@ -49,10 +53,11 @@ export function HomepageMediaPanel({ section, onCopyChange, onSaveCopy, onUpload
         </div>
       </article>)}
     </div>
-    {gallery && visibleMedia.length < 10 && <div className="admin-upload-panel">
-      <h3>Thêm ảnh Gallery</h3><p>Layout hiện hỗ trợ tối đa 10 ảnh. Ảnh cũ chỉ được gỡ relation, không bị xoá khỏi Storage.</p>
+    {(gallery ? visibleMedia.length < 10 : missingSlots.length > 0) && <div className="admin-upload-panel">
+      <h3>{gallery ? "Thêm ảnh Gallery" : "Thêm ảnh cho section"}</h3><p>{gallery ? "Layout hiện hỗ trợ tối đa 10 ảnh. Ảnh cũ chỉ được gỡ relation, không bị xoá khỏi Storage." : "Chọn đúng vị trí ảnh. Ảnh mới được lưu riêng; không ghi đè file cũ."}</p>
+      {!gallery && <label>Vị trí ảnh<select value={nextSlot ?? ""} onChange={(event) => setSelectedSlot(event.target.value)}>{missingSlots.map((slot) => <option value={slot.key} key={slot.key}>{slot.label}</option>)}</select></label>}
       <div className="admin-field-grid"><label>Alt — VI<input value={newViAlt} onChange={(event) => setNewViAlt(event.target.value)} /></label><label>Alt — KO<input value={newKoAlt} onChange={(event) => setNewKoAlt(event.target.value)} /></label></div>
-      <label className="admin-file-input">{busy ? "Đang tải…" : "Chọn ảnh để thêm"}<input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={busy !== null || !newViAlt.trim() || !newKoAlt.trim()} onChange={(event) => { const file = event.target.files?.[0]; if (file) void upload(`gallery-${crypto.randomUUID()}`, file); event.target.value = ""; }} /></label>
+      <label className="admin-file-input">{busy ? "Đang tải…" : "Chọn ảnh để thêm"}<input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={busy !== null || !newViAlt.trim() || !newKoAlt.trim() || (!gallery && !nextSlot)} onChange={(event) => { const file = event.target.files?.[0]; if (file && (gallery || nextSlot)) void upload(gallery ? `gallery-${crypto.randomUUID()}` : nextSlot!, file); event.target.value = ""; }} /></label>
       <small>JPEG, PNG, WebP hoặc AVIF. Alt VI/KO là bắt buộc.</small>
     </div>}
   </div>;

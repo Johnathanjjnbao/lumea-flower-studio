@@ -7,6 +7,19 @@ import type { AdminHomepageFeature, AdminHomepageMedia, AdminHomepageSection, Ad
 import { discardUploadedPublicMediaAsset, updatePublicMediaCopy, uploadPublicMediaAsset } from "./adminMediaService";
 
 const SAFE_CTA_TARGETS = new Set(["/flowers", "/create-bouquet", "/flowers?sameDay=true", "#best-sellers", "#florist-choice", "#custom", "#gallery", "#visit"]);
+const SECTION_DEFINITIONS = [
+  { key: "hero", primary: "/flowers", secondary: "#custom" },
+  { key: "occasions", primary: null, secondary: null },
+  { key: "best_sellers", primary: "/flowers", secondary: null },
+  { key: "budget", primary: null, secondary: null },
+  { key: "same_day", primary: "/flowers?sameDay=true", secondary: null },
+  { key: "florist_choice", primary: "/flowers", secondary: null },
+  { key: "create_bouquet", primary: "/create-bouquet", secondary: "#florist-choice" },
+  { key: "why_lumea", primary: null, secondary: null },
+  { key: "gallery", primary: "#visit", secondary: null },
+  { key: "visit", primary: null, secondary: null },
+] as const;
+const WHY_FEATURE_KEYS = ["fresh-daily", "made-by-hand", "given-with-care"] as const;
 
 function fail(message: string, error: unknown): never {
   const code = typeof error === "object" && error !== null && "code" in error && typeof error.code === "string" ? error.code : null;
@@ -44,6 +57,7 @@ function translationPayload(sectionId: string, locale: "vi" | "ko", copy: Homepa
 
 export interface AdminHomepageRepository {
   getHomepage(): Promise<AdminHomepageSnapshot>;
+  initializeMissingStructure(): Promise<void>;
   saveSection(section: AdminHomepageSection): Promise<void>;
   saveFeatures(features: AdminHomepageFeature[]): Promise<void>;
   replaceCuration(sectionId: string, productIds: string[]): Promise<void>;
@@ -62,18 +76,23 @@ export class SupabaseAdminHomepageRepository implements AdminHomepageRepository 
     if (sectionsResult.error) fail("Không thể tải cấu hình Homepage", sectionsResult.error);
     const sectionRows = (sectionsResult.data ?? []).filter((row) => isSectionKey(row.section_key));
     const ids = sectionRows.map((row) => row.id);
-    const [translations, mediaResult, featureResult, curationResult, productsResult] = await Promise.all([
+    if (!ids.length) return { sections: [], products: [], occasionMediaSlots: [], budgetMediaSlots: [] };
+    const [translations, mediaResult, featureResult, curationResult, productsResult, occasionsResult, budgetsResult] = await Promise.all([
       this.client.from("homepage_section_translations").select("homepage_section_id, locale, eyebrow, title_line_one, title_line_two, body, note, primary_cta_label, secondary_cta_label, secondary_heading, secondary_body, detail_one_label, detail_one_value, detail_two_label, detail_two_value").in("homepage_section_id", ids),
       this.client.from("homepage_section_media").select("id, homepage_section_id, media_asset_id, slot_key, sort_order, active, media_assets(storage_bucket, storage_path, status, media_asset_translations(locale, alt_text, caption))").in("homepage_section_id", ids).order("sort_order"),
       this.client.from("homepage_feature_items").select("id, homepage_section_id, item_key, media_asset_id, sort_order, active, homepage_feature_item_translations(locale, label, title, body), media_assets(storage_bucket, storage_path, status, media_asset_translations(locale, alt_text))").in("homepage_section_id", ids).order("sort_order"),
       this.client.from("homepage_product_curations").select("homepage_section_id, product_id, sort_order, active").in("homepage_section_id", ids).order("sort_order"),
       this.client.from("products").select("id, slug, product_translations(locale, name), product_images(role, active, media_assets(storage_bucket, storage_path, status))").eq("visibility", "PUBLISHED").is("archived_at", null).order("sort_order"),
+      this.client.from("occasions").select("stable_code, occasion_translations(locale, name)").eq("visibility", "PUBLISHED").order("sort_order"),
+      this.client.from("budget_ranges").select("stable_code, budget_range_translations(locale, label)").eq("visibility", "PUBLISHED").order("sort_order"),
     ]);
     if (translations.error) fail("Không thể tải nội dung Homepage", translations.error);
     if (mediaResult.error) fail("Không thể tải media Homepage", mediaResult.error);
     if (featureResult.error) fail("Không thể tải nội dung Why Luméa", featureResult.error);
     if (curationResult.error) fail("Không thể tải Best Sellers", curationResult.error);
     if (productsResult.error) fail("Không thể tải danh sách Product đã publish", productsResult.error);
+    if (occasionsResult.error) fail("Không thể tải dịp tặng cho ảnh Homepage", occasionsResult.error);
+    if (budgetsResult.error) fail("Không thể tải khoảng giá cho ảnh Homepage", budgetsResult.error);
 
     const sections = sectionRows.map((row): AdminHomepageSection => {
       const sectionMedia = (mediaResult.data ?? []).filter((item) => item.homepage_section_id === row.id).map((item): AdminHomepageMedia => {
@@ -117,7 +136,43 @@ export class SupabaseAdminHomepageRepository implements AdminHomepageRepository 
         imageUrl: primary && primary.status === "ACTIVE" ? this.client.storage.from(primary.storage_bucket).getPublicUrl(primary.storage_path).data.publicUrl : null,
       };
     });
-    return { sections, products };
+    return {
+      sections, products,
+      occasionMediaSlots: (occasionsResult.data ?? []).map((row) => ({ key: `occasion-${row.stable_code}`, label: row.occasion_translations.find((item) => item.locale === "vi")?.name ?? row.stable_code })),
+      budgetMediaSlots: (budgetsResult.data ?? []).map((row) => ({ key: `budget-${row.stable_code}`, label: row.budget_range_translations.find((item) => item.locale === "vi")?.label ?? row.stable_code })),
+    };
+  }
+
+  async initializeMissingStructure() {
+    const current = await this.client.from("homepage_sections").select("id, section_key");
+    if (current.error) fail("Không thể kiểm tra slot Homepage", current.error);
+    const existing = new Set((current.data ?? []).map((row) => row.section_key));
+    const missing = SECTION_DEFINITIONS.filter((item) => !existing.has(item.key));
+    if (missing.length) {
+      const inserted = await this.client.from("homepage_sections").insert(missing.map((item) => ({
+        section_key: item.key,
+        display_order: (SECTION_DEFINITIONS.findIndex((definition) => definition.key === item.key) + 1) * 10,
+        enabled: false,
+        primary_cta_target: item.primary,
+        secondary_cta_target: item.secondary,
+      })));
+      if (inserted.error) fail("Không thể khởi tạo slot Homepage", inserted.error);
+    }
+    const why = await this.client.from("homepage_sections").select("id").eq("section_key", "why_lumea").single();
+    if (why.error || !why.data) fail("Không thể tìm slot Why Luméa", why.error);
+    const features = await this.client.from("homepage_feature_items").select("item_key").eq("homepage_section_id", why.data.id);
+    if (features.error) fail("Không thể kiểm tra slot Why Luméa", features.error);
+    const presentFeatures = new Set((features.data ?? []).map((item) => item.item_key));
+    const missingFeatures = WHY_FEATURE_KEYS.filter((key) => !presentFeatures.has(key));
+    if (missingFeatures.length) {
+      const inserted = await this.client.from("homepage_feature_items").insert(missingFeatures.map((key) => ({
+        homepage_section_id: why.data.id,
+        item_key: key,
+        sort_order: WHY_FEATURE_KEYS.indexOf(key) * 10,
+        active: true,
+      })));
+      if (inserted.error) fail("Không thể khởi tạo slot Why Luméa", inserted.error);
+    }
   }
 
   async saveSection(section: AdminHomepageSection) {
@@ -132,6 +187,10 @@ export class SupabaseAdminHomepageRepository implements AdminHomepageRepository 
       const errors = Object.values(validateVisitSettings(section.visit, section.vi, section.ko)).filter(Boolean);
       if (errors.length) throw new Error(errors[0]);
     }
+    const copyUpdate = await this.client.from("homepage_section_translations").upsert([
+      translationPayload(section.id, "vi", section.vi), translationPayload(section.id, "ko", section.ko),
+    ], { onConflict: "homepage_section_id,locale" });
+    if (copyUpdate.error) fail("Không thể lưu nội dung VI/KO", copyUpdate.error);
     const sectionUpdate = await this.client.from("homepage_sections").update({
       enabled: section.key === "hero" ? true : section.enabled,
       primary_cta_target: section.primaryCtaTarget,
@@ -143,10 +202,6 @@ export class SupabaseAdminHomepageRepository implements AdminHomepageRepository 
       } : {}),
     }).eq("id", section.id);
     if (sectionUpdate.error) fail("Không thể lưu trạng thái section", sectionUpdate.error);
-    const copyUpdate = await this.client.from("homepage_section_translations").upsert([
-      translationPayload(section.id, "vi", section.vi), translationPayload(section.id, "ko", section.ko),
-    ], { onConflict: "homepage_section_id,locale" });
-    if (copyUpdate.error) fail("Không thể lưu nội dung VI/KO", copyUpdate.error);
   }
 
   async saveFeatures(features: AdminHomepageFeature[]) {

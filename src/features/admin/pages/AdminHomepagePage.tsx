@@ -4,6 +4,7 @@ import { HomepageVisitEditor } from "../components/HomepageVisitEditor";
 import { HomepageMediaPanel } from "../components/HomepageMediaPanel";
 import { createAdminHomepageRepository } from "../data/adminHomepageRepository";
 import type { AdminHomepageFeature, AdminHomepageMedia, AdminHomepageSection, AdminHomepageSnapshot } from "../types";
+import { homepageSectionKeys } from "../../homepage/types";
 import { validateVisitSettings } from "../../homepage/visitLocation";
 
 const sectionLabels: Record<AdminHomepageSection["key"], { name: string; description: string }> = {
@@ -24,7 +25,19 @@ const ctaOptions = [
   ["#best-sellers", "Best Sellers"], ["#florist-choice", "Florist’s Choice"], ["#custom", "Tạo bó hoa trên Home"], ["#gallery", "Gallery"], ["#visit", "Ghé studio"],
 ] as const;
 
-const visibilityEditableSections = new Set<AdminHomepageSection["key"]>(["same_day", "florist_choice", "create_bouquet", "why_lumea", "gallery"]);
+const visibilityEditableSections = new Set<AdminHomepageSection["key"]>(homepageSectionKeys.filter((key) => key !== "hero"));
+
+function mediaSlots(section: AdminHomepageSection, snapshot: AdminHomepageSnapshot) {
+  switch (section.key) {
+    case "hero": return [{ key: "hero-main", label: "Ảnh chính" }, { key: "hero-detail", label: "Ảnh chi tiết" }];
+    case "occasions": return snapshot.occasionMediaSlots;
+    case "budget": return snapshot.budgetMediaSlots;
+    case "same_day": return [{ key: "same-day-main", label: "Ảnh giao trong ngày" }];
+    case "florist_choice": return [{ key: "florist-main", label: "Ảnh florist" }];
+    case "create_bouquet": return [{ key: "custom-main", label: "Ảnh tạo bó hoa" }];
+    default: return [];
+  }
+}
 
 function focusVisitError(section: AdminHomepageSection, errors: ReturnType<typeof validateVisitSettings>) {
   const focus = (id: string) => {
@@ -81,6 +94,33 @@ export function AdminHomepagePage() {
   };
 
   const saveSection = (section: AdminHomepageSection, label: string) => {
+    if (!section.vi.titleOne.trim() || !section.ko.titleOne.trim()) {
+      setSuccess(null); setError(`Cần tiêu đề VI và KO trước khi lưu ${label}.`); return;
+    }
+    if (section.key === "hero" && ([section.vi, section.ko].some((copy) => !copy.titleTwo.trim() || !copy.body.trim() || !copy.primaryCtaLabel.trim() || !copy.secondaryCtaLabel.trim()))) {
+      setSuccess(null); setError("Hero cần đủ hai dòng tiêu đề, lời giới thiệu và hai nhãn CTA ở cả VI/KO trước khi hiển thị."); return;
+    }
+    if (section.enabled || section.key === "hero") {
+      const requiredSlots = mediaSlots(section, snapshot!);
+      if ((section.key === "occasions" || section.key === "budget") && !requiredSlots.length) {
+        setSuccess(null); setError(`Cần có lựa chọn ${section.key === "occasions" ? "dịp tặng" : "ngân sách"} đã publish trước khi hiển thị ${label}.`); return;
+      }
+      const missing = requiredSlots.filter((slot) => !section.media.some((media) => media.active && media.slotKey === slot.key));
+      if (missing.length) {
+        setSuccess(null);
+        setError(`Cần tải ảnh ${missing.map((slot) => slot.label).join(", ")} trước khi hiển thị ${label}.`);
+        return;
+      }
+      if (section.key === "gallery" && section.media.filter((media) => media.active).length < 10) {
+        setSuccess(null); setError("Gallery cần đủ 10 ảnh trước khi hiển thị."); return;
+      }
+      if (section.key === "best_sellers" && section.curatedProductIds.length !== 6) {
+        setSuccess(null); setError("Best Sellers cần đủ 6 Product đã publish trước khi hiển thị."); return;
+      }
+      if (section.key === "why_lumea" && (section.features.length !== 3 || section.features.some((feature) => !feature.active || !feature.mediaAssetId || !feature.vi.title.trim() || !feature.ko.title.trim()))) {
+        setSuccess(null); setError("Why Luméa cần đủ ba lời hứa VI/KO và ảnh trước khi hiển thị."); return;
+      }
+    }
     if (section.key === "visit") {
       const addressLocale = (["vi", "ko"] as const).find((locale) => {
         const address = section[locale].detailOneValue.trim();
@@ -102,8 +142,8 @@ export function AdminHomepagePage() {
       }
     }
     void run(`section-${section.id}`, async () => {
+      if (section.key === "why_lumea" && section.features.every((feature) => feature.vi.title.trim() && feature.ko.title.trim())) await repository.saveFeatures(section.features);
       await repository.saveSection(section);
-      if (section.key === "why_lumea") await repository.saveFeatures(section.features);
     }, `Đã lưu ${label}.`);
   };
 
@@ -127,11 +167,18 @@ export function AdminHomepagePage() {
     {error && <div className="admin-alert admin-alert--error" role="alert">{error}</div>}
     {success && <div className="admin-alert admin-alert--success" role="status">{success}</div>}
     <div className="admin-homepage-notice"><strong>10 section cố định</strong><span>Lưu từng section. Không autosave, không HTML/CSS tùy ý, không đổi thứ tự câu chuyện.</span></div>
+    {(snapshot.sections.length < homepageSectionKeys.length || (snapshot.sections.find((section) => section.key === "why_lumea")?.features.length ?? 0) < 3) &&
+      <div className="admin-empty admin-homepage-setup">
+        <h2>Chưa có đủ slot Homepage</h2>
+        <p>Khởi tạo đúng 10 section và ba card Why Luméa ở trạng thái ẩn. Không thêm nội dung, ảnh hay hiển thị ra website; sau đó nhập và duyệt từng section.</p>
+        <button className="admin-button admin-button--primary" type="button" disabled={Boolean(busy)} onClick={() => void run("initialize-homepage", () => repository.initializeMissingStructure(), "Đã khởi tạo các slot còn thiếu. Tất cả section mới vẫn đang ẩn.")}>{busy ? "Đang khởi tạo…" : "Khởi tạo slot còn thiếu"}</button>
+      </div>}
 
     <div className="admin-homepage-sections">
       {snapshot.sections.map((section, index) => {
         const label = sectionLabels[section.key];
         const isBusy = busy?.includes(section.id) || busy?.includes(section.key);
+        const availableMediaSlots = mediaSlots(section, snapshot);
         return <details className="admin-home-section" open={section.key === "hero"} key={section.id}>
           <summary><span>{String(index + 1).padStart(2, "0")}</span><div><strong>{label.name}</strong><small>{label.description}</small></div><b>{section.enabled ? "Đang hiển thị" : "Đang ẩn"}</b></summary>
           <div className="admin-home-section__body">
@@ -146,8 +193,9 @@ export function AdminHomepagePage() {
 
             {section.key === "best_sellers" && <BestSellerCuration section={section} products={snapshot.products} busy={Boolean(isBusy)} onChange={updateSection} onSave={() => run(`curation-${section.id}`, () => repository.replaceCuration(section.id, section.curatedProductIds), "Đã lưu tuyển chọn Best Sellers.")} />}
             {section.key === "why_lumea" && <WhyFeatureEditor section={section} onChange={updateSection} onUpload={(feature, file) => run(`feature-${feature.id}`, () => repository.uploadFeatureImage(section, feature, file, feature.viAlt, feature.koAlt), "Đã thay ảnh Why Luméa.")} />}
-            {(section.key === "gallery" || section.media.length > 0) && <HomepageMediaPanel
+            {(section.key === "gallery" || availableMediaSlots.length > 0 || section.media.length > 0) && <HomepageMediaPanel
               section={section}
+              availableSlots={availableMediaSlots}
               gallery={section.key === "gallery"}
               onCopyChange={(media) => updateMedia(section.id, media)}
               onSaveCopy={(media) => run(`media-copy-${media.id}`, () => repository.updateMediaCopy(media), "Đã lưu alt/caption ảnh.")}

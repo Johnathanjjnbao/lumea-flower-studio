@@ -9,6 +9,7 @@ const checks = [
   "check:admin-auth-recovery",
   "check:admin-orders",
   "check:homepage-visit",
+  "check:homepage-bootstrap",
   "check:step15",
   "check:v2-commerce",
   "check:v2-2-commercial-content",

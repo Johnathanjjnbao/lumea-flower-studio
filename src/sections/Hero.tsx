@@ -23,10 +23,10 @@ export function Hero({ section }: { section: HomepageSection }) {
           <a className="button button--solid" href={resolveHomepageTarget(section.primaryCtaTarget, path)}>{copy.primaryCtaLabel}</a>
           <a className="button button--outline" href={resolveHomepageTarget(section.secondaryCtaTarget, path)}>{copy.secondaryCtaLabel}</a>
         </div>
-        <div className="hero-commerce">
+        {copy.detailOneLabel && copy.detailOneValue && copy.detailTwoLabel && <div className="hero-commerce">
           <span className="botanical-hairline" aria-hidden="true" />
           <p>{copy.detailOneLabel} <strong>{copy.detailOneValue}</strong> · {copy.detailTwoLabel}</p>
-        </div>
+        </div>}
       </div>
 
       <div className="hero-media" aria-label={mainImage?.altText || t.home.hero.mediaAria}>

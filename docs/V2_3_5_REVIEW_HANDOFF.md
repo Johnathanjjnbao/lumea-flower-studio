@@ -9,6 +9,7 @@
 - Hash links wait for asynchronously loaded Home sections, focus interactive targets, and respect reduced-motion preferences.
 - Home has a neutral, localized empty state when no managed section is enabled. A decorative florist budget now uses the managed budget-range label.
 - Footer links lead to the new routes, and contact links use existing URL validation.
+- The Admin Homepage can now initialize missing fixed section and Why Luméa card slots without publishing them, and can upload the first image for an empty fixed media slot. This is local code only; the initialization button has not been used on staging.
 
 ## Local preview
 
@@ -38,6 +39,8 @@ Set `LUMEA_QA_SCREENSHOT_DIR` to a local directory to save mobile and desktop sc
 ## Reviewer limitations and remaining work
 
 - Staging currently exposes **zero enabled Home sections**. The Home empty state is correct, but it is not the approved ten-section visual story. About and Visit are likewise sparse until owner-managed content is available. No staging content was changed in this milestone.
+- Read-only staging inspection on 2026-10-21 found zero rows in `homepage_sections`, `homepage_section_translations`, `homepage_section_media`, `homepage_feature_items`, and `homepage_product_curations`. The original Admin editor could not create a page from that state. The new local initializer creates only hidden structural slots and needs separate owner approval before use on staging. No content or media has been uploaded.
+- Staging currently has only two published QA Products, not the six published, owner-approved Products needed for the documented Best Sellers curation. The legacy production-targeted Home seed includes old price/delivery copy and external image downloads; it must not be run on staging as a shortcut.
 - Staging catalog items shown in the screenshots are explicitly QA fixtures, not owner-approved commercial Product imagery or copy. Do not treat them as final photography, pricing, or assortment.
 - Checkout was reviewed only through the non-mutating form boundary; no Order was created. Authenticated Admin editing was not exercised in this milestone.
 - V2.3–V2.5 design/content, Admin, and full reviewer-preview acceptance remain open. A shareable public preview has not been deployed. Production migrations, release, and recovery are separate, permission-gated work.
