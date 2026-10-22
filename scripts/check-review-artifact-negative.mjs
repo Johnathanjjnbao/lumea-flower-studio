@@ -5,9 +5,10 @@ import { join, resolve } from "node:path";
 import { verifyArtifact, writeManifest } from "./lib/review-artifact.mjs";
 
 const root = await mkdtemp(join(tmpdir(), "lumea-review-gate-"));
+const cloudflareRoot = await mkdtemp(join(tmpdir(), "lumea-review-cloudflare-gate-"));
 const shell = '<!doctype html><html><head><meta name="robots" content="noindex,nofollow,noarchive" /></head><body><script src="/lumea-review-preview/assets/index-test.js"></script></body></html>';
-async function file(path, content) {
-  const target = join(root, path);
+async function file(path, content, base = root) {
+  const target = join(base, path);
   await mkdir(resolve(target, ".."), { recursive: true });
   await writeFile(target, content);
 }
@@ -33,8 +34,28 @@ try {
   await reject("modified live checkout endpoint");
   await file("assets/index-test.js", "console.log('review-only')");
   await verifyArtifact(root);
-  console.log("Review artifact negative tests PASS (stale Admin, env file, live endpoint/hash contamination)");
+
+  const hostname = "lumea-review-test.pages.dev";
+  const cloudflareShell = shell.replace("/lumea-review-preview/assets/", "/assets/");
+  for (const path of ["index.html", "404.html", "checkout/index.html", "ko/checkout/index.html"]) {
+    await file(path, cloudflareShell, cloudflareRoot);
+  }
+  await file("assets/index-test.js", `console.log('${hostname}')`, cloudflareRoot);
+  await writeManifest(cloudflareRoot, { variant: "review-cloudflare", hostname });
+  await verifyArtifact(cloudflareRoot, { expectedVariant: "review-cloudflare", expectedHostname: hostname });
+  await assert.rejects(
+    () => verifyArtifact(cloudflareRoot, { expectedVariant: "review-cloudflare", expectedHostname: "wrong.pages.dev" }),
+    undefined,
+    "Cloudflare artifact must match the selected hostname",
+  );
+  await assert.rejects(
+    () => verifyArtifact(cloudflareRoot, { expectedVariant: "review-hosted" }),
+    undefined,
+    "Cloudflare artifact cannot be mistaken for a GitHub Pages package",
+  );
+  console.log("Review artifact negative tests PASS (stale files, hash contamination, Cloudflare host/variant mismatch)");
 } finally {
   // This temp directory is created and owned exclusively by this test.
   await rm(root, { recursive: true, force: true });
+  await rm(cloudflareRoot, { recursive: true, force: true });
 }

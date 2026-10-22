@@ -5,6 +5,7 @@ import react from "@vitejs/plugin-react";
 import { products } from "./src/data/content";
 
 function githubPagesRouteEntries(mode: string): Plugin {
+  const hostedReview = mode === "review-hosted" || mode === "review-cloudflare";
   let outputDirectory: string;
   return {
     name: "github-pages-route-entries",
@@ -13,7 +14,7 @@ function githubPagesRouteEntries(mode: string): Plugin {
       outputDirectory = isAbsolute(config.build.outDir) ? config.build.outDir : resolve(config.root, config.build.outDir);
     },
     transformIndexHtml(html) {
-      if (mode !== "review-hosted") return html;
+      if (!hostedReview) return html;
       return html
         .replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/>/, '<meta name="description" content="Luméa Flower Studio — bản xem trước VI/KO. Sản phẩm và giá chỉ minh họa; không nhận đơn thật." />')
         .replace("<title>Luméa Flower Studio — Hoa cho những điều khó nói thành lời</title>", "<title>Luméa — Bản xem trước / Review Demo</title>")
@@ -61,7 +62,7 @@ function githubPagesRouteEntries(mode: string): Plugin {
         "ko/admin/commercial-policies",
         "ko/admin/orders",
       ];
-      if (mode === "review-hosted") for (const product of products) {
+      if (hostedReview) for (const product of products) {
         routes.push(`flowers/${product.slug}`, `ko/flowers/${product.slug}`);
       }
 
@@ -81,7 +82,7 @@ function reviewImportBoundary(mode: string): Plugin {
     name: "review-import-boundary",
     apply: "build",
     generateBundle(_, bundle) {
-      if (mode !== "review-hosted" && mode !== "review") return;
+      if (mode !== "review-hosted" && mode !== "review" && mode !== "review-cloudflare") return;
       const forbidden = [
         /\/features\/admin\//,
         /\/features\/checkout\/repository\.ts$/,
@@ -101,26 +102,31 @@ function reviewImportBoundary(mode: string): Plugin {
   };
 }
 
-export default defineConfig(({ mode }) => ({
-  base: mode === "review-hosted" ? "/lumea-review-preview/" : "/lumea-flower-studio/",
-  build: {
-    outDir: mode === "review-hosted" ? "dist-review" : mode === "review" ? "dist-review-local" : "dist",
-    emptyOutDir: true,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes("node_modules/@supabase/")) return "supabase";
-          if (id.includes("node_modules/gsap/") || id.includes("node_modules/@gsap/")) return "motion";
-          if (
-            id.includes("node_modules/react/")
-            || id.includes("node_modules/react-dom/")
-            || id.includes("node_modules/react-router-dom/")
-            || id.includes("node_modules/react-router/")
-          ) return "react";
-          return undefined;
+export default defineConfig(({ mode }) => {
+  if (mode === "review-cloudflare" && !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.pages\.dev$/.test(process.env.VITE_REVIEW_HOSTNAME ?? "")) {
+    throw new Error("review-cloudflare requires an exact VITE_REVIEW_HOSTNAME under pages.dev");
+  }
+  return {
+    base: mode === "review-cloudflare" ? "/" : mode === "review-hosted" ? "/lumea-review-preview/" : "/lumea-flower-studio/",
+    build: {
+      outDir: mode === "review-cloudflare" ? "dist-review-cloudflare" : mode === "review-hosted" ? "dist-review" : mode === "review" ? "dist-review-local" : "dist",
+      emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("node_modules/@supabase/")) return "supabase";
+            if (id.includes("node_modules/gsap/") || id.includes("node_modules/@gsap/")) return "motion";
+            if (
+              id.includes("node_modules/react/")
+              || id.includes("node_modules/react-dom/")
+              || id.includes("node_modules/react-router-dom/")
+              || id.includes("node_modules/react-router/")
+            ) return "react";
+            return undefined;
+          },
         },
       },
     },
-  },
-  plugins: [react(), reviewImportBoundary(mode), githubPagesRouteEntries(mode)],
-}));
+    plugins: [react(), reviewImportBoundary(mode), githubPagesRouteEntries(mode)],
+  };
+});
