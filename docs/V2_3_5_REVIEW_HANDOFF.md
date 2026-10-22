@@ -4,6 +4,8 @@ For the final engineering/reviewer matrix and the 21 October refinement, see [th
 
 **Status (2026-10-21):** The independent, bilingual reviewer demo is available at **https://johnathanjjnbao.github.io/lumea-review-preview/**. Open it on a phone or computer; no installation or account is needed. This public demo is **not** the production Luméa storefront, production acceptance, or a release of V2.2. V2.2 staging acceptance remains PASS; V2.2 has not been released to production.
 
+**22 October local remediation note:** A privacy-safe Checkout and clean Review packaging are now prepared locally, but this task did not redeploy the public URL. Until that later publication is approved and verified, do not enter real names, phones or addresses into the public demo's older Checkout form. See [the post-audit section of the final handoff](LUMEA_FINAL_PROJECT_HANDOFF.md#post-audit-remediation--local-not-published-22-october-2026).
+
 ## What to review
 
 Luméa is a flower studio website designed to help someone discover an arrangement and request an order. Start on Home, explore the flower catalog, open a Product, add an available arrangement to Cart, and try the **demo-only** Checkout. Use the language switcher to compare Vietnamese and Korean. On a phone, check the menu and readability as well as the shopping flow. About, Contact, Same-day, and Policies are also in the menu.
@@ -37,7 +39,7 @@ The persistent **REVIEW MODE** ribbon identifies illustrative data. Catalog pric
 - VI Home `/` and KO Home `/ko`: 10 enabled sections—Hero, Occasions, Best Sellers, Budget, Same-day, Florist's Choice, Create Bouquet, Why Luméa, Gallery, Visit. There are six curated demo best sellers and 10 demo catalog products.
 - Catalog `/flowers`, PDP `/flowers/pink-garden` (plus other demo slugs), bouquet builder `/create-bouquet`, Cart `/cart`, Checkout `/checkout` all have `/ko` counterparts.
 - About `/about`, Contact `/contact`, Same-day `/same-day`, and Policies `/policies` are bilingual. Contact intentionally does not invent a phone, email, address, or social account.
-- A READY product can be selected, added to Cart, edited/removed and taken through a demo Checkout form. A SEASONAL product remains non-purchasable. Checkout stops at a local-only completion screen: no Order, payment, personal data, or network mutation is sent. The Order Confirmation route cannot display a previously stored live receipt in Review Mode.
+- A READY product can be selected, added to Cart, edited/removed and taken through demo Checkout. In the new local build, only sample pickup/delivery choices remain; no identifying input is requested. A SEASONAL product remains non-purchasable. Checkout stops at a local-only completion screen: no Order, payment, personal data, or network mutation is sent. The Order Confirmation route cannot display a previously stored live receipt in Review Mode.
 - The `/admin/*` route explains that real Admin requires authenticated, server-authorized access; it does not bypass Auth.
 
 Review Cart uses a separate `lumea.review.cart.v1` browser storage key, leaving a live Cart untouched. All storefront data sources in Review Mode resolve to local fixtures. Supabase client creation and the Order repository are guarded against use in this mode. Demo copy is deliberately neutral wherever real commercial decisions are required; do not reuse it as published policy.
@@ -53,6 +55,9 @@ npm run build:review
 npm run check:review-bundle -- review
 npm run check:review-browser
 npm run check:secrets
+npm run package:review
+npm run check:review-artifact
+npm run check:secrets-artifact
 ```
 
 The Review Mode browser suite uses installed Playwright for Python and Edge. It checks 13 routes in VI/KO at 320, 390, 768, and 1440 px (104 route/locale/viewport checks), decoded imagery, no horizontal overflow, Home sections and actions, Cart edits, safe KO Checkout, missing live receipt on Order Confirmation, search/focus, locale switch, mobile keyboard navigation, and absence of Supabase/Order or mutation-capable requests. The normal-bundle check ensures Review Mode fixture markers are absent from the regular output. See the task's final report for the results of the latest full local run.

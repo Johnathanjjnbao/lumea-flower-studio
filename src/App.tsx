@@ -5,12 +5,10 @@ import { PrototypeActionProvider } from "./context/PrototypeActionContext";
 import { CatalogPage } from "./pages/CatalogPage";
 import { BouquetBuilderPage } from "./pages/BouquetBuilderPage";
 import { CartPage } from "./pages/CartPage";
-import { CheckoutPage } from "./pages/CheckoutPage";
 import { HomePage } from "./pages/HomePage";
 import { AboutPage } from "./pages/AboutPage";
 import { ContactPage } from "./pages/ContactPage";
 import { SameDayPage } from "./pages/SameDayPage";
-import { OrderConfirmationPage } from "./pages/OrderConfirmationPage";
 import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { PoliciesPage } from "./pages/PoliciesPage";
 import { I18nProvider } from "./i18n";
@@ -18,8 +16,12 @@ import { CartProvider } from "./features/cart/CartContext";
 import { reviewBuild, reviewMode } from "./review/mode";
 import { ReviewAdminNotice } from "./review/ReviewAdminNotice";
 import { ReviewNotFound } from "./review/ReviewNotFound";
+import { ReviewCheckoutPage } from "./review/ReviewCheckoutPage";
+import { ReviewOrderConfirmationPage } from "./review/ReviewOrderConfirmationPage";
 
 const AdminRoutes = reviewBuild ? ReviewAdminNotice : lazy(() => import("./features/admin/AdminRoutes"));
+const CheckoutRoute = reviewBuild ? ReviewCheckoutPage : lazy(() => import("./pages/CheckoutPage").then((module) => ({ default: module.CheckoutPage })));
+const OrderConfirmationRoute = reviewBuild ? ReviewOrderConfirmationPage : lazy(() => import("./pages/OrderConfirmationPage").then((module) => ({ default: module.OrderConfirmationPage })));
 
 export default function App() {
   const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -41,8 +43,8 @@ export default function App() {
               <Route path="/flowers/:slug" element={<ProductDetailPage />} />
               <Route path="/create-bouquet" element={<BouquetBuilderPage />} />
               <Route path="/cart" element={<CartPage />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
-              <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
+              <Route path="/checkout" element={<Suspense fallback={null}><CheckoutRoute /></Suspense>} />
+              <Route path="/order-confirmation" element={<Suspense fallback={null}><OrderConfirmationRoute /></Suspense>} />
               <Route path="/policies" element={<PoliciesPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
@@ -52,8 +54,8 @@ export default function App() {
               <Route path="/ko/flowers/:slug" element={<ProductDetailPage />} />
               <Route path="/ko/create-bouquet" element={<BouquetBuilderPage />} />
               <Route path="/ko/cart" element={<CartPage />} />
-              <Route path="/ko/checkout" element={<CheckoutPage />} />
-              <Route path="/ko/order-confirmation" element={<OrderConfirmationPage />} />
+              <Route path="/ko/checkout" element={<Suspense fallback={null}><CheckoutRoute /></Suspense>} />
+              <Route path="/ko/order-confirmation" element={<Suspense fallback={null}><OrderConfirmationRoute /></Suspense>} />
               <Route path="/ko/policies" element={<PoliciesPage />} />
               <Route path="/ko/about" element={<AboutPage />} />
               <Route path="/ko/contact" element={<ContactPage />} />

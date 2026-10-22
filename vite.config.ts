@@ -1,13 +1,17 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
-import { defineConfig, type Plugin } from "vite";
+import { isAbsolute, resolve } from "node:path";
+import { defineConfig, type Plugin, type ResolvedConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { products } from "./src/data/content";
 
 function githubPagesRouteEntries(mode: string): Plugin {
+  let outputDirectory: string;
   return {
     name: "github-pages-route-entries",
     apply: "build",
+    configResolved(config: ResolvedConfig) {
+      outputDirectory = isAbsolute(config.build.outDir) ? config.build.outDir : resolve(config.root, config.build.outDir);
+    },
     transformIndexHtml(html) {
       if (mode !== "review-hosted") return html;
       return html
@@ -16,8 +20,7 @@ function githubPagesRouteEntries(mode: string): Plugin {
         .replace("</head>", '  <meta name="robots" content="noindex,nofollow,noarchive" />\n  </head>')
         .replace(/\r\r?\n/g, "\n");
     },
-    async closeBundle() {
-      const outputDirectory = resolve(process.cwd(), "dist");
+    async writeBundle() {
       const appShell = await readFile(resolve(outputDirectory, "index.html"), "utf8");
       const routes = [
         "flowers",
@@ -73,9 +76,36 @@ function githubPagesRouteEntries(mode: string): Plugin {
   };
 }
 
+function reviewImportBoundary(mode: string): Plugin {
+  return {
+    name: "review-import-boundary",
+    apply: "build",
+    generateBundle(_, bundle) {
+      if (mode !== "review-hosted" && mode !== "review") return;
+      const forbidden = [
+        /\/features\/admin\//,
+        /\/features\/checkout\/repository\.ts$/,
+        /\/features\/checkout\/receipt\.ts$/,
+        /\/pages\/CheckoutPage\.tsx$/,
+      ];
+      for (const output of Object.values(bundle)) {
+        if (output.type !== "chunk") continue;
+        for (const id of Object.keys(output.modules)) {
+          const normalized = id.replaceAll("\\", "/");
+          if (forbidden.some((pattern) => pattern.test(normalized))) {
+            throw new Error(`Review artifact includes live-only module: ${normalized}`);
+          }
+        }
+      }
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => ({
   base: mode === "review-hosted" ? "/lumea-review-preview/" : "/lumea-flower-studio/",
   build: {
+    outDir: mode === "review-hosted" ? "dist-review" : mode === "review" ? "dist-review-local" : "dist",
+    emptyOutDir: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -92,5 +122,5 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  plugins: [react(), githubPagesRouteEntries(mode)],
+  plugins: [react(), reviewImportBoundary(mode), githubPagesRouteEntries(mode)],
 }));

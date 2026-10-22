@@ -1,7 +1,6 @@
 """Browser acceptance for the isolated local or hosted Luméa Review Mode."""
 
 import os
-from datetime import date, timedelta
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -89,7 +88,7 @@ def main():
 
             context = browser.new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce")
             page = context.new_page()
-            page.on("request", lambda request: backend.append(f"{request.method} {request.url}") if "supabase.co" in request.url or "create-checkout-order" in request.url else None)
+            page.on("request", lambda request: backend.append(f"{request.method} {request.url}") if any(marker in request.url for marker in ("supabase.co", "create-checkout-order", "/functions/v1/", "/payment/")) else None)
             page.on("request", lambda request: mutations.append(f"{request.method} {request.url}") if request.method not in ("GET", "HEAD", "OPTIONS") else None)
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.goto(f"{BASE}/flowers/pink-garden")
@@ -110,14 +109,15 @@ def main():
             page.locator(".checkout-form").wait_for(state="visible")
             if SHOTS:
                 capture(page, Path(SHOTS) / "review-ko-checkout-390.png")
-            page.locator("#buyerName").fill("Demo Reviewer")
-            page.locator("#buyerPhone").fill("0900000000")
-            page.locator("#buyer-is-recipient").check()
-            page.locator('input[name="fulfillmentType"][value="PICKUP"]').check()
-            page.locator("#deliveryDate").fill((date.today() + timedelta(days=2)).isoformat())
+            assert page.locator('#buyerName, #buyerPhone, #buyerEmail, #recipientName, #recipientPhone, #deliveryAddress').count() == 0, "review checkout accepts personal data"
+            assert page.locator('[autocomplete="name"], [autocomplete="tel"], [autocomplete="email"], [autocomplete^="shipping"]').count() == 0, "review checkout enables personal autofill"
+            page.locator('input[name="reviewFulfillment"][value="PICKUP"]').check()
+            assert page.locator('input[name="reviewFulfillment"][value="PICKUP"]').is_checked()
             page.get_by_role("button", name="데모 종료 화면 보기").click()
             page.locator(".review-complete").wait_for(state="visible")
             assert page.locator(".review-complete").count() == 1
+            assert page.evaluate("Object.keys(localStorage).every(key => key === 'lumea.review.cart.v1')"), "demo created an unexpected stored value"
+            assert page.evaluate("sessionStorage.length") == 0, "demo wrote session storage"
             if SHOTS:
                 capture(page, Path(SHOTS) / "review-ko-demo-complete-390.png")
             context.close()

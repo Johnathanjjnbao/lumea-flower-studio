@@ -7,5 +7,7 @@ Thumbs.db
 .cache/
 node_modules/
 dist/
+dist-review/
+dist-review-local/
 graft/
 .ignore
